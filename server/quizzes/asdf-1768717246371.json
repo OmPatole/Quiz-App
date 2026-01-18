@@ -1,0 +1,36 @@
+{
+  "id": "asdf-1768717246371",
+  "title": "asdf",
+  "schedule": {
+    "start": "2026-01-18T11:52",
+    "end": "2026-01-18T12:14"
+  },
+  "questions": [
+    {
+      "id": 1768717208897,
+      "type": "mcq",
+      "text": "asdfasf asdf sdfs",
+      "marks": 5,
+      "options": [
+        {
+          "text": "asfd",
+          "image": ""
+        },
+        {
+          "text": "ad f",
+          "image": ""
+        }
+      ],
+      "isMultiSelect": false,
+      "correctIndices": [
+        0
+      ],
+      "testCases": [
+        {
+          "input": "",
+          "output": ""
+        }
+      ]
+    }
+  ]
+}

@@ -6,13 +6,13 @@ import LeaderboardList from './components/LeaderboardList';
 import Leaderboard from './components/Leaderboard';
 import AdminLogin from './components/AdminLogin';
 import AdminPanel from './components/AdminPanel';
+import QuizDashboard from './components/QuizDashboard'; // <--- IMPORT THIS
 
 function App() {
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check session on load
     const session = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
     if (session) setIsAuth(true);
     setLoading(false);
@@ -24,7 +24,11 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/quizzes" element={<LeaderboardList />} />
+        
+        {/* --- FIX IS HERE --- */}
+        {/* CHANGE 'LeaderboardList' TO 'QuizDashboard' */}
+        <Route path="/quizzes" element={<QuizDashboard />} />
+        
         <Route path="/leaderboards" element={<LeaderboardList />} />
         <Route path="/quiz/:quizId" element={<QuizPlayer />} />
         <Route path="/leaderboard/:quizId" element={<Leaderboard />} />
@@ -34,7 +38,6 @@ function App() {
           element={!isAuth ? <AdminLogin setIsAuth={setIsAuth} /> : <Navigate to="/admin" replace />} 
         />
         
-        {/* PASS setIsAuth HERE so AdminPanel can log out */}
         <Route 
           path="/admin" 
           element={isAuth ? <AdminPanel setIsAuth={setIsAuth} /> : <Navigate to="/login" replace />} 
