@@ -1,0 +1,63 @@
+{
+  "id": "new-1767079262934",
+  "title": "new",
+  "schedule": {
+    "start": "2025-12-30T12:52",
+    "end": "2025-12-30T13:07"
+  },
+  "questions": [
+    {
+      "id": 1767079192502,
+      "type": "mcq",
+      "text": "new problem",
+      "marks": 5,
+      "options": [
+        {
+          "text": "option 1",
+          "image": ""
+        },
+        {
+          "text": "option 2",
+          "image": ""
+        }
+      ],
+      "isMultiSelect": false,
+      "correctIndices": [
+        0,
+        1
+      ],
+      "testCases": [
+        {
+          "input": "",
+          "output": ""
+        }
+      ]
+    },
+    {
+      "id": 1767079250223,
+      "type": "code",
+      "text": "**New Question**asdfasf",
+      "marks": 5,
+      "options": [
+        {
+          "text": "",
+          "image": ""
+        },
+        {
+          "text": "",
+          "image": ""
+        }
+      ],
+      "isMultiSelect": false,
+      "correctIndices": [
+        0
+      ],
+      "testCases": [
+        {
+          "input": "5",
+          "output": "25"
+        }
+      ]
+    }
+  ]
+}
