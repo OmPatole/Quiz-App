@@ -4,7 +4,7 @@ import axios from 'axios';
 import Editor from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import toast, { Toaster } from 'react-hot-toast'; 
-import { User, ShieldBan, Play, Code, AlertCircle, Clock } from 'lucide-react';
+import { User, ShieldBan, Play, Clock, CheckCircle, XCircle, Info } from 'lucide-react';
 
 const API_URL = 'http://localhost:3001'; 
 const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -45,8 +45,9 @@ const QuizPlayer = () => {
     axios.get(`${API_URL}/api/quizzes/${quizId}`)
       .then(res => { 
           const data = res.data;
-          // Shuffle questions on client so every student sees different order
-          if (data.questions && data.questions.length > 0) {
+          // Only shuffle if it's NOT a mock test (Mock tests usually follow a learning order)
+          // But if you want shuffling everywhere, keep it.
+          if (data.quizType !== 'mock' && data.questions && data.questions.length > 0) {
               data.questions = shuffleArray([...data.questions]);
           }
           setQuizData(data); 
@@ -99,13 +100,12 @@ const QuizPlayer = () => {
   const submitQuiz = async (statusOverride = 'Completed') => {
     if (isSubmitted) return; setIsSubmitted(true);
     
-    // --- SECURITY FIX: Send Raw Answers, Not Score ---
     const payload = {
         quizId: quizData.id,
         studentName: info.name,
         year: info.year,
         prn: info.prn,
-        userAnswers: answers, // The server will calculate the score
+        userAnswers: answers,
         status: statusOverride
     };
 
@@ -197,6 +197,28 @@ const QuizPlayer = () => {
 
   const q = quizData.questions[currentQ];
   const processedMarkdown = q.text ? q.text.replace(/\]\(\/uploads\//g, `](${API_URL}/uploads/`) : '';
+  const isLast = currentQ === quizData.questions.length - 1;
+  const isMock = quizData.quizType === 'mock';
+
+  // --- MOCK LOGIC HELPERS ---
+  const hasAnswered = answers[currentQ]?.selectedIndices?.length > 0;
+  
+  // Helper to determine option style (Correct/Incorrect/Neutral)
+  const getOptionStyle = (index) => {
+    const isSelected = answers[currentQ]?.selectedIndices?.includes(index);
+    
+    if (isMock && hasAnswered) {
+        // If it's a mock test AND they have answered, show truth
+        const isCorrect = q.correctIndices?.includes(index);
+        if (isCorrect) return 'border-green-500 bg-green-900/20'; // Always show correct answer in green
+        if (isSelected && !isCorrect) return 'border-red-500 bg-red-900/20'; // Show wrong selection in red
+        return 'border-slate-800 bg-slate-900 opacity-50'; // Fade out unrelated options
+    }
+
+    // Standard behavior (Weekly Test OR before answering in Mock)
+    if (isSelected) return 'border-purple-500 bg-purple-900/20 shadow-[0_0_15px_rgba(168,85,247,0.15)]';
+    return 'border-slate-800 bg-slate-900 hover:border-slate-600';
+  };
 
   return (
     <div className="h-screen bg-slate-950 text-slate-200 flex flex-col font-sans overflow-hidden">
@@ -205,19 +227,60 @@ const QuizPlayer = () => {
          <div className="flex items-center gap-4">
              <div className="font-bold text-purple-400">{quizData?.title}</div>
              {quizData.duration > 0 && (
-                 <div className={`flex items-center gap-2 px-3 py-1 rounded bg-slate-800 border border-slate-700 font-mono text-sm ${timeLeft < 60 && quizData.quizType !== 'mock' ? 'text-red-500 animate-pulse border-red-900/50' : 'text-slate-300'}`}>
+                 <div className={`flex items-center gap-2 px-3 py-1 rounded bg-slate-800 border border-slate-700 font-mono text-sm ${timeLeft < 60 && !isMock ? 'text-red-500 animate-pulse border-red-900/50' : 'text-slate-300'}`}>
                      <Clock size={14}/> {formatTime(timeLeft)}
                  </div>
              )}
-             {quizData.quizType === 'mock' && <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-1 rounded border border-blue-800">PRACTICE MODE</span>}
+             {isMock && <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-1 rounded border border-blue-800">PRACTICE MODE</span>}
          </div>
          <div className="flex items-center gap-2 bg-slate-800 py-1 px-3 rounded-full text-sm"><User size={14}/> {info.name}</div>
        </header>
+
        <div className="flex-1 flex overflow-hidden">
           <div className={`flex-1 flex flex-col p-6 overflow-y-auto ${q.type === 'code' ? 'w-1/2 border-r border-slate-800' : 'max-w-3xl mx-auto w-full'}`}>
                <div className="mb-4 text-white" data-color-mode="dark"><span className="text-purple-400 font-bold text-lg mr-2">Q{currentQ+1}.</span><MDEditor.Markdown source={processedMarkdown} style={{ backgroundColor: 'transparent', color: '#e2e8f0' }} /></div>
-               {q.type === 'mcq' && (<div className="space-y-4 mt-4">{q.options.map((opt, i) => (<button key={i} onClick={() => {const curr = answers[currentQ]?.selectedIndices || []; const newSel = q.isMultiSelect ? (curr.includes(i) ? curr.filter(x=>x!==i) : [...curr, i]) : [i]; setAnswers({...answers, [currentQ]: {...answers[currentQ], selectedIndices: newSel}});}} className={`w-full p-4 text-left rounded-xl border transition-all flex items-start gap-4 group ${answers[currentQ]?.selectedIndices?.includes(i) ? 'border-purple-500 bg-purple-900/20 shadow-[0_0_15px_rgba(168,85,247,0.15)]' : 'border-slate-800 bg-slate-900 hover:border-slate-600'}`}><div className={`mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${answers[currentQ]?.selectedIndices?.includes(i) ? 'border-purple-500 bg-purple-500' : 'border-slate-600 group-hover:border-slate-400'}`}>{answers[currentQ]?.selectedIndices?.includes(i) && <div className="w-2 h-2 bg-white rounded-full" />}</div><div className="flex-1">{opt.image && <img src={getImageUrl(opt.image)} className="mb-2 h-32 rounded object-contain"/>}<div className="text-slate-200">{opt.text}</div></div></button>))}</div>)}
+               
+               {q.type === 'mcq' && (
+                  <div className="space-y-4 mt-4">
+                      {q.options.map((opt, i) => (
+                        <button 
+                            key={i} 
+                            disabled={isMock && hasAnswered} // Lock answers in mock once clicked
+                            onClick={() => {
+                                const curr = answers[currentQ]?.selectedIndices || []; 
+                                const newSel = q.isMultiSelect ? (curr.includes(i) ? curr.filter(x=>x!==i) : [...curr, i]) : [i]; 
+                                setAnswers({...answers, [currentQ]: {...answers[currentQ], selectedIndices: newSel}});
+                            }} 
+                            className={`w-full p-4 text-left rounded-xl border transition-all flex items-start gap-4 group ${getOptionStyle(i)}`}
+                        >
+                            <div className={`mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 
+                                ${isMock && hasAnswered && q.correctIndices?.includes(i) ? 'border-green-500 bg-green-500' : 
+                                  isMock && hasAnswered && answers[currentQ]?.selectedIndices?.includes(i) ? 'border-red-500 bg-red-500' :
+                                  answers[currentQ]?.selectedIndices?.includes(i) ? 'border-purple-500 bg-purple-500' : 'border-slate-600 group-hover:border-slate-400'}`}>
+                                
+                                {isMock && hasAnswered && q.correctIndices?.includes(i) && <CheckCircle size={14} className="text-white"/>}
+                                {isMock && hasAnswered && answers[currentQ]?.selectedIndices?.includes(i) && !q.correctIndices?.includes(i) && <XCircle size={14} className="text-white"/>}
+                                {!isMock && answers[currentQ]?.selectedIndices?.includes(i) && <div className="w-2 h-2 bg-white rounded-full" />}
+                            </div>
+                            <div className="flex-1">
+                                {opt.image && <img src={getImageUrl(opt.image)} className="mb-2 h-32 rounded object-contain" alt="option"/>}
+                                <div className="text-slate-200">{opt.text}</div>
+                            </div>
+                        </button>
+                      ))}
+                  </div>
+               )}
+               
+               {/* --- EXPLANATION BOX (Mock Only) --- */}
+               {isMock && hasAnswered && q.explanation && (
+                   <div className="mt-6 p-4 bg-blue-900/20 border border-blue-800 rounded-xl animate-in fade-in slide-in-from-bottom-2">
+                       <h4 className="text-blue-400 font-bold text-sm mb-2 flex items-center gap-2"><Info size={16}/> Explanation:</h4>
+                       <p className="text-slate-300 text-sm leading-relaxed">{q.explanation}</p>
+                   </div>
+               )}
+
           </div>
+
           {q.type === 'code' && (
               <div className="w-1/2 flex flex-col bg-slate-900">
                   <div className="h-12 bg-slate-950 border-b border-slate-800 flex justify-between items-center px-4"><select className="bg-slate-900 text-xs font-bold text-slate-300 border border-slate-700 rounded px-2 py-1 outline-none" value={answers[currentQ]?.language || 'python'} onChange={e => setAnswers({...answers, [currentQ]: { ...answers[currentQ], language: e.target.value }})}><option value="python">Python 3</option><option value="javascript">JavaScript</option><option value="c">C</option><option value="cpp">C++</option><option value="java">Java</option></select><button onClick={runCode} disabled={isRunning} className="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded">Run Code</button></div>
@@ -226,9 +289,10 @@ const QuizPlayer = () => {
               </div>
           )}
        </div>
+
        <footer className="h-16 bg-slate-900 border-t border-slate-800 flex justify-between items-center px-6 shrink-0">
-          <button disabled={currentQ===0} onClick={()=>setCurrentQ(c=>c-1)} className="text-slate-400">Prev</button>
-          {isLast ? <button onClick={()=>submitQuiz()} className="bg-purple-600 px-6 py-2 rounded text-white font-bold">Submit</button> : <button onClick={()=>setCurrentQ(c=>c+1)} className="bg-slate-800 px-6 py-2 rounded text-white">Next</button>}
+          <button disabled={currentQ===0} onClick={()=>setCurrentQ(c=>c-1)} className="text-slate-400 hover:text-white transition">Previous</button>
+          {isLast ? <button onClick={()=>submitQuiz()} className="bg-purple-600 hover:bg-purple-700 px-8 py-2 rounded text-white font-bold transition">Submit Quiz</button> : <button onClick={()=>setCurrentQ(c=>c+1)} className="bg-slate-800 hover:bg-slate-700 px-6 py-2 rounded text-white transition">Next Question</button>}
        </footer>
     </div>
   );

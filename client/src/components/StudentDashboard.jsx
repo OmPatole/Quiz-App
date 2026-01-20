@@ -1,190 +1,248 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Brain, Code, Clock, ArrowLeft, LogOut, FileText, Trophy, Play } from 'lucide-react';
+import { LogOut, Clock, Calendar, ChevronRight, BrainCircuit, Code, FileText, AlertCircle, Layers, CheckCircle2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
-const StudentDashboard = () => {
+const StudentDashboard = ({ setIsAuth }) => {
   const navigate = useNavigate();
+  const [student, setStudent] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
-  const [userInfo, setUserInfo] = useState(null);
-  
-  const [selectedCategory, setSelectedCategory] = useState(null); 
-  const [selectedType, setSelectedType] = useState(null); 
+  const [loading, setLoading] = useState(true);
+
+  // --- FILTER STATES ---
+  const [activeTab, setActiveTab] = useState('weekly'); // 'weekly' or 'mock'
+  const [selectedTrack, setSelectedTrack] = useState('aptitude'); // 'aptitude' or 'coding'
 
   useEffect(() => {
-    const stored = localStorage.getItem('quiz_student_info') || sessionStorage.getItem('quiz_student_info');
-    if (!stored) {
-        navigate('/student-login');
-        return;
-    }
-    setUserInfo(JSON.parse(stored));
-    
-    axios.get('http://localhost:3001/api/quizzes')
-      .then(res => setQuizzes(res.data))
-      .catch(() => toast.error("Failed to load quizzes"));
-  }, [navigate]);
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error("No token");
+
+        const storedStudent = JSON.parse(localStorage.getItem('student_data') || '{}');
+        setStudent(storedStudent);
+
+        // If student is strictly 'coding', set the track to coding automatically
+        if (storedStudent.category === 'coding') {
+            setSelectedTrack('coding');
+        }
+
+        const res = await axios.get('http://localhost:3001/api/quizzes', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        setQuizzes(res.data);
+      } catch (error) {
+        console.error(error);
+        localStorage.clear();
+        if(setIsAuth) setIsAuth(false);
+        navigate('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [navigate, setIsAuth]);
 
   const handleLogout = () => {
     localStorage.clear();
-    sessionStorage.clear();
-    navigate('/');
+    if(setIsAuth) setIsAuth(false);
+    navigate('/login');
   };
 
-  const getFilteredQuizzes = () => {
-    return quizzes.filter(q => {
-        if (q.category !== selectedCategory) return false;
-        if (selectedCategory === 'aptitude' && q.quizType !== selectedType) return false;
-        if (selectedCategory === 'coding') return true; 
-        return true;
-    });
-  };
+  const handleStartQuiz = async (quizId) => {
+    try {
+        const token = localStorage.getItem('token');
+        const prn = student?.prn;
+        const check = await axios.post('http://localhost:3001/api/check-attempt', 
+            { quizId, prn },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-  // --- FIXED NAVIGATION LOGIC ---
-  const handleReset = () => {
-    if (selectedType && selectedCategory === 'aptitude') {
-        // If in Mock/Weekly menu, go back to Category selection is WRONG based on user request.
-        // User said: "if i press back... it should take me back to mock or weekly"
-        // WAIT: User said "if i am in mock quiz menu... takes me back to main menu... instead it should take me back to mock or weekly".
-        // This implies they are in the QUIZ LIST.
-        
-        // My Logic:
-        // Level 1: Category Selection (Apti/Coding)
-        // Level 2: Type Selection (Mock/Weekly) -> Only for Aptitude
-        // Level 3: Quiz List
-        
-        // If I am at Level 3 (Quiz List), back should go to Level 2.
-        setSelectedType(null);
-    } else {
-        // If I am at Level 2 or Coding List, go back to Level 1
-        setSelectedCategory(null);
-        setSelectedType(null);
+        if (check.data.attempted) {
+            toast.error("Already attempted.");
+        } else {
+            navigate(`/quiz/${quizId}`);
+        }
+    } catch (e) {
+        toast.error("Unable to start.");
     }
   };
 
-  const OptionCard = ({ icon, title, desc, onClick, color }) => (
-    <div onClick={onClick} className={`group bg-slate-900/50 backdrop-blur-sm border border-slate-800 p-8 rounded-3xl cursor-pointer transition-all hover:-translate-y-2 hover:shadow-2xl hover:border-${color}-500/50 flex flex-col items-center text-center h-full justify-center min-h-[250px]`}>
-        <div className={`mb-6 w-20 h-20 bg-slate-950 rounded-full flex items-center justify-center text-${color}-500 group-hover:scale-110 transition border border-slate-800 group-hover:border-${color}-500/30 shadow-lg`}>
-            {icon}
-        </div>
-        <h3 className="text-3xl font-extrabold text-white mb-3">{title}</h3>
-        <p className="text-slate-400 text-sm max-w-xs leading-relaxed font-medium">{desc}</p>
-    </div>
-  );
+  // --- STRICT FILTERING LOGIC ---
+  const filteredQuizzes = quizzes.filter(q => {
+      const matchesType = q.quizType === activeTab;
+      const matchesTrack = q.category === selectedTrack;
+      return matchesType && matchesTrack;
+  });
+
+  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500 font-mono">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col">
-        <Toaster position="top-right" toastOptions={{style: {background: '#1e293b', color: '#fff'}}}/>
-        
-        {/* Navbar */}
-        <header className="px-8 py-6 border-b border-slate-900 bg-slate-950/50 backdrop-blur-md sticky top-0 z-20">
-            <div className="max-w-7xl mx-auto flex justify-between items-center">
-                <div className="flex items-center gap-6">
-                    {(selectedCategory) && (
-                        <button onClick={handleReset} className="p-3 bg-slate-900 rounded-xl hover:bg-slate-800 border border-slate-800 transition text-slate-400 hover:text-white group" title="Go Back">
-                            <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform"/>
-                        </button>
-                    )}
-                    <div>
-                        {/* BOLDER AND BIGGER PROFILE INFO */}
-                        <h1 className="text-3xl font-black text-white tracking-tight">Hi, {userInfo?.name?.split(' ')[0]} 👋</h1>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="px-2 py-0.5 bg-purple-900/30 border border-purple-500/30 rounded text-purple-300 text-xs font-bold uppercase tracking-wider">
-                                {userInfo?.year}
-                            </span>
-                            <span className="text-slate-500 font-mono text-sm font-bold tracking-wider">
-                                {userInfo?.prn}
-                            </span>
-                        </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-purple-500/30">
+      <Toaster position="top-right" />
+      
+      {/* NAVBAR */}
+      <header className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg ${
+                    student?.category === 'coding' ? 'bg-blue-600' : 
+                    student?.category === 'both' ? 'bg-gradient-to-br from-purple-600 to-blue-600' : 
+                    'bg-purple-600'
+                }`}>
+                    {student?.category === 'coding' ? <Code size={20}/> : 
+                     student?.category === 'both' ? <Layers size={20}/> : 
+                     <BrainCircuit size={20}/>}
+                </div>
+                <div>
+                    <h1 className="font-bold text-lg leading-tight">{student?.name}</h1>
+                    <div className="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-0.5">
+                        {student?.prn} • {student?.category === 'both' ? 'Dual Course Access' : `${student?.category} track`}
                     </div>
                 </div>
-                <div className="flex gap-4">
-                    <Link to="/study" className="px-5 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm font-bold hover:text-white text-slate-400 hover:border-slate-700 transition flex items-center gap-2">
-                        <FileText size={18}/> Study Material
-                    </Link>
-                    <button onClick={handleLogout} className="p-3 text-red-400 hover:bg-red-400/10 rounded-xl transition border border-transparent hover:border-red-900/50">
-                        <LogOut size={24}/>
+            </div>
+            <button onClick={handleLogout} className="p-2 hover:bg-red-900/20 text-slate-500 hover:text-red-400 rounded-lg transition">
+                <LogOut size={20}/>
+            </button>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        
+        {/* TRACK SELECTOR (Only visible for 'both' students) */}
+        {student?.category === 'both' && (
+            <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 px-1">Select Your track</p>
+                <div className="grid grid-cols-2 gap-4">
+                    <button 
+                        onClick={() => setSelectedTrack('aptitude')}
+                        className={`relative p-4 rounded-2xl border transition-all overflow-hidden group ${
+                            selectedTrack === 'aptitude' 
+                            ? 'bg-purple-600/10 border-purple-500/50 ring-1 ring-purple-500/50 shadow-xl shadow-purple-950/20' 
+                            : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3 relative z-10">
+                            <div className={`p-2 rounded-lg ${selectedTrack === 'aptitude' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                <BrainCircuit size={20} />
+                            </div>
+                            <div className="text-left">
+                                <div className={`font-bold ${selectedTrack === 'aptitude' ? 'text-white' : 'text-slate-400'}`}>Aptitude</div>
+                                <div className="text-[10px] text-slate-500 font-medium">Logical & Quant</div>
+                            </div>
+                            {selectedTrack === 'aptitude' && <CheckCircle2 size={18} className="ml-auto text-purple-400" />}
+                        </div>
+                    </button>
+
+                    <button 
+                        onClick={() => setSelectedTrack('coding')}
+                        className={`relative p-4 rounded-2xl border transition-all overflow-hidden group ${
+                            selectedTrack === 'coding' 
+                            ? 'bg-blue-600/10 border-blue-500/50 ring-1 ring-blue-500/50 shadow-xl shadow-blue-950/20' 
+                            : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3 relative z-10">
+                            <div className={`p-2 rounded-lg ${selectedTrack === 'coding' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                <Code size={20} />
+                            </div>
+                            <div className="text-left">
+                                <div className={`font-bold ${selectedTrack === 'coding' ? 'text-white' : 'text-slate-400'}`}>Coding</div>
+                                <div className="text-[10px] text-slate-500 font-medium">Data Structures & Algo</div>
+                            </div>
+                            {selectedTrack === 'coding' && <CheckCircle2 size={18} className="ml-auto text-blue-400" />}
+                        </div>
                     </button>
                 </div>
             </div>
-        </header>
+        )}
 
-        {/* Main Content Area */}
-        <main className="flex-1 flex flex-col items-center justify-center p-6 relative">
-            <div className="max-w-6xl w-full">
-                
-                {/* 1. CATEGORY SELECTION */}
-                {!selectedCategory && (
-                    <div className="animate-in fade-in zoom-in-95 duration-500 w-full">
-                        <h2 className="text-4xl font-black text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-500">What do you want to practice?</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                            <OptionCard icon={<Brain size={48}/>} title="Aptitude" color="purple" desc="Quantitative, Logical & Verbal Reasoning" onClick={() => setSelectedCategory('aptitude')} />
-                            <OptionCard icon={<Code size={48}/>} title="Coding Club" color="blue" desc="Algorithms, Data Structures & Competitive Coding" onClick={() => { setSelectedCategory('coding'); setSelectedType('weekly'); }} />
+        {/* EXAM TYPE TABS */}
+        <div className="flex gap-6 mb-8 border-b border-slate-800/50 pb-1">
+            <button 
+                onClick={() => setActiveTab('weekly')}
+                className={`pb-3 px-1 text-sm font-bold flex items-center gap-2 transition border-b-2 ${
+                    activeTab === 'weekly' 
+                    ? (selectedTrack === 'coding' ? 'border-blue-500 text-white' : 'border-purple-500 text-white')
+                    : 'border-transparent text-slate-500 hover:text-slate-300'
+                }`}
+            >
+                <Calendar size={16}/> Weekly Exams
+            </button>
+            <button 
+                onClick={() => setActiveTab('mock')}
+                className={`pb-3 px-1 text-sm font-bold flex items-center gap-2 transition border-b-2 ${
+                    activeTab === 'mock' 
+                    ? (selectedTrack === 'coding' ? 'border-blue-500 text-white' : 'border-purple-500 text-white')
+                    : 'border-transparent text-slate-500 hover:text-slate-300'
+                }`}
+            >
+                <FileText size={16}/> Mock Tests
+            </button>
+        </div>
+
+        {/* QUIZ GRID */}
+        {filteredQuizzes.length === 0 ? (
+            <div className="text-center py-20 bg-slate-900/20 rounded-3xl border border-dashed border-slate-800 animate-in fade-in duration-500">
+                <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-600">
+                    <Layers size={28}/>
+                </div>
+                <h3 className="text-lg font-bold text-slate-300">No {activeTab} tests found</h3>
+                <p className="text-slate-500 text-sm mt-1">There are no assignments in the {selectedTrack} track yet.</p>
+            </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredQuizzes.map(quiz => (
+                    <div key={quiz.id} className="group bg-slate-900 border border-slate-800/80 rounded-3xl p-6 hover:border-slate-600 transition-all flex flex-col relative overflow-hidden">
+                        <div className={`absolute top-0 left-0 w-1.5 h-full ${selectedTrack === 'coding' ? 'bg-blue-600' : 'bg-purple-600'}`} />
+                        
+                        <div className="flex justify-between items-start mb-5">
+                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
+                                selectedTrack === 'coding' 
+                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
+                                : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                            }`}>
+                                {quiz.quizType}
+                            </span>
+                            <div className="text-slate-500 text-xs font-mono bg-slate-950 px-2 py-1 rounded-md">{quiz.questions.length} Qs</div>
                         </div>
-                    </div>
-                )}
 
-                {/* 2. TYPE SELECTION (Aptitude Only) */}
-                {selectedCategory === 'aptitude' && !selectedType && (
-                    <div className="animate-in fade-in zoom-in-95 duration-500 w-full">
-                        <h2 className="text-4xl font-black text-center mb-12 text-white">Select Mode</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                            <OptionCard icon={<Clock size={48}/>} title="Mock Tests" color="blue" desc="Unlimited attempts • No Timer Enforcement • Practice" onClick={() => setSelectedType('mock')} />
-                            <OptionCard icon={<Trophy size={48}/>} title="Weekly Live" color="yellow" desc="One Attempt • Strict Timer • Global Ranking" onClick={() => setSelectedType('weekly')} />
-                        </div>
-                    </div>
-                )}
-
-                {/* 3. QUIZ LIST */}
-                {(selectedType || selectedCategory === 'coding') && (
-                    <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 max-w-4xl mx-auto w-full">
-                        <div className="text-center mb-10">
-                            <h2 className="text-3xl font-black flex items-center justify-center gap-3">
-                                {selectedCategory === 'coding' ? <Code className="text-blue-500" size={32}/> : (selectedType === 'mock' ? <Clock className="text-blue-400" size={32}/> : <Trophy className="text-yellow-500" size={32}/>)}
-                                {selectedCategory === 'coding' ? "Coding Challenges" : (selectedType === 'mock' ? "Practice Mock Tests" : "Weekly Competitions")}
-                            </h2>
-                            <p className="text-slate-500 mt-2 font-medium">Select an exam to begin. Good luck!</p>
-                        </div>
-
-                        <div className="grid gap-5">
-                            {getFilteredQuizzes().map(q => (
-                                <div key={q.id} className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-6 hover:border-slate-600 transition group hover:shadow-xl hover:shadow-purple-900/5">
-                                    <div className="text-center sm:text-left w-full">
-                                        <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-purple-400 transition">{q.title}</h3>
-                                        <div className="flex flex-wrap justify-center sm:justify-start gap-3">
-                                            <Badge icon={<FileText size={12}/>} text={`${q.questionCount} Questions`} />
-                                            <Badge icon={<Clock size={12}/>} text={q.duration > 0 ? `${q.duration} Mins` : 'Unlimited Time'} />
-                                            {q.quizType !== 'mock' && <Badge text={new Date(q.schedule.start).toLocaleDateString()} />}
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-4 w-full sm:w-auto shrink-0">
-                                        <Link to={`/leaderboard/${q.id}`} className="flex-1 sm:flex-none px-6 py-3 border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 font-bold transition flex items-center justify-center gap-2">
-                                            <Trophy size={18}/> Rank
-                                        </Link>
-                                        <Link to={`/quiz/${q.id}`} className="flex-1 sm:flex-none px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20 hover:scale-105 transform">
-                                            <Play size={18}/> Start
-                                        </Link>
-                                    </div>
-                                </div>
-                            ))}
-                            {getFilteredQuizzes().length === 0 && (
-                                <div className="text-center py-24 bg-slate-900/30 rounded-3xl border border-slate-800/50 text-slate-500 font-medium">
-                                    No active quizzes found in this category right now.
+                        <h3 className="text-xl font-bold text-white mb-3 leading-snug group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-400 transition-all duration-300">
+                            {quiz.title}
+                        </h3>
+                        
+                        <div className="space-y-3 mb-8">
+                            <div className="flex items-center gap-2.5 text-xs text-slate-400">
+                                <Clock size={14} className="text-slate-600"/> 
+                                <span>{Math.floor(quiz.duration / 60)}h {quiz.duration % 60}m limit</span>
+                            </div>
+                            {quiz.quizType === 'weekly' && quiz.schedule && (
+                                <div className="flex items-center gap-2.5 text-xs text-slate-400">
+                                    <AlertCircle size={14} className="text-slate-600"/>
+                                    <span className="truncate">Deadline: {new Date(quiz.schedule.end).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                 </div>
                             )}
                         </div>
+
+                        <button 
+                            onClick={() => handleStartQuiz(quiz.id)}
+                            className={`w-full py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg ${
+                                selectedTrack === 'coding'
+                                ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20'
+                                : 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/20'
+                            }`}
+                        >
+                            Start Assessment <ChevronRight size={18}/>
+                        </button>
                     </div>
-                )}
+                ))}
             </div>
-        </main>
+        )}
+      </main>
     </div>
   );
 };
-
-const Badge = ({ icon, text }) => (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-bold text-slate-400 uppercase tracking-wide">
-        {icon} {text}
-    </span>
-);
 
 export default StudentDashboard;

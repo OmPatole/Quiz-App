@@ -1,55 +1,72 @@
 const mongoose = require('mongoose');
 
-const AdminSchema = new mongoose.Schema({
+const adminSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, default: 'admin' }
+  role: { type: String, default: 'admin' }, // 'superadmin' or 'admin'
+  scope: { type: String, default: 'all' },  // 'all', 'aptitude', 'coding'
+  createdAt: { type: Date, default: Date.now }
 });
 
-const StudentSchema = new mongoose.Schema({
+const batchSchema = new mongoose.Schema({
+  batchName: { type: String, required: true },
+  category: { type: String, required: true }, // 'aptitude' or 'coding'
+  studentCount: { type: Number, default: 0 },
+  uploadedAt: { type: Date, default: Date.now }
+});
+
+const studentSchema = new mongoose.Schema({
   name: String,
-  prn: { type: String, required: true, unique: true },
+  prn: { type: String, required: true },
   year: String,
-  joinedAt: { type: Date, default: Date.now }
+  branch: String,
+  category: { type: String, required: true }, // Locks student to category
+  batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'StudentBatch' }
 });
+// Allow same PRN only if in different categories
+studentSchema.index({ prn: 1, category: 1 }, { unique: true });
 
-const QuizSchema = new mongoose.Schema({
-  id: { type: String, unique: true }, // Keeping string ID for backward compatibility
+const quizSchema = new mongoose.Schema({
+  id: { type: String, unique: true },
   title: String,
-  schedule: { start: Date, end: Date },
-  questions: Array, // Storing questions structure as mixed array
+  description: String,
+  questions: Array,
+  category: String, // 'aptitude' or 'coding'
+  quizType: String, // 'weekly' or 'mock'
+  duration: Number,
+  schedule: { start: String, end: String },
+  targetYears: Array,
   createdBy: String,
-  targetYears: [String],
-  category: { type: String, default: 'aptitude' },
-  quizType: { type: String, default: 'weekly' },
-  duration: Number
+  createdAt: { type: Date, default: Date.now }
 });
 
-const ResultSchema = new mongoose.Schema({
+const resultSchema = new mongoose.Schema({
   quizId: String,
   prn: String,
   studentName: String,
   year: String,
+  branch: String,
   score: Number,
   totalMarks: Number,
   status: String,
   submittedAt: { type: Date, default: Date.now }
 });
 
-const MaterialSchema = new mongoose.Schema({
-  id: String,
-  title: String,
-  type: String,
-  parentId: String,
-  fileUrl: String,
-  createdBy: String,
-  createdAt: { type: Date, default: Date.now }
+const materialSchema = new mongoose.Schema({
+    id: { type: String, unique: true },
+    title: String,
+    type: String, 
+    parentId: { type: String, default: null },
+    url: String, 
+    createdBy: String,
+    createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = {
-  Admin: mongoose.model('Admin', AdminSchema),
-  Student: mongoose.model('Student', StudentSchema),
-  Quiz: mongoose.model('Quiz', QuizSchema),
-  Result: mongoose.model('Result', ResultSchema),
-  Material: mongoose.model('Material', MaterialSchema)
-};
+const Admin = mongoose.model('Admin', adminSchema);
+const Student = mongoose.model('Student', studentSchema);
+const Quiz = mongoose.model('Quiz', quizSchema);
+const Result = mongoose.model('Result', resultSchema);
+const Material = mongoose.model('Material', materialSchema);
+const StudentBatch = mongoose.model('StudentBatch', batchSchema);
+
+module.exports = { Admin, Student, Quiz, Result, Material, StudentBatch };
