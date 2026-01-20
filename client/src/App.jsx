@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
-// --- COMPONENTS ---
-import Home from './components/Home'; // Landing Page
-import StudentLogin from './components/StudentLogin'; // Dedicated Login
+import Home from './components/Home';
+import StudentLogin from './components/StudentLogin';
 import StudentDashboard from './components/StudentDashboard'; 
 import QuizPlayer from './components/QuizPlayer';
 import LeaderboardList from './components/LeaderboardList';
@@ -27,23 +25,17 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* PUBLIC ROUTES */}
         <Route path="/" element={<Home />} />
         <Route path="/student-login" element={<StudentLogin />} />
-        
-        {/* STUDENT ROUTES */}
         <Route path="/dashboard" element={<StudentDashboard />} />
         <Route path="/study" element={<StudyMaterials />} />
         <Route path="/quiz/:quizId" element={<QuizPlayer />} />
         <Route path="/leaderboards" element={<LeaderboardList />} />
         <Route path="/leaderboard/:quizId" element={<Leaderboard />} />
-
-        {/* ADMIN ROUTES */}
         <Route path="/login" element={!isAuth ? <AdminLogin setIsAuth={setIsAuth} /> : <Navigate to="/admin" replace />} />
         <Route path="/admin" element={isAuth ? <AdminPanel setIsAuth={setIsAuth} /> : <Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );
 }
-
 export default App;

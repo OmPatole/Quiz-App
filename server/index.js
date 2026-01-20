@@ -6,7 +6,6 @@ const axios = require('axios');
 const multer = require('multer');
 const fs = require('fs');
 const hpp = require('hpp');
-const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const pdfParse = require('pdf-parse');
@@ -15,6 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'beta_secret_key_123';
 
+// --- DIRECTORIES ---
 const DATA_DIR = path.join(__dirname, 'results');
 const QUIZ_DIR = path.join(__dirname, 'quizzes');
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
@@ -49,7 +49,8 @@ const writeJSON = (file, data) => fs.writeFileSync(getFile(file), JSON.stringify
 // --- MIDDLEWARE ---
 app.use(express.json({ limit: '50mb' })); 
 app.use(hpp()); 
-app.use(cors());
+// Allow all origins for local development (IP access)
+app.use(cors({ origin: '*' })); 
 app.use('/uploads', express.static(UPLOAD_DIR));
 
 const authenticateToken = (req, res, next) => {
@@ -93,7 +94,7 @@ app.post('/api/student/login', (req, res) => {
     writeJSON('students.json', students);
   } else {
     student.name = name;
-    student.year = year; 
+    student.year = year;
     writeJSON('students.json', students);
   }
 
@@ -101,7 +102,7 @@ app.post('/api/student/login', (req, res) => {
   res.json({ success: true, token, student });
 });
 
-// --- SECURE QUIZ ACCESS ---
+// --- SECURE QUIZ ACCESS (STUDENT VIEW) ---
 app.get('/api/quizzes/:id', (req, res) => {
   const p = path.join(QUIZ_DIR, `${req.params.id}.json`);
   if (!fs.existsSync(p)) return res.status(404).json({ error: "Not found" });
@@ -111,13 +112,20 @@ app.get('/api/quizzes/:id', (req, res) => {
     
     // SECURITY: Remove answers before sending to client
     const sanitizedQuestions = fullQuiz.questions.map(q => {
-        const { correctIndices, ...safeQuestion } = q; // Strip correctIndices
+        const { correctIndices, ...safeQuestion } = q; 
         return safeQuestion;
     });
 
     const safeQuiz = { ...fullQuiz, questions: sanitizedQuestions };
     res.json(safeQuiz);
   } catch (e) { res.status(500).json({ error: "Server Error" }); }
+});
+
+// --- FULL QUIZ ACCESS (ADMIN VIEW) ---
+app.get('/api/admin/quiz-details/:id', authenticateToken, (req, res) => {
+    const p = path.join(QUIZ_DIR, `${req.params.id}.json`);
+    if (!fs.existsSync(p)) return res.status(404).json({ error: "Not found" });
+    res.json(JSON.parse(fs.readFileSync(p, 'utf8')));
 });
 
 // --- SECURE SCORING ---
@@ -132,7 +140,7 @@ app.post('/api/submit-score', (req, res) => {
     try {
         const quizData = JSON.parse(fs.readFileSync(quizPath, 'utf8'));
         
-        // 1. Server-Side Validation
+        // 1. Server-Side Year Validation
         if (quizData.targetYears?.length > 0 && !quizData.targetYears.includes(year)) {
              return res.status(403).json({ error: "Year mismatch" });
         }
@@ -149,8 +157,8 @@ app.post('/api/submit-score', (req, res) => {
                 const student = studentSelection.slice().sort().join(',');
                 if (correct === student) calculatedScore += parseInt(q.marks);
             } else if (q.type === 'code') {
-                // For code, we still rely on the 'passed' flag from the runner response
-                // ideally, you'd re-run the code here for 100% security, but this is 95% secure
+                // Trusting passed flag for simplicity in file-based version, 
+                // but secure architecture would re-run logic here.
                 if (userAnswers[idx]?.passed) calculatedScore += parseInt(q.marks);
             }
         });
@@ -158,14 +166,14 @@ app.post('/api/submit-score', (req, res) => {
         // 3. Save Result
         let results = fs.existsSync(resultPath) ? JSON.parse(fs.readFileSync(resultPath, 'utf8')) : [];
         
-        // Prevent Duplicate Weekly Submissions
+        // Block duplicates ONLY for Weekly tests
         if(quizData.quizType !== 'mock' && results.some(d => d.prn === prn)) {
             return res.json({ success: false, message: "Already attempted" });
         }
 
         const newEntry = {
             prn, studentName, year,
-            score: calculatedScore, // Verified Score
+            score: calculatedScore,
             totalMarks,
             status,
             submittedAt: new Date()
@@ -178,7 +186,7 @@ app.post('/api/submit-score', (req, res) => {
     } catch (error) { res.status(500).json({ error: "Submission failed" }); }
 });
 
-// --- ADMIN QUIZ ROUTES (With Full Data) ---
+// --- QUIZ MANAGEMENT ---
 app.get('/api/quizzes', (req, res) => {
   try {
     const files = fs.readdirSync(QUIZ_DIR);
@@ -211,13 +219,6 @@ app.get('/api/admin/my-quizzes', authenticateToken, (req, res) => {
   } catch (e) { res.json([]); }
 });
 
-// This route returns FULL quiz (with answers) ONLY for Editing
-app.get('/api/admin/quiz-details/:id', authenticateToken, (req, res) => {
-    const p = path.join(QUIZ_DIR, `${req.params.id}.json`);
-    if (!fs.existsSync(p)) return res.status(404).json({ error: "Not found" });
-    res.json(JSON.parse(fs.readFileSync(p, 'utf8')));
-});
-
 app.post('/api/quizzes', authenticateToken, (req, res) => {
   const { id, title, schedule, questions, createdBy, targetYears, category, quizType, duration } = req.body;
   const p = path.join(QUIZ_DIR, `${id}.json`);
@@ -237,7 +238,22 @@ app.delete('/api/quizzes/:id', authenticateToken, (req, res) => {
   res.json({ success: true });
 });
 
-// --- MISC ROUTES ---
+// --- MISC (Materials, PDF, Upload, Check Attempt) ---
+app.get('/api/materials', (req, res) => res.json(readJSON('materials.json')));
+app.post('/api/materials', authenticateToken, (req, res) => {
+  const { title, type, parentId, fileUrl } = req.body;
+  const materials = readJSON('materials.json');
+  materials.push({ id: Date.now().toString(), title, type, parentId: parentId || null, fileUrl, createdBy: req.user.username, createdAt: new Date() });
+  writeJSON('materials.json', materials);
+  res.json({ success: true });
+});
+app.delete('/api/materials/:id', authenticateToken, (req, res) => {
+  let materials = readJSON('materials.json');
+  materials = materials.filter(m => m.id !== req.params.id && m.parentId !== req.params.id);
+  writeJSON('materials.json', materials);
+  res.json({ success: true });
+});
+
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   res.json({ imageUrl: `/uploads/${req.file.filename}` });
@@ -266,7 +282,6 @@ app.post('/api/generate-quiz', authenticateToken, upload.single('file'), async (
 
 app.post('/api/check-attempt', (req, res) => {
     const { quizId, prn } = req.body;
-    // Check Quiz Type
     const qPath = path.join(QUIZ_DIR, `${quizId}.json`);
     if (fs.existsSync(qPath)) {
         const quiz = JSON.parse(fs.readFileSync(qPath, 'utf8'));
@@ -294,4 +309,4 @@ app.post('/api/run-code', async (req, res) => {
     } catch(e) { res.status(500).json({error: "Run failed"}); }
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Secure Server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
