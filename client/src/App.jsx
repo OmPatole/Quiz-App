@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Home from './components/Home';
+
+// --- COMPONENTS ---
+import Home from './components/Home'; // Landing Page
+import StudentLogin from './components/StudentLogin'; // Dedicated Login
+import StudentDashboard from './components/StudentDashboard'; 
 import QuizPlayer from './components/QuizPlayer';
 import LeaderboardList from './components/LeaderboardList';
 import Leaderboard from './components/Leaderboard';
 import AdminLogin from './components/AdminLogin';
 import AdminPanel from './components/AdminPanel';
-import QuizDashboard from './components/QuizDashboard'; // <--- IMPORT THIS
+import StudyMaterials from './components/StudyMaterials';
 
 function App() {
   const [isAuth, setIsAuth] = useState(false);
@@ -18,30 +22,25 @@ function App() {
     setLoading(false);
   }, []);
 
-  if (loading) return <div className="min-h-screen bg-slate-950"></div>;
+  if (loading) return <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Loading...</div>;
 
   return (
     <Router>
       <Routes>
+        {/* PUBLIC ROUTES */}
         <Route path="/" element={<Home />} />
+        <Route path="/student-login" element={<StudentLogin />} />
         
-        {/* --- FIX IS HERE --- */}
-        {/* CHANGE 'LeaderboardList' TO 'QuizDashboard' */}
-        <Route path="/quizzes" element={<QuizDashboard />} />
-        
-        <Route path="/leaderboards" element={<LeaderboardList />} />
+        {/* STUDENT ROUTES */}
+        <Route path="/dashboard" element={<StudentDashboard />} />
+        <Route path="/study" element={<StudyMaterials />} />
         <Route path="/quiz/:quizId" element={<QuizPlayer />} />
+        <Route path="/leaderboards" element={<LeaderboardList />} />
         <Route path="/leaderboard/:quizId" element={<Leaderboard />} />
 
-        <Route 
-          path="/login" 
-          element={!isAuth ? <AdminLogin setIsAuth={setIsAuth} /> : <Navigate to="/admin" replace />} 
-        />
-        
-        <Route 
-          path="/admin" 
-          element={isAuth ? <AdminPanel setIsAuth={setIsAuth} /> : <Navigate to="/login" replace />} 
-        />
+        {/* ADMIN ROUTES */}
+        <Route path="/login" element={!isAuth ? <AdminLogin setIsAuth={setIsAuth} /> : <Navigate to="/admin" replace />} />
+        <Route path="/admin" element={isAuth ? <AdminPanel setIsAuth={setIsAuth} /> : <Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );

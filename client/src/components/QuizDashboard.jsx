@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Clock, Calendar, AlertCircle, Play, Trophy, ArrowLeft, Lock, TimerReset } from 'lucide-react';
+import { Clock, Calendar, AlertCircle, Play, Trophy, ArrowLeft, Lock, TimerReset, User, Users } from 'lucide-react';
 
 const QuizDashboard = () => {
   const navigate = useNavigate();
@@ -59,16 +59,11 @@ const QuizDashboard = () => {
     };
   };
 
-  // --- FIXED JOIN HANDLER ---
   const handleJoin = (quiz) => {
-    console.log("Attempting to join quiz:", quiz.id); // Debug Log
-    
     if (!quiz.id) {
         alert("Error: Invalid Quiz ID");
         return;
     }
-    
-    // Direct navigation without extra checks
     navigate(`/quiz/${quiz.id}`); 
   };
 
@@ -112,6 +107,16 @@ const QuizDashboard = () => {
 
                   <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">{quiz.title}</h3>
                   
+                  {/* --- NEW: CREATOR & YEAR INFO --- */}
+                  <div className="flex gap-2 mb-4">
+                     <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 flex items-center gap-1 border border-slate-700">
+                        <User size={10}/> {quiz.createdBy || 'Admin'}
+                     </span>
+                     <span className="text-[10px] bg-purple-900/20 px-2 py-1 rounded text-purple-300 flex items-center gap-1 border border-purple-500/20">
+                        <Users size={10}/> {quiz.targetYears && quiz.targetYears.length > 0 ? quiz.targetYears.join(', ') : 'All Years'}
+                     </span>
+                  </div>
+
                   <div className="space-y-3 mt-4 text-sm text-slate-400 mb-8 flex-1 border-t border-slate-800 pt-4">
                     <div className="flex items-center gap-2.5">
                       <Calendar size={14} className="text-purple-500" />
