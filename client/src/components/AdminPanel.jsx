@@ -8,9 +8,12 @@ import {
   Trash2, Plus, LogOut, FileText, Calendar, 
   Code, CheckSquare, Edit, ArrowLeft, Image as ImageIcon, X, Users, User, Eye, EyeOff, FileUp, Clock, Layers, UploadCloud
 } from 'lucide-react';
-import { API_URL } from '../config';
 
 const AdminPanel = ({ setIsAuth }) => {
+  // --- CONFIGURATION ---
+  // Change this to your Ubuntu Server IP if accessing from other devices (e.g., 'http://192.168.1.50:3001')
+  const API_URL = 'http://localhost:3001'; 
+
   const navigate = useNavigate();
   const [view, setView] = useState('dashboard'); // 'dashboard' | 'editor' | 'students'
   const [previewMode, setPreviewMode] = useState(false);
@@ -245,9 +248,9 @@ const AdminPanel = ({ setIsAuth }) => {
                 <div className="bg-slate-900 border border-slate-800 p-12 rounded-2xl text-center">
                     <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto text-blue-500 mb-6"><Users size={32}/></div>
                     <h3 className="text-xl font-bold text-white mb-2">Bulk Import</h3>
-                    <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">Upload a <strong>CSV file</strong> to register students.</p>
+                    <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">Upload a <strong>CSV file</strong> to register students. Since you skipped the seed file, you <strong>must</strong> do this to add students.</p>
                     <div className="text-left bg-slate-950 p-6 rounded-xl border border-slate-800 max-w-lg mx-auto font-mono text-xs text-slate-300">
-                        <div className="text-slate-500 font-bold mb-2">REQUIRED HEADERS:</div>
+                        <div className="text-slate-500 font-bold mb-2">REQUIRED CSV HEADERS:</div>
                         name, prn, year, branch
                     </div>
                 </div>
@@ -408,9 +411,9 @@ const AdminPanel = ({ setIsAuth }) => {
             </div>
 
             <div className="flex gap-4 mb-20 mt-8">
-                <button onClick={() => setQuestions([...questions, { id: Date.now(), type: 'mcq', text: '**Problem**', marks: 5, options: [{text:'', image:''}, {text:'', image:''}], isMultiSelect: false, correctIndices: [0], testCases: [{input:'', output:''}]}])} className="flex-1 py-4 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 hover:text-purple-400 font-bold flex justify-center gap-2 transition hover:border-purple-500/50"><Plus size={20}/> Add Manually</button>
+                <button onClick={() => setQuestions([...questions, { id: Date.now(), type: 'mcq', text: '**Problem Description**', marks: 5, options: [{text:'', image:''}, {text:'', image:''}], isMultiSelect: false, correctIndices: [0], testCases: [{input:'', output:''}]}])} className="flex-1 py-4 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 hover:text-purple-400 font-bold flex justify-center gap-2 transition hover:border-purple-500/50"><Plus size={20}/> Add Manually</button>
                 <label className="flex-1 py-4 border-2 border-dashed border-slate-800 rounded-xl text-slate-500 hover:text-blue-400 font-bold flex justify-center gap-2 transition hover:border-blue-500/50 cursor-pointer">
-                    <FileUp size={20}/> PDF Import
+                    <FileUp size={20}/> Import from PDF
                     <input type="file" accept=".pdf" hidden onChange={handlePdfUpload} />
                 </label>
             </div>
