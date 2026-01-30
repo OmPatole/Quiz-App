@@ -3,39 +3,43 @@ const mongoose = require('mongoose');
 const adminSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, default: 'admin' }, // 'superadmin' or 'admin'
-  scope: { type: String, default: 'all' },  // 'all', 'aptitude', 'coding'
+  role: { type: String, default: 'admin' }, 
+  scope: { type: String, default: 'all' },
   createdAt: { type: Date, default: Date.now }
 });
 
 const batchSchema = new mongoose.Schema({
-  batchName: { type: String, required: true },
-  category: { type: String, required: true }, // 'aptitude' or 'coding'
+  batchName: { type: String, required: true }, // e.g., "Class of 2026"
   studentCount: { type: Number, default: 0 },
+  type: { type: String, default: 'official' }, // 'official' or 'self-reg'
   uploadedAt: { type: Date, default: Date.now }
 });
 
 const studentSchema = new mongoose.Schema({
   name: String,
-  prn: { type: String, required: true },
-  year: String,
+  prn: { type: String, required: true, unique: true }, 
+  year: String, // "First Year", etc.
   branch: String,
-  category: { type: String, required: true }, // Locks student to category
-  batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'StudentBatch' }
+  batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'StudentBatch' },
+  
+  // NEW: To separate self-signed vs admin-uploaded
+  registrationType: { type: String, default: 'admin-upload' }, // 'admin-upload', 'self-signup'
+  gradYear: { type: String }, // e.g., "2026", "2027" (Derived from batch or input)
+  
+  lastLogin: { type: Date }, 
+  createdAt: { type: Date, default: Date.now }
 });
-// Allow same PRN only if in different categories
-studentSchema.index({ prn: 1, category: 1 }, { unique: true });
 
 const quizSchema = new mongoose.Schema({
   id: { type: String, unique: true },
   title: String,
   description: String,
   questions: Array,
-  category: String, // 'aptitude' or 'coding'
   quizType: String, // 'weekly' or 'mock'
   duration: Number,
   schedule: { start: String, end: String },
   targetYears: Array,
+  category: String,
   createdBy: String,
   createdAt: { type: Date, default: Date.now }
 });
@@ -52,7 +56,7 @@ const resultSchema = new mongoose.Schema({
   submittedAt: { type: Date, default: Date.now }
 });
 
-const materialSchema = new mongoose.Schema({
+const Material = mongoose.model('Material', new mongoose.Schema({
     id: { type: String, unique: true },
     title: String,
     type: String, 
@@ -60,13 +64,12 @@ const materialSchema = new mongoose.Schema({
     url: String, 
     createdBy: String,
     createdAt: { type: Date, default: Date.now }
-});
+}));
 
 const Admin = mongoose.model('Admin', adminSchema);
 const Student = mongoose.model('Student', studentSchema);
 const Quiz = mongoose.model('Quiz', quizSchema);
 const Result = mongoose.model('Result', resultSchema);
-const Material = mongoose.model('Material', materialSchema);
 const StudentBatch = mongoose.model('StudentBatch', batchSchema);
 
 module.exports = { Admin, Student, Quiz, Result, Material, StudentBatch };

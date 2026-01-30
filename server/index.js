@@ -1,50 +1,34 @@
-require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const mongoose = require('mongoose');
-const hpp = require('hpp');
-const { Admin } = require('./models');
-const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
-// Route Imports
+// Import Routes
 const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
 const quizRoutes = require('./routes/quiz');
-const utilRoutes = require('./routes/utils');
+const adminRoutes = require('./routes/admin'); // Admin management routes
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/quiz_app_db';
-
-// Database
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB Connection Error:', err));
-
-// Init Root Admin
-const initAdmin = async () => {
-  try {
-    const hash = await bcrypt.hash(process.env.ADMIN_PASS || 'admin123', 10);
-    await Admin.findOneAndUpdate(
-      { username: process.env.ADMIN_USER || 'admin' }, 
-      { $set: { password: hash, role: 'superadmin', scope: 'all' } },
-      { upsert: true, new: true } 
-    );
-  } catch (e) { console.error("Admin Init Error:", e); }
-};
-initAdmin();
+const MONGO_URI = 'mongodb://localhost:27017/quiz_app_db'; // Direct connection string
 
 // Middleware
-app.use(express.json({ limit: '50mb' })); 
-app.use(hpp()); 
-app.use(cors({ origin: '*' })); 
+app.use(cors());
+app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
-app.use('/api', authRoutes);
-app.use('/api', adminRoutes);
+app.use('/api', authRoutes);  // <--- This enables /api/student/signup
 app.use('/api', quizRoutes);
-app.use('/api', utilRoutes);
+app.use('/api', adminRoutes);
 
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
+// Database Connection
+mongoose.connect(MONGO_URI)
+.then(() => console.log('✅ MongoDB Connected'))
+.catch(err => console.error('❌ MongoDB Connection Error:', err));
+
+// Start Server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});

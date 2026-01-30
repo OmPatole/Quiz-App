@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Home from './components/Home';
 import StudentLogin from './components/StudentLogin';
 import StudentDashboard from './components/StudentDashboard'; 
+import StudentProfile from './components/StudentProfile'; // IMPORTED
 import QuizPlayer from './components/QuizPlayer';
 import LeaderboardList from './components/LeaderboardList';
 import Leaderboard from './components/Leaderboard';
@@ -28,6 +29,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/student-login" element={<StudentLogin />} />
         <Route path="/dashboard" element={<StudentDashboard />} />
+        <Route path="/profile" element={<StudentProfile />} /> {/* NEW ROUTE */}
         <Route path="/study" element={<StudyMaterials />} />
         <Route path="/quiz/:quizId" element={<QuizPlayer />} />
         <Route path="/leaderboards" element={<LeaderboardList />} />

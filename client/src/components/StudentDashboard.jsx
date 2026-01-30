@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { LogOut, Clock, Calendar, ChevronRight, BrainCircuit, Code, FileText, AlertCircle, Layers, CheckCircle2 } from 'lucide-react';
+import { LogOut, Clock, Calendar, ChevronRight, BrainCircuit, Code, FileText, AlertCircle, Layers, CheckCircle2, ChevronDown, User } from 'lucide-react'; // Added User
 import toast, { Toaster } from 'react-hot-toast';
 
 const StudentDashboard = ({ setIsAuth }) => {
@@ -9,10 +9,25 @@ const StudentDashboard = ({ setIsAuth }) => {
   const [student, setStudent] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // --- UI STATES ---
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const menuRef = useRef(null);
 
   // --- FILTER STATES ---
-  const [activeTab, setActiveTab] = useState('weekly'); // 'weekly' or 'mock'
-  const [selectedTrack, setSelectedTrack] = useState('aptitude'); // 'aptitude' or 'coding'
+  const [activeTab, setActiveTab] = useState('weekly');
+  const [selectedTrack, setSelectedTrack] = useState('aptitude');
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,7 +38,6 @@ const StudentDashboard = ({ setIsAuth }) => {
         const storedStudent = JSON.parse(localStorage.getItem('student_data') || '{}');
         setStudent(storedStudent);
 
-        // If student is strictly 'coding', set the track to coding automatically
         if (storedStudent.category === 'coding') {
             setSelectedTrack('coding');
         }
@@ -48,7 +62,7 @@ const StudentDashboard = ({ setIsAuth }) => {
   const handleLogout = () => {
     localStorage.clear();
     if(setIsAuth) setIsAuth(false);
-    navigate('/login');
+    navigate('/');
   };
 
   const handleStartQuiz = async (quizId) => {
@@ -70,7 +84,6 @@ const StudentDashboard = ({ setIsAuth }) => {
     }
   };
 
-  // --- STRICT FILTERING LOGIC ---
   const filteredQuizzes = quizzes.filter(q => {
       const matchesType = q.quizType === activeTab;
       const matchesTrack = q.category === selectedTrack;
@@ -86,26 +99,71 @@ const StudentDashboard = ({ setIsAuth }) => {
       {/* NAVBAR */}
       <header className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg ${
-                    student?.category === 'coding' ? 'bg-blue-600' : 
-                    student?.category === 'both' ? 'bg-gradient-to-br from-purple-600 to-blue-600' : 
-                    'bg-purple-600'
-                }`}>
-                    {student?.category === 'coding' ? <Code size={20}/> : 
-                     student?.category === 'both' ? <Layers size={20}/> : 
-                     <BrainCircuit size={20}/>}
+            
+            {/* LEFT: APP BRANDING */}
+            <div className="flex items-center gap-2 text-xl font-bold tracking-tight">
+                <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-900/20">
+                    <BrainCircuit size={18} className="text-white rotate-90" />
                 </div>
-                <div>
-                    <h1 className="font-bold text-lg leading-tight">{student?.name}</h1>
-                    <div className="text-[10px] text-slate-400 font-mono uppercase tracking-widest mt-0.5">
-                        {student?.prn} • {student?.category === 'both' ? 'Dual Course Access' : `${student?.category} track`}
-                    </div>
-                </div>
+                <span>Quizzer<span className="text-slate-500">.io</span></span>
             </div>
-            <button onClick={handleLogout} className="p-2 hover:bg-red-900/20 text-slate-500 hover:text-red-400 rounded-lg transition">
-                <LogOut size={20}/>
-            </button>
+
+            {/* RIGHT: PROFILE DROPDOWN */}
+            <div className="relative" ref={menuRef}>
+                <button 
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center gap-3 hover:bg-slate-800/50 p-1.5 pr-3 rounded-xl transition cursor-pointer border border-transparent hover:border-slate-700/50"
+                >
+                    {/* User Avatar - Now using User Icon */}
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-lg ${
+                        student?.category === 'coding' ? 'bg-blue-600' : 
+                        student?.category === 'both' ? 'bg-gradient-to-br from-purple-600 to-blue-600' : 
+                        'bg-purple-600'
+                    }`}>
+                        <User size={18} />
+                    </div>
+                    
+                    {/* User Name & Info */}
+                    <div className="text-left hidden sm:block">
+                        <div className="font-bold text-sm leading-tight text-white">{student?.name}</div>
+                        <div className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">
+                            {student?.prn}
+                        </div>
+                    </div>
+                    
+                    {/* Dropdown Arrow */}
+                    <ChevronDown size={14} className={`text-slate-500 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`}/>
+                </button>
+
+                {/* DROPDOWN MENU CARD */}
+                {showProfileMenu && (
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50">
+                        <div className="p-4 border-b border-slate-800 bg-slate-950/30">
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Signed in as</p>
+                            <p className="text-sm font-bold text-white truncate">{student?.name}</p>
+                        </div>
+                        <div className="p-2">
+                            {/* UPDATED: Profile Option with User Icon */}
+                            <Link 
+                                to="/profile" 
+                                className="flex items-center gap-3 w-full p-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition"
+                            >
+                                <User size={16} className="text-purple-400"/>
+                                Student Profile
+                            </Link>
+                            
+                            <button 
+                                onClick={handleLogout}
+                                className="flex items-center gap-3 w-full p-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-900/10 hover:text-red-300 transition"
+                            >
+                                <LogOut size={16}/>
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
         </div>
       </header>
 
@@ -126,7 +184,7 @@ const StudentDashboard = ({ setIsAuth }) => {
                     >
                         <div className="flex items-center gap-3 relative z-10">
                             <div className={`p-2 rounded-lg ${selectedTrack === 'aptitude' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
-                                <BrainCircuit size={20} />
+                                <BrainCircuit size={20} className="rotate-90"/>
                             </div>
                             <div className="text-left">
                                 <div className={`font-bold ${selectedTrack === 'aptitude' ? 'text-white' : 'text-slate-400'}`}>Aptitude</div>

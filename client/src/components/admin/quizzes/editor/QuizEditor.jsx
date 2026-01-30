@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Plus, FileUp, Eye, Clock, BrainCircuit, Code } from 'lucide-react';
+import { ArrowLeft, Plus, FileUp, Eye, Clock, BrainCircuit } from 'lucide-react';
 import QuestionEditor from './QuestionEditor';
 
 const QuizEditor = ({ 
@@ -47,16 +47,10 @@ const QuizEditor = ({
               <div className="flex-1">
                   <input className="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white text-lg font-medium outline-none focus:border-purple-500 transition" placeholder="Enter Quiz Title..." value={formState.title} onChange={e => setFormState({...formState, title: e.target.value})} />
               </div>
-              {/* READ ONLY CATEGORY BADGE */}
-              <div className={`px-4 py-3 rounded-lg border font-bold text-sm uppercase flex items-center gap-2 ${formState.category === 'aptitude' ? 'bg-purple-900/20 border-purple-500/50 text-purple-400' : 'bg-blue-900/20 border-blue-500/50 text-blue-400'}`}>
-                  {formState.category === 'aptitude' ? <BrainCircuit size={18}/> : <Code size={18}/>}
-                  {formState.category}
-              </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-6">
-                {/* REMOVED CATEGORY SELECTOR HERE */}
                 <div>
                     <label className="text-xs text-slate-500 font-bold uppercase mb-2 block">Type</label>
                     <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800">

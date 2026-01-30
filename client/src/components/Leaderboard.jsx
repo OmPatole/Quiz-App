@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { Trophy, ArrowLeft, Clock, User, ShieldAlert } from 'lucide-react';
 
 const Leaderboard = () => {
   const { quizId } = useParams();
+  const navigate = useNavigate(); // Initialize hook
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,11 +37,18 @@ const Leaderboard = () => {
               </div>
               <p className="text-slate-400 ml-11">Updates every 3 seconds</p>
           </div>
+          
+          {/* UPDATED: Buttons */}
           <div className="flex gap-2">
             <Link to="/leaderboards" className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-sm font-medium transition">All Quizzes</Link>
-            <Link to="/" className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-                <ArrowLeft size={16} /> Home
-            </Link>
+            
+            {/* Functional Back Button */}
+            <button 
+                onClick={() => navigate(-1)} 
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-sm font-medium flex items-center gap-2 transition text-slate-200"
+            >
+                <ArrowLeft size={16} /> Back
+            </button>
           </div>
         </div>
         
@@ -70,7 +78,6 @@ const Leaderboard = () => {
                     let RankIcon = <span className="text-slate-500 font-mono text-xl">#{index + 1}</span>;
                     let RowStyle = "hover:bg-slate-800/50";
                     
-                    // TOP 3 STYLING
                     if(index === 0) {
                         RankIcon = <div className="text-4xl animate-bounce">🥇</div>;
                         RowStyle = "bg-yellow-900/10 hover:bg-yellow-900/20 border-l-4 border-yellow-500";

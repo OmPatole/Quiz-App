@@ -1,209 +1,230 @@
-import React, { useState } from 'react';
-import { Plus, Upload, Search, Filter, Trash2, Edit, Clock, AlertTriangle, X, BrainCircuit, Code } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
+import { LogOut, Clock, Calendar, ChevronRight, BrainCircuit, FileText, AlertCircle, Layers, ChevronDown, BarChart3 } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
-// FIX: Added activeCategory and setActiveCategory to props
-const QuizList = ({ 
-    quizzes, 
-    onCreateNew, 
-    onEditQuiz, 
-    onDeleteQuiz, 
-    onImportJson, 
-    activeCategory, 
-    setActiveCategory 
-}) => {
-    
-  // --- STATE FOR FILTERS (Local) ---
-  const [filterType, setFilterType] = useState('all'); 
-  const [searchTerm, setSearchTerm] = useState('');
+const StudentDashboard = ({ setIsAuth }) => {
+  const navigate = useNavigate();
+  const [student, setStudent] = useState(null);
+  const [quizzes, setQuizzes] = useState([]);
+  const [loading, setLoading] = useState(true);
   
-  // --- STATE FOR MODAL ---
-  const [deleteModal, setDeleteModal] = useState({ show: false, id: null, title: '' });
+  // --- UI STATES ---
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const menuRef = useRef(null);
 
-  // --- FILTERING LOGIC ---
-  const filteredQuizzes = quizzes.filter(q => {
-      // 1. Filter by Category (Prop)
-      // Safety check: ensure q.category exists, default to aptitude
-      const quizCat = q.category || 'aptitude';
-      const matchesCategory = quizCat === activeCategory;
-      
-      // 2. Filter by Search
-      const matchesSearch = q.title.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      // 3. Filter by Type
-      const matchesType = filterType === 'all' || q.quizType === filterType;
+  // --- FILTER STATES ---
+  const [activeTab, setActiveTab] = useState('weekly'); // 'weekly' or 'mock'
 
-      return matchesCategory && matchesSearch && matchesType;
-  });
-
-  // --- DELETE HANDLERS ---
-  const initiateDelete = (id, title) => setDeleteModal({ show: true, id, title });
-  const confirmDelete = () => {
-      if (deleteModal.id) {
-          onDeleteQuiz(deleteModal.id);
-          setDeleteModal({ show: false, id: null, title: '' });
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
       }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error("No token");
+
+        const storedStudent = JSON.parse(localStorage.getItem('student_data') || '{}');
+        setStudent(storedStudent);
+
+        const res = await axios.get('http://localhost:3001/api/quizzes', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        setQuizzes(res.data);
+      } catch (error) {
+        console.error(error);
+        localStorage.clear();
+        if(setIsAuth) setIsAuth(false);
+        navigate('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [navigate, setIsAuth]);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    if(setIsAuth) setIsAuth(false);
+    navigate('/login');
   };
 
-  return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 relative">
-      
-      {/* HEADER & ACTIONS */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-            <h2 className="text-2xl font-bold text-white">Quiz Library</h2>
-            <p className="text-slate-400 text-sm mt-1">Manage assessments and coding challenges.</p>
-        </div>
+  const handleStartQuiz = async (quizId) => {
+    try {
+        const token = localStorage.getItem('token');
+        const prn = student?.prn;
+        const check = await axios.post('http://localhost:3001/api/check-attempt', 
+            { quizId, prn },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-        <div className="flex gap-3 w-full md:w-auto">
-            <label className="px-4 py-2 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-700 hover:text-white transition cursor-pointer shadow-lg active:scale-95 text-sm">
-                <Upload size={16} /> <span className="hidden sm:inline">Import JSON</span>
-                <input type="file" accept=".json" hidden onChange={onImportJson} />
-            </label>
-            <button onClick={onCreateNew} className="px-4 py-2 bg-purple-600 rounded-xl font-bold flex items-center gap-2 hover:bg-purple-700 text-white transition shadow-lg shadow-purple-900/20 active:scale-95 text-sm">
-                <Plus size={16} /> <span className="hidden sm:inline">Create Quiz</span><span className="sm:hidden">New</span>
+        if (check.data.attempted) {
+            toast.error("Already attempted.");
+        } else {
+            navigate(`/quiz/${quizId}`);
+        }
+    } catch (e) {
+        toast.error("Unable to start.");
+    }
+  };
+
+  // --- STRICT FILTERING LOGIC (REMOVED CATEGORY CHECK) ---
+  const filteredQuizzes = quizzes.filter(q => q.quizType === activeTab);
+
+  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500 font-mono">Loading...</div>;
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-purple-500/30">
+      <Toaster position="top-right" />
+      
+      {/* NAVBAR */}
+      <header className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            
+            {/* BRANDING */}
+            <div className="flex items-center gap-2 text-xl font-bold tracking-tight">
+                <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-900/20">
+                    <BrainCircuit size={18} className="text-white rotate-90" />
+                </div>
+                <span>Quizzer<span className="text-slate-500">.io</span></span>
+            </div>
+
+            {/* PROFILE DROPDOWN */}
+            <div className="relative" ref={menuRef}>
+                <button 
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center gap-3 hover:bg-slate-800/50 p-1.5 pr-3 rounded-xl transition cursor-pointer border border-transparent hover:border-slate-700/50"
+                >
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-lg bg-gradient-to-br from-purple-600 to-blue-600">
+                        <span className="font-bold text-sm">{student?.name?.charAt(0)}</span>
+                    </div>
+                    <div className="text-left hidden sm:block">
+                        <div className="font-bold text-sm leading-tight text-white">{student?.name}</div>
+                        <div className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">
+                            {student?.prn}
+                        </div>
+                    </div>
+                    <ChevronDown size={14} className={`text-slate-500 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`}/>
+                </button>
+
+                {/* DROPDOWN MENU */}
+                {showProfileMenu && (
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50">
+                        <div className="p-4 border-b border-slate-800 bg-slate-950/30">
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Signed in as</p>
+                            <p className="text-sm font-bold text-white truncate">{student?.name}</p>
+                        </div>
+                        <div className="p-2">
+                            <Link 
+                                to="/profile" 
+                                className="flex items-center gap-3 w-full p-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition"
+                            >
+                                <BarChart3 size={16} className="text-purple-400"/>
+                                My Statistics
+                            </Link>
+                            <button 
+                                onClick={handleLogout}
+                                className="flex items-center gap-3 w-full p-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-900/10 hover:text-red-300 transition"
+                            >
+                                <LogOut size={16}/>
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        
+        {/* EXAM TYPE TABS */}
+        <div className="flex gap-6 mb-8 border-b border-slate-800/50 pb-1">
+            <button 
+                onClick={() => setActiveTab('weekly')}
+                className={`pb-3 px-1 text-sm font-bold flex items-center gap-2 transition border-b-2 ${
+                    activeTab === 'weekly' 
+                    ? 'border-purple-500 text-white'
+                    : 'border-transparent text-slate-500 hover:text-slate-300'
+                }`}
+            >
+                <Calendar size={16}/> Weekly Exams
+            </button>
+            <button 
+                onClick={() => setActiveTab('mock')}
+                className={`pb-3 px-1 text-sm font-bold flex items-center gap-2 transition border-b-2 ${
+                    activeTab === 'mock' 
+                    ? 'border-purple-500 text-white'
+                    : 'border-transparent text-slate-500 hover:text-slate-300'
+                }`}
+            >
+                <FileText size={16}/> Mock Tests
             </button>
         </div>
-      </div>
 
-      {/* --- LEVEL 1: CATEGORY TABS (CONTROLLED BY PARENT) --- */}
-      <div className="flex gap-1 bg-slate-900 p-1 rounded-xl mb-6 border border-slate-800 w-full md:w-fit">
-          <button 
-            onClick={() => setActiveCategory('aptitude')}
-            className={`flex-1 md:flex-none px-6 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition ${activeCategory === 'aptitude' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-              <BrainCircuit size={18} /> Aptitude
-          </button>
-          <button 
-            onClick={() => setActiveCategory('coding')}
-            className={`flex-1 md:flex-none px-6 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition ${activeCategory === 'coding' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-              <Code size={18} /> Coding
-          </button>
-      </div>
+        {/* QUIZ GRID */}
+        {filteredQuizzes.length === 0 ? (
+            <div className="text-center py-20 bg-slate-900/20 rounded-3xl border border-dashed border-slate-800 animate-in fade-in duration-500">
+                <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-600">
+                    <Layers size={28}/>
+                </div>
+                <h3 className="text-lg font-bold text-slate-300">No {activeTab} tests found</h3>
+                <p className="text-slate-500 text-sm mt-1">Check back later for new assignments.</p>
+            </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredQuizzes.map(quiz => (
+                    <div key={quiz.id} className="group bg-slate-900 border border-slate-800/80 rounded-3xl p-6 hover:border-slate-600 transition-all flex flex-col relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1.5 h-full bg-purple-600" />
+                        
+                        <div className="flex justify-between items-start mb-5">
+                            <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border bg-purple-500/10 text-purple-400 border-purple-500/20">
+                                {quiz.quizType}
+                            </span>
+                            <div className="text-slate-500 text-xs font-mono bg-slate-950 px-2 py-1 rounded-md">{quiz.questions.length} Qs</div>
+                        </div>
 
-      {/* --- LEVEL 2: SEARCH & TYPE FILTER --- */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8">
-          <div className="md:col-span-8 relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition" size={18} />
-              <input 
-                  type="text" 
-                  placeholder={`Search ${activeCategory} quizzes...`}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-12 pr-4 text-slate-200 outline-none focus:border-purple-500 transition shadow-sm"
-              />
-          </div>
+                        <h3 className="text-xl font-bold text-white mb-3 leading-snug group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-400 transition-all duration-300">
+                            {quiz.title}
+                        </h3>
+                        
+                        <div className="space-y-3 mb-8">
+                            <div className="flex items-center gap-2.5 text-xs text-slate-400">
+                                <Clock size={14} className="text-slate-600"/> 
+                                <span>{Math.floor(quiz.duration / 60)}h {quiz.duration % 60}m limit</span>
+                            </div>
+                            {quiz.quizType === 'weekly' && quiz.schedule && (
+                                <div className="flex items-center gap-2.5 text-xs text-slate-400">
+                                    <AlertCircle size={14} className="text-slate-600"/>
+                                    <span className="truncate">Deadline: {new Date(quiz.schedule.end).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                </div>
+                            )}
+                        </div>
 
-          <div className="md:col-span-4 relative">
-              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-              <select 
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-12 pr-4 text-slate-200 outline-none focus:border-purple-500 transition shadow-sm appearance-none cursor-pointer capitalize"
-              >
-                  <option value="all">All Types</option>
-                  <option value="mock">Mock Tests</option>
-                  <option value="weekly">Weekly Exams</option>
-              </select>
-          </div>
-      </div>
-      
-      {/* QUIZ GRID */}
-      {filteredQuizzes.length === 0 ? (
-        <div className="text-center py-24 text-slate-500 border border-dashed border-slate-800 rounded-2xl bg-slate-900/50">
-            <div className="flex justify-center mb-4"><Search size={48} className="text-slate-700"/></div>
-            <p className="text-lg font-medium">No {activeCategory} quizzes found.</p>
-            <p className="text-sm">Try changing filters or creating a new one.</p>
-        </div>
-      ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredQuizzes.map(q => (
-                  <div key={q.id} className="group bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-purple-500/50 transition-all hover:shadow-xl hover:shadow-purple-900/10 flex flex-col relative overflow-hidden">
-                      <div className={`absolute top-0 left-0 w-full h-1 ${q.quizType === 'mock' ? 'bg-blue-500' : 'bg-purple-500'}`} />
-                      
-                      <div className="flex justify-between items-start mb-4">
-                          <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
-                              q.quizType === 'mock' 
-                              ? 'bg-blue-900/30 text-blue-400 border-blue-500/30' 
-                              : 'bg-purple-900/30 text-purple-400 border-purple-500/30'
-                          }`}>
-                              {q.quizType}
-                          </span>
-                          <span className="text-xs text-slate-500 font-mono">{q.questions?.length || 0} Qs</span>
-                      </div>
-
-                      <h3 className="text-lg font-bold text-slate-100 mb-2 line-clamp-2 h-14" title={q.title}>{q.title}</h3>
-                      
-                      <div className="space-y-2 mb-6">
-                          <div className="flex items-center gap-2 text-xs text-slate-400">
-                              <Clock size={14} /> 
-                              <span>{Math.floor((q.duration || 60)/60)}h {(q.duration || 60)%60}m</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-slate-400">
-                              <UsersIcon size={14} />
-                              <span className="truncate max-w-[200px]">{q.targetYears?.join(', ') || 'All Years'}</span>
-                          </div>
-                      </div>
-
-                      <div className="mt-auto flex gap-3 pt-4 border-t border-slate-800">
-                          <button 
-                            onClick={() => onEditQuiz(q.id)} 
-                            className="flex-1 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm font-bold hover:bg-slate-700 hover:text-white transition flex items-center justify-center gap-2"
-                          >
-                              <Edit size={14} /> Edit
-                          </button>
-                          <button 
-                            onClick={() => initiateDelete(q.id, q.title)} 
-                            className="px-3 py-2 rounded-lg bg-red-900/20 text-red-400 border border-red-900/50 hover:bg-red-900/40 hover:text-red-300 transition"
-                          >
-                              <Trash2 size={16} />
-                          </button>
-                      </div>
-                  </div>
-              ))}
-          </div>
-      )}
-
-      {/* --- CUSTOM DELETE MODAL --- */}
-      {deleteModal.show && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-              <div 
-                className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" 
-                onClick={() => setDeleteModal({ show: false, id: null, title: '' })}
-              />
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md relative z-10 shadow-2xl animate-in zoom-in-95 duration-200">
-                  <div className="w-12 h-12 bg-red-900/30 rounded-full flex items-center justify-center mb-4 mx-auto text-red-500 border border-red-500/20">
-                      <AlertTriangle size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold text-white text-center mb-2">Delete Quiz?</h3>
-                  <p className="text-slate-400 text-center text-sm mb-6">
-                      Are you sure you want to delete <span className="text-white font-bold">"{deleteModal.title}"</span>? 
-                      <br/>This action cannot be undone.
-                  </p>
-                  <div className="flex gap-3">
-                      <button 
-                          onClick={() => setDeleteModal({ show: false, id: null, title: '' })}
-                          className="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-sm hover:bg-slate-700 transition"
-                      >
-                          Cancel
-                      </button>
-                      <button 
-                          onClick={confirmDelete}
-                          className="flex-1 py-3 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-900/20 transition"
-                      >
-                          Yes, Delete
-                      </button>
-                  </div>
-                  <button onClick={() => setDeleteModal({ show: false, id: null, title: '' })} className="absolute top-4 right-4 text-slate-500 hover:text-white"><X size={20}/></button>
-              </div>
-          </div>
-      )}
+                        <button 
+                            onClick={() => handleStartQuiz(quiz.id)}
+                            className="w-full py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/20"
+                        >
+                            Start Assessment <ChevronRight size={18}/>
+                        </button>
+                    </div>
+                ))}
+            </div>
+        )}
+      </main>
     </div>
   );
 };
 
-const UsersIcon = ({ size }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-);
-
-export default QuizList;
+export default StudentDashboard;
