@@ -1,20 +1,22 @@
 import React from 'react';
 import { FileText, Users, Layers, LogOut, Settings } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const AdminNavbar = ({ view, setView, handleLogout }) => {
-  const isActive = (id) => {
-      if (id === 'quizzes') return ['quizzes', 'editor'].includes(view);
-      if (id === 'batches') return ['batches', 'batch-list', 'student-profile'].includes(view);
-      if (id === 'materials') return view === 'materials';
-      if (id === 'settings') return view === 'settings';
-      return false;
+const AdminNavbar = ({ handleLogout }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Helper to check if the current path matches the tab
+  const isActive = (path) => {
+      if (path === '') return location.pathname === '/admin' || location.pathname === '/admin/';
+      return location.pathname.includes(`/admin/${path}`);
   };
 
-  const NavTab = ({ id, label, icon: Icon }) => (
+  const NavTab = ({ path, label, icon: Icon }) => (
       <button 
-        onClick={() => setView(id)} 
+        onClick={() => navigate(path === '' ? '/admin' : `/admin/${path}`)} 
         className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold transition text-sm ${
-            isActive(id) 
+            isActive(path) 
             ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/50' 
             : 'text-slate-400 hover:text-white hover:bg-slate-800'
         }`}
@@ -31,10 +33,10 @@ const AdminNavbar = ({ view, setView, handleLogout }) => {
         </div>
 
         <div className="flex-1 flex justify-center gap-4">
-            <NavTab id="quizzes" label="Quizzes" icon={FileText} />
-            <NavTab id="batches" label="Students" icon={Users} />
-            <NavTab id="materials" label="Study Material" icon={Layers} />
-            <NavTab id="settings" label="Settings" icon={Settings} />
+            <NavTab path="" label="Quizzes" icon={FileText} />
+            <NavTab path="students" label="Students" icon={Users} />
+            <NavTab path="materials" label="Study Material" icon={Layers} />
+            <NavTab path="settings" label="Settings" icon={Settings} />
         </div>
 
         <div className="flex items-center gap-4 w-48 justify-end">

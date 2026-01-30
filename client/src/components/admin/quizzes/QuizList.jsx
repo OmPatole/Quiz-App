@@ -1,230 +1,107 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
-import { LogOut, Clock, Calendar, ChevronRight, BrainCircuit, FileText, AlertCircle, Layers, ChevronDown, BarChart3 } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
+import React from 'react';
+import { Plus, FileJson, Edit, Trash2, Clock, HelpCircle, FileText } from 'lucide-react';
 
-const StudentDashboard = ({ setIsAuth }) => {
-  const navigate = useNavigate();
-  const [student, setStudent] = useState(null);
-  const [quizzes, setQuizzes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  // --- UI STATES ---
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const menuRef = useRef(null);
-
-  // --- FILTER STATES ---
-  const [activeTab, setActiveTab] = useState('weekly'); // 'weekly' or 'mock'
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowProfileMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error("No token");
-
-        const storedStudent = JSON.parse(localStorage.getItem('student_data') || '{}');
-        setStudent(storedStudent);
-
-        const res = await axios.get('http://localhost:3001/api/quizzes', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        setQuizzes(res.data);
-      } catch (error) {
-        console.error(error);
-        localStorage.clear();
-        if(setIsAuth) setIsAuth(false);
-        navigate('/login');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [navigate, setIsAuth]);
-
-  const handleLogout = () => {
-    localStorage.clear();
-    if(setIsAuth) setIsAuth(false);
-    navigate('/login');
-  };
-
-  const handleStartQuiz = async (quizId) => {
-    try {
-        const token = localStorage.getItem('token');
-        const prn = student?.prn;
-        const check = await axios.post('http://localhost:3001/api/check-attempt', 
-            { quizId, prn },
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        if (check.data.attempted) {
-            toast.error("Already attempted.");
-        } else {
-            navigate(`/quiz/${quizId}`);
-        }
-    } catch (e) {
-        toast.error("Unable to start.");
-    }
-  };
-
-  // --- STRICT FILTERING LOGIC (REMOVED CATEGORY CHECK) ---
-  const filteredQuizzes = quizzes.filter(q => q.quizType === activeTab);
-
-  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500 font-mono">Loading...</div>;
-
+const QuizList = ({ quizzes, onCreateNew, onEditQuiz, onDeleteQuiz, onImportJson }) => {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-purple-500/30">
-      <Toaster position="top-right" />
+    <div className="space-y-8 animate-in fade-in duration-500">
       
-      {/* NAVBAR */}
-      <header className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            
-            {/* BRANDING */}
-            <div className="flex items-center gap-2 text-xl font-bold tracking-tight">
-                <div className="w-8 h-8 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-900/20">
-                    <BrainCircuit size={18} className="text-white rotate-90" />
-                </div>
-                <span>Quizzer<span className="text-slate-500">.io</span></span>
-            </div>
-
-            {/* PROFILE DROPDOWN */}
-            <div className="relative" ref={menuRef}>
-                <button 
-                    onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="flex items-center gap-3 hover:bg-slate-800/50 p-1.5 pr-3 rounded-xl transition cursor-pointer border border-transparent hover:border-slate-700/50"
-                >
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-lg bg-gradient-to-br from-purple-600 to-blue-600">
-                        <span className="font-bold text-sm">{student?.name?.charAt(0)}</span>
-                    </div>
-                    <div className="text-left hidden sm:block">
-                        <div className="font-bold text-sm leading-tight text-white">{student?.name}</div>
-                        <div className="text-[10px] text-slate-400 font-mono uppercase tracking-widest">
-                            {student?.prn}
-                        </div>
-                    </div>
-                    <ChevronDown size={14} className={`text-slate-500 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`}/>
-                </button>
-
-                {/* DROPDOWN MENU */}
-                {showProfileMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50">
-                        <div className="p-4 border-b border-slate-800 bg-slate-950/30">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Signed in as</p>
-                            <p className="text-sm font-bold text-white truncate">{student?.name}</p>
-                        </div>
-                        <div className="p-2">
-                            <Link 
-                                to="/profile" 
-                                className="flex items-center gap-3 w-full p-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition"
-                            >
-                                <BarChart3 size={16} className="text-purple-400"/>
-                                My Statistics
-                            </Link>
-                            <button 
-                                onClick={handleLogout}
-                                className="flex items-center gap-3 w-full p-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-900/10 hover:text-red-300 transition"
-                            >
-                                <LogOut size={16}/>
-                                Sign Out
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
+      {/* --- HEADER SECTION WITH ACTION BUTTONS --- */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-800 backdrop-blur-sm">
+        <div>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Quiz Dashboard</h2>
+          <p className="text-slate-400 mt-1">Manage assessments and track performance</p>
         </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8">
         
-        {/* EXAM TYPE TABS */}
-        <div className="flex gap-6 mb-8 border-b border-slate-800/50 pb-1">
-            <button 
-                onClick={() => setActiveTab('weekly')}
-                className={`pb-3 px-1 text-sm font-bold flex items-center gap-2 transition border-b-2 ${
-                    activeTab === 'weekly' 
-                    ? 'border-purple-500 text-white'
-                    : 'border-transparent text-slate-500 hover:text-slate-300'
-                }`}
-            >
-                <Calendar size={16}/> Weekly Exams
-            </button>
-            <button 
-                onClick={() => setActiveTab('mock')}
-                className={`pb-3 px-1 text-sm font-bold flex items-center gap-2 transition border-b-2 ${
-                    activeTab === 'mock' 
-                    ? 'border-purple-500 text-white'
-                    : 'border-transparent text-slate-500 hover:text-slate-300'
-                }`}
-            >
-                <FileText size={16}/> Mock Tests
-            </button>
+        <div className="flex gap-3 w-full md:w-auto">
+          {/* OPTION 1: UPLOAD JSON */}
+          <label className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl cursor-pointer transition border border-slate-700 font-medium group">
+            <FileJson size={18} className="text-blue-400 group-hover:scale-110 transition-transform" />
+            <span>Import JSON</span>
+            {/* Hidden Input for File Upload */}
+            <input 
+              type="file" 
+              accept=".json" 
+              className="hidden" 
+              onChange={onImportJson} 
+            />
+          </label>
+
+          {/* OPTION 2: CREATE MANUALLY */}
+          <button 
+            onClick={onCreateNew}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl transition font-bold shadow-lg shadow-purple-900/20 active:scale-95"
+          >
+            <Plus size={18} strokeWidth={3} />
+            <span>Create Quiz</span>
+          </button>
         </div>
+      </div>
 
-        {/* QUIZ GRID */}
-        {filteredQuizzes.length === 0 ? (
-            <div className="text-center py-20 bg-slate-900/20 rounded-3xl border border-dashed border-slate-800 animate-in fade-in duration-500">
-                <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-600">
-                    <Layers size={28}/>
-                </div>
-                <h3 className="text-lg font-bold text-slate-300">No {activeTab} tests found</h3>
-                <p className="text-slate-500 text-sm mt-1">Check back later for new assignments.</p>
+      {/* --- QUIZ GRID DISPLAY --- */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {quizzes.length === 0 ? (
+          <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-500 bg-slate-900/30 rounded-3xl border-2 border-dashed border-slate-800">
+            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
+              <FileText size={32} className="text-slate-600" />
             </div>
+            <p className="text-lg font-medium">No quizzes found</p>
+            <p className="text-sm">Get started by creating a new quiz or importing one.</p>
+          </div>
         ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredQuizzes.map(quiz => (
-                    <div key={quiz.id} className="group bg-slate-900 border border-slate-800/80 rounded-3xl p-6 hover:border-slate-600 transition-all flex flex-col relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-1.5 h-full bg-purple-600" />
-                        
-                        <div className="flex justify-between items-start mb-5">
-                            <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border bg-purple-500/10 text-purple-400 border-purple-500/20">
-                                {quiz.quizType}
-                            </span>
-                            <div className="text-slate-500 text-xs font-mono bg-slate-950 px-2 py-1 rounded-md">{quiz.questions.length} Qs</div>
-                        </div>
-
-                        <h3 className="text-xl font-bold text-white mb-3 leading-snug group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-400 transition-all duration-300">
-                            {quiz.title}
-                        </h3>
-                        
-                        <div className="space-y-3 mb-8">
-                            <div className="flex items-center gap-2.5 text-xs text-slate-400">
-                                <Clock size={14} className="text-slate-600"/> 
-                                <span>{Math.floor(quiz.duration / 60)}h {quiz.duration % 60}m limit</span>
-                            </div>
-                            {quiz.quizType === 'weekly' && quiz.schedule && (
-                                <div className="flex items-center gap-2.5 text-xs text-slate-400">
-                                    <AlertCircle size={14} className="text-slate-600"/>
-                                    <span className="truncate">Deadline: {new Date(quiz.schedule.end).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <button 
-                            onClick={() => handleStartQuiz(quiz.id)}
-                            className="w-full py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/20"
-                        >
-                            Start Assessment <ChevronRight size={18}/>
-                        </button>
+          quizzes.map((quiz) => (
+            <div key={quiz.id} className="group relative bg-slate-900 border border-slate-800 hover:border-purple-500/50 rounded-2xl p-5 transition-all duration-300 hover:shadow-xl hover:shadow-purple-900/10 hover:-translate-y-1">
+                
+                {/* Card Header */}
+                <div className="flex justify-between items-start mb-4">
+                    <div className="pr-2">
+                        <h3 className="font-bold text-lg text-white group-hover:text-purple-400 transition-colors line-clamp-1">{quiz.title}</h3>
+                        <span className="text-[10px] font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 mt-1 inline-block">
+                           ID: {quiz.id}
+                        </span>
                     </div>
-                ))}
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                        quiz.quizType === 'mock' 
+                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
+                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    }`}>
+                        {quiz.quizType}
+                    </span>
+                </div>
+                
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-2 text-sm text-slate-400 mb-6 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                    <div className="flex items-center gap-2">
+                        <HelpCircle size={14} className="text-purple-500"/>
+                        <span className="text-slate-200 font-medium">{quiz.questions ? quiz.questions.length : 0}</span> Qs
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Clock size={14} className="text-blue-500"/>
+                        <span className="text-slate-200 font-medium">{quiz.duration}</span> mins
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 mt-auto">
+                    <button 
+                        onClick={() => onEditQuiz(quiz.id)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium transition group-hover:bg-slate-800/80"
+                    >
+                        <Edit size={14} /> Edit
+                    </button>
+                    <button 
+                        onClick={() => onDeleteQuiz(quiz.id)}
+                        className="flex items-center justify-center px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/10 rounded-lg transition"
+                        title="Delete Quiz"
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                </div>
             </div>
+          ))
         )}
-      </main>
+      </div>
     </div>
   );
 };
 
-export default StudentDashboard;
+export default QuizList;

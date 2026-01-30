@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, Routes, Route, useParams } from 'react-router-dom';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { ArrowLeft, Upload } from 'lucide-react'; 
@@ -13,12 +13,21 @@ import StudentProfile from './admin/students/StudentProfile';
 import StudyMaterials from './StudyMaterials'; 
 import AdminManager from './admin/settings/AdminManager';
 
+// --- ROUTE HANDLER ---
+// Prevents infinite loops by only running the action when the ID changes
+const RouteHandler = ({ action, children }) => {
+    const params = useParams();
+    useEffect(() => { 
+        action(params.id); 
+    }, [action, params.id]); // 'action' is now stable thanks to useCallback
+    return children;
+};
+
 const AdminPanel = ({ setIsAuth }) => {
   const API_URL = 'http://localhost:3001'; 
   const navigate = useNavigate();
 
-  // --- VIEW STATES ---
-  const [view, setView] = useState('quizzes');
+  // --- UI STATES ---
   const [previewMode, setPreviewMode] = useState(false);
   
   // --- DATA STATES ---
@@ -46,6 +55,7 @@ const AdminPanel = ({ setIsAuth }) => {
         navigate('/login', { replace: true }); 
         return;
     }
+    fetchQuizzes();
   }, [navigate, setIsAuth]);
 
   // --- DATA FETCHING ---
@@ -58,11 +68,6 @@ const AdminPanel = ({ setIsAuth }) => {
     } catch (e) { console.error(e); }
   };
 
-  useEffect(() => { 
-      if (view === 'quizzes' || view === 'editor') fetchQuizzes(); 
-  }, [view]);
-
-  // --- GLOBAL HANDLERS ---
   const handleLogout = () => { 
       localStorage.clear(); 
       sessionStorage.clear(); 
@@ -70,8 +75,9 @@ const AdminPanel = ({ setIsAuth }) => {
       navigate('/login', { replace: true }); 
   };
 
-  // --- QUIZ HANDLERS ---
-  const handleCreateNew = () => {
+  // --- STABLE QUIZ HANDLERS (Fixed Loop) ---
+  
+  const prepareCreateQuiz = useCallback(() => {
       setEditingId(null); 
       setFormState({ 
           title: '', 
@@ -83,10 +89,10 @@ const AdminPanel = ({ setIsAuth }) => {
       });
       setQuestions([{ id: Date.now(), type: 'mcq', text: '**New Question**', marks: 5, options: [{text:'', image: ''}, {text:'', image: ''}], isMultiSelect: false, correctIndices: [0], testCases: [{input:'', output:''}] }]);
       setPreviewMode(false); 
-      setView('editor');
-  };
+  }, []); // Dependencies empty = Function never changes
 
-  const handleEditQuiz = async (id) => {
+  const prepareEditQuiz = useCallback(async (id) => {
+      if(!id) return;
       try {
         const res = await axios.get(`${API_URL}/api/admin/quiz-details/${id}`, { 
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -104,21 +110,10 @@ const AdminPanel = ({ setIsAuth }) => {
         });
         setQuestions(data.questions);
         setPreviewMode(false); 
-        setView('editor');
       } catch(e) { toast.error("Error loading quiz"); }
-  };
-  
-  const handleDeleteQuiz = async (id) => { 
-      try {
-          await axios.delete(`${API_URL}/api/quizzes/${id}`, { 
-              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          });
-          toast.success("Deleted"); 
-          fetchQuizzes(); 
-      } catch (e) { toast.error("Delete Failed"); }
-  };
-  
-  const handleSaveQuiz = async () => {
+  }, [API_URL]);
+
+  const handleSaveQuiz = useCallback(async () => {
     if(!formState.title.trim()) return toast.error("Title required");
     if(questions.length === 0) return toast.error("Add questions");
     if (formState.quizType !== 'mock' && (!formState.schedule.start || !formState.schedule.end)) return toast.error("Schedule required for Weekly tests");
@@ -137,9 +132,19 @@ const AdminPanel = ({ setIsAuth }) => {
         }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
         
         toast.success("Saved"); 
-        setView('quizzes');
         fetchQuizzes();
+        navigate('/admin'); 
     } catch (e) { toast.error("Save failed"); }
+  }, [formState, questions, editingId, API_URL, navigate]);
+
+  const handleDeleteQuiz = async (id) => { 
+      try {
+          await axios.delete(`${API_URL}/api/quizzes/${id}`, { 
+              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          });
+          toast.success("Deleted"); 
+          fetchQuizzes(); 
+      } catch (e) { toast.error("Delete Failed"); }
   };
 
   const handleQuizJsonUpload = (e) => {
@@ -180,13 +185,13 @@ const AdminPanel = ({ setIsAuth }) => {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         if (res.data.success) { 
-            setQuestions([...questions, ...res.data.questions]); 
+            setQuestions(prev => [...prev, ...res.data.questions]); 
             toast.success(`Added ${res.data.questions.length} questions`); 
         }
     } catch (err) { toast.error("PDF Parse Failed"); } finally { toast.dismiss(load); }
   };
 
-  // --- STUDENT HANDLERS ---
+  // --- STABLE STUDENT HANDLERS ---
   const handleStudentUpload = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     const formData = new FormData(); 
@@ -198,95 +203,108 @@ const AdminPanel = ({ setIsAuth }) => {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }); 
         toast.success("Uploaded Batch"); 
-        // Trigger a reload in StudentManager if possible, or just let user navigate
     } catch (err) { toast.error("Upload Failed"); } finally { toast.dismiss(load); }
   };
   
-  const fetchStudentProfile = async (student) => {
+  const fetchStudentProfile = useCallback(async (prn) => {
+    if(!prn) return;
     const load = toast.loading("Fetching Stats...");
     try {
-        const res = await axios.get(`${API_URL}/api/admin/student-stats/${student.prn}`, { 
+        const studentInfo = { prn: prn }; 
+        const res = await axios.get(`${API_URL}/api/admin/student-stats/${prn}`, { 
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setStudentStats(res.data); 
-        setSelectedStudent(student); 
-        setView('student-profile');
+        setSelectedStudent(res.data.studentInfo || studentInfo); 
     } catch (e) { toast.error("Failed to load profile"); } finally { toast.dismiss(load); }
-  };
+  }, [API_URL]);
 
   return (
     <div className="min-h-screen bg-slate-950 pb-32 text-slate-100 font-sans">
       <Toaster position="top-right" toastOptions={{ duration: 2500, style: { background: '#1e293b', color: '#fff', border: '1px solid #334155' } }}/>
       
-      <AdminNavbar view={view} setView={setView} handleLogout={handleLogout} />
+      <AdminNavbar handleLogout={handleLogout} />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        
-        {/* VIEW: QUIZZES */}
-        {view === 'quizzes' && (
-            <QuizList 
-                quizzes={quizzes} 
-                onCreateNew={handleCreateNew} 
-                onEditQuiz={handleEditQuiz} 
-                onDeleteQuiz={handleDeleteQuiz} 
-                onImportJson={handleQuizJsonUpload}
-            />
-        )}
-        
-        {/* VIEW: STUDENT MANAGEMENT */}
-        {view === 'batches' && (
-            <div className="space-y-4">
-                {/* Header Actions */}
-                <div className="flex justify-end gap-3">
-                     <label className="text-sm font-bold text-slate-300 hover:text-white flex items-center gap-2 bg-slate-900 border border-slate-800 py-2 px-4 rounded-xl transition hover:border-slate-600 cursor-pointer">
-                         <Upload size={16}/> Upload CSV Batch
-                         <input type="file" accept=".csv" hidden onChange={handleStudentUpload} />
-                     </label>
-                </div>
-                
-                {/* The Unified Hierarchy Manager */}
-                <StudentManager 
-                    onSelectStudent={fetchStudentProfile} 
+        <Routes>
+            {/* 1. DASHBOARD */}
+            <Route path="/" element={
+                <QuizList 
+                    quizzes={quizzes} 
+                    onCreateNew={() => navigate('create-quiz')} 
+                    onEditQuiz={(id) => navigate(`edit-quiz/${id}`)} 
+                    onDeleteQuiz={handleDeleteQuiz} 
+                    onImportJson={handleQuizJsonUpload}
                 />
-            </div>
-        )}
-        
-        {/* VIEW: STUDENT PROFILE */}
-        {view === 'student-profile' && selectedStudent && studentStats && (
-            <StudentProfile 
-                student={selectedStudent} 
-                stats={studentStats} 
-                onBack={()=>setView('batches')} 
-            />
-        )}
-        
-        {/* VIEW: MATERIALS */}
-        {view === 'materials' && <StudyMaterials />}
-        
-        {/* VIEW: SETTINGS */}
-        {view === 'settings' && <AdminManager API_URL={API_URL} />}
-        
-        {/* VIEW: QUIZ EDITOR */}
-        {view === 'editor' && !previewMode && (
-            <QuizEditor 
-                formState={formState} setFormState={setFormState}
-                questions={questions} setQuestions={setQuestions}
-                onBack={()=>setView('quizzes')} onSave={handleSaveQuiz}
-                previewMode={previewMode} setPreviewMode={setPreviewMode}
-                handlePdfUpload={handlePdfUpload} API_URL={API_URL}
-            />
-        )}
-        
-        {/* VIEW: PREVIEW */}
-        {view === 'editor' && previewMode && (
-          <div className="animate-in fade-in duration-300 pb-20">
-             <div className="flex justify-between items-center mb-6">
-                 <button onClick={()=>setPreviewMode(false)} className="text-slate-400 hover:text-white flex items-center gap-2 text-sm font-bold"><ArrowLeft size={16}/> Back Editor</button>
-                 <span className="px-3 py-1 bg-purple-900/50 text-purple-200 text-xs font-bold rounded-full uppercase tracking-wider border border-purple-500/30">Student Preview</span>
-            </div>
-             <div className="text-center mt-12 text-slate-500">Preview Mode Active</div>
-          </div>
-        )}
+            }/>
+
+            {/* 2. CREATE QUIZ */}
+            <Route path="create-quiz" element={
+                <RouteHandler action={prepareCreateQuiz}>
+                    {!previewMode ? (
+                        <QuizEditor 
+                            formState={formState} setFormState={setFormState}
+                            questions={questions} setQuestions={setQuestions}
+                            onBack={()=>navigate('/admin')} onSave={handleSaveQuiz}
+                            previewMode={previewMode} setPreviewMode={setPreviewMode}
+                            handlePdfUpload={handlePdfUpload} API_URL={API_URL}
+                        />
+                    ) : (
+                        <div className="animate-in fade-in duration-300 pb-20">
+                            <div className="flex justify-between items-center mb-6">
+                                <button onClick={()=>setPreviewMode(false)} className="text-slate-400 hover:text-white flex items-center gap-2 text-sm font-bold"><ArrowLeft size={16}/> Back Editor</button>
+                                <span className="px-3 py-1 bg-purple-900/50 text-purple-200 text-xs font-bold rounded-full uppercase tracking-wider border border-purple-500/30">Student Preview</span>
+                            </div>
+                            <div className="text-center mt-12 text-slate-500">Preview Mode Active</div>
+                        </div>
+                    )}
+                </RouteHandler>
+            }/>
+
+            {/* 3. EDIT QUIZ */}
+            <Route path="edit-quiz/:id" element={
+                <RouteHandler action={prepareEditQuiz}>
+                     <QuizEditor 
+                        formState={formState} setFormState={setFormState}
+                        questions={questions} setQuestions={setQuestions}
+                        onBack={()=>navigate('/admin')} onSave={handleSaveQuiz}
+                        previewMode={previewMode} setPreviewMode={setPreviewMode}
+                        handlePdfUpload={handlePdfUpload} API_URL={API_URL}
+                    />
+                </RouteHandler>
+            }/>
+
+            {/* 4. STUDENTS MANAGER */}
+            <Route path="students" element={
+                <div className="space-y-4">
+                    <div className="flex justify-end gap-3">
+                         <label className="text-sm font-bold text-slate-300 hover:text-white flex items-center gap-2 bg-slate-900 border border-slate-800 py-2 px-4 rounded-xl transition hover:border-slate-600 cursor-pointer">
+                             <Upload size={16}/> Upload CSV Batch
+                             <input type="file" accept=".csv" hidden onChange={handleStudentUpload} />
+                         </label>
+                    </div>
+                    <StudentManager onSelectStudent={(s) => navigate(`student/${s.prn}`)} />
+                </div>
+            }/>
+
+            {/* 5. STUDENT PROFILE */}
+            <Route path="students/student/:id" element={
+                <RouteHandler action={fetchStudentProfile}>
+                    {selectedStudent && studentStats && (
+                        <StudentProfile 
+                            student={selectedStudent} 
+                            stats={studentStats} 
+                            onBack={()=>navigate('/admin/students')} 
+                        />
+                    )}
+                </RouteHandler>
+            }/>
+
+            {/* 6. MATERIALS & SETTINGS */}
+            <Route path="materials" element={<StudyMaterials />} />
+            <Route path="settings" element={<AdminManager API_URL={API_URL} />} />
+
+        </Routes>
       </main>
     </div>
   );

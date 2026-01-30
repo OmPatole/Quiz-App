@@ -8,118 +8,65 @@ const { authenticateToken } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 // ==========================================
-// 1. ADMIN ACCOUNT MANAGEMENT
+// 1. STUDENT MANAGEMENT (The missing link)
 // ==========================================
-router.post('/admin/students/filter', authenticateToken, async (req, res) => {
-    try {
-        const { gradYear, academicYear } = req.body;
-        const query = {};
 
-        // Filter by Class (Graduation Year)
-        // This unifies "Admin Upload" and "Self Signup" because both have gradYear
-        if (gradYear) query.gradYear = gradYear;
+// GET /api/admin/students?year=2026
+// This is the route your Frontend StudentManager is trying to call
+router.get('/admin/students', authenticateToken, async (req, res) => {
+    try {
+        const { year } = req.query; // e.g., "2026"
         
-        // Filter by Current Academic Year
-        if (academicYear) query.year = academicYear;
+        const query = {};
+        // Filter by Graduation Year if provided
+        if (year) query.gradYear = year; 
 
-        // Sort by Branch first, then Name
-        const students = await Student.find(query).sort({ branch: 1, name: 1 });
+        // Return sorted by Name
+        const students = await Student.find(query).sort({ name: 1 });
         res.json(students);
-    } catch (e) { res.status(500).json({ error: "Fetch Failed" }); }
-});
-// Get all admins (Superadmin only)
-router.get('/admins', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'superadmin') return res.status(403).json({ error: "Denied" });
-    try {
-        const admins = await Admin.find({}, '-password');
-        res.json(admins);
-    } catch (e) { res.status(500).json({ error: "Fetch Failed" }); }
+    } catch (e) {
+        console.error("Fetch Error:", e);
+        res.status(500).json({ error: "Failed to fetch students" });
+    }
 });
 
-// Create new admin
-router.post('/create-admin', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'superadmin') return res.status(403).json({ error: "Only Super Admin" });
-    try {
-        const { username, password } = req.body;
-        if (!username || !password) return res.status(400).json({ error: "Missing fields" });
-        if (await Admin.findOne({ username })) return res.status(400).json({ error: "Username taken" });
-
-        const hash = await bcrypt.hash(password, 10);
-        await Admin.create({ username, password: hash, role: 'admin' });
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: "Failed" }); }
-});
-
-// Delete admin
-router.delete('/admin/:id', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'superadmin') return res.status(403).json({ error: "Denied" });
-    try {
-        await Admin.findByIdAndDelete(req.params.id);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: "Delete Failed" }); }
-});
-
-// ==========================================
-// 2. STUDENT & BATCH MANAGEMENT
-// ==========================================
-
-// Get all batches (Legacy view)
-router.get('/admin/batches', authenticateToken, async (req, res) => {
-    try {
-        const batches = await StudentBatch.find().sort({ uploadedAt: -1 });
-        res.json(batches);
-    } catch (e) { res.status(500).json({ error: "Fetch Failed" }); }
-});
-
-// Get students in a specific batch (Legacy view)
-router.get('/admin/batches/:batchId/students', authenticateToken, async (req, res) => {
-    try {
-        const students = await Student.find({ batchId: req.params.batchId });
-        res.json(students);
-    } catch (e) { res.status(500).json({ error: "Fetch Failed" }); }
-});
-
-// --- NEW HIERARCHICAL MANAGEMENT ROUTES ---
-
-// Get List of Graduation Years (Left Sidebar)
-router.get('/admin/grad-years', authenticateToken, async (req, res) => {
-    try {
-        // Distinct years from students
-        const years = await Student.distinct('gradYear');
-        // Filter out nulls/undefined and sort
-        res.json(years.filter(y => y).sort());
-    } catch (e) { res.status(500).json({ error: "Fetch Failed" }); }
-});
-
-// Filter Students (Main View)
+// POST /api/admin/students/filter (Advanced Filter)
 router.post('/admin/students/filter', authenticateToken, async (req, res) => {
     try {
         const { gradYear, academicYear, type } = req.body;
         const query = {};
 
-        // If explicitly asking for self-signup
         if (type === 'self-signup') {
             query.registrationType = 'self-signup';
         } else {
-            // Default to official admin-uploads
-            query.registrationType = 'admin-upload';
+            // Default to official admin-uploads if not specified
             if (gradYear) query.gradYear = gradYear;
         }
 
         if (academicYear) query.year = academicYear;
 
-        // Sort by Branch first, then Name
         const students = await Student.find(query).sort({ branch: 1, name: 1 });
         res.json(students);
     } catch (e) { res.status(500).json({ error: "Fetch Failed" }); }
 });
 
-// Upload Students via CSV
+// ==========================================
+// 2. BATCH & UPLOAD
+// ==========================================
+
+// Get List of Graduation Years (For Sidebar)
+router.get('/admin/grad-years', authenticateToken, async (req, res) => {
+    try {
+        const years = await Student.distinct('gradYear');
+        res.json(years.filter(y => y).sort());
+    } catch (e) { res.status(500).json({ error: "Fetch Failed" }); }
+});
+
+// Upload CSV Batch
 router.post('/admin/upload-students', authenticateToken, upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No CSV' });
     
-    // Extract Grad Year from filename if possible (e.g., "Batch_2026.csv")
-    // If not found, default to Current Year + 4 (Approx graduation for incoming batch)
+    // Default Grad Year logic
     const match = req.file.originalname.match(/20\d{2}/);
     const defaultGradYear = match ? match[0] : (new Date().getFullYear() + 4).toString();
 
@@ -135,7 +82,7 @@ router.post('/admin/upload-students', authenticateToken, upload.single('file'), 
         fs.createReadStream(req.file.path)
           .pipe(csv())
           .on('data', (data) => {
-              // Normalize keys
+              // Normalize keys to lowercase trim
               const clean = {}; 
               Object.keys(data).forEach(k => clean[k.trim().toLowerCase()] = data[k].trim());
               
@@ -144,7 +91,6 @@ router.post('/admin/upload-students', authenticateToken, upload.single('file'), 
                       ...clean, 
                       batchId: newBatch._id,
                       registrationType: 'admin-upload',
-                      // Use CSV column 'gradyear' if exists, else inferred
                       gradYear: clean.gradyear || defaultGradYear 
                   });
               }
@@ -157,7 +103,6 @@ router.post('/admin/upload-students', authenticateToken, upload.single('file'), 
                    return res.status(400).json({ error: "Empty CSV or Invalid Headers" });
               }
 
-              // Bulk Write with Upsert
               const bulkOps = studentsToProcess.map(s => ({
                   updateOne: {
                       filter: { prn: s.prn },
@@ -183,45 +128,38 @@ router.post('/admin/upload-students', authenticateToken, upload.single('file'), 
     }
 });
 
-// Delete a batch and its students
-router.delete('/admin/batches/:batchId', authenticateToken, async (req, res) => {
-    try {
-        await Student.deleteMany({ batchId: req.params.batchId });
-        await StudentBatch.findByIdAndDelete(req.params.batchId);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: "Delete Failed" }); }
-});
-
-// Delete a single student
-router.delete('/admin/students/:id', authenticateToken, async (req, res) => {
-    try {
-        await Student.findByIdAndDelete(req.params.id);
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: "Delete Failed" }); }
-});
-
 // ==========================================
-// 3. ANALYTICS & MONITORING
+// 3. ADMIN ACCOUNTS
 // ==========================================
 
-// Get Login Activity (Sorted by Last Login)
-router.get('/admin/login-activity', authenticateToken, async (req, res) => {
+router.get('/admins', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'superadmin') return res.status(403).json({ error: "Denied" });
     try {
-        const students = await Student.find({ lastLogin: { $exists: true } })
-            .sort({ lastLogin: -1 })
-            .limit(50)
-            .select('name prn year branch lastLogin');
-        res.json(students);
+        const admins = await Admin.find({}, '-password');
+        res.json(admins);
     } catch (e) { res.status(500).json({ error: "Fetch Failed" }); }
 });
 
-// Get Individual Student Stats
+router.post('/create-admin', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'superadmin') return res.status(403).json({ error: "Only Super Admin" });
+    try {
+        const { username, password } = req.body;
+        if (await Admin.findOne({ username })) return res.status(400).json({ error: "Username taken" });
+        const hash = await bcrypt.hash(password, 10);
+        await Admin.create({ username, password: hash, role: 'admin' });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: "Failed" }); }
+});
+
+// ==========================================
+// 4. STATS
+// ==========================================
+
 router.get('/admin/student-stats/:prn', authenticateToken, async (req, res) => {
     try {
         const { prn } = req.params;
         const results = await Result.find({ prn }).sort({ submittedAt: -1 });
         
-        // Calculate Stats
         const totalTests = results.length;
         const totalScore = results.reduce((acc, curr) => acc + curr.score, 0);
         const maxTotalMarks = results.reduce((acc, curr) => acc + (curr.totalMarks || 100), 0);
@@ -229,17 +167,15 @@ router.get('/admin/student-stats/:prn', authenticateToken, async (req, res) => {
         const avgScore = totalTests ? Math.round((totalScore / totalTests)) : 0;
         const accuracy = totalTests ? Math.round((totalScore / maxTotalMarks) * 100) : 0;
         
-        // Activity Map
+        // Activity Map for Heatmap
         const activityMap = {}; 
         results.forEach(r => {
             const date = r.submittedAt.toISOString().split('T')[0];
             activityMap[date] = (activityMap[date] || 0) + 1;
         });
 
-        const bestResult = results.length > 0 ? results.reduce((prev, current) => (prev.score > current.score) ? prev : current) : null;
-
         res.json({
-            stats: { totalTests, avgScore, accuracy, bestScore: bestResult ? bestResult.score : 0 },
+            stats: { totalTests, avgScore, accuracy },
             activityMap,
             recentActivity: results.slice(0, 5)
         });

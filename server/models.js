@@ -11,21 +11,22 @@ const adminSchema = new mongoose.Schema({
 const batchSchema = new mongoose.Schema({
   batchName: { type: String, required: true }, // e.g., "Class of 2026"
   studentCount: { type: Number, default: 0 },
-  type: { type: String, default: 'official' }, // 'official' or 'self-reg'
+  type: { type: String, default: 'official' }, 
   uploadedAt: { type: Date, default: Date.now }
 });
 
 const studentSchema = new mongoose.Schema({
   name: String,
   prn: { type: String, required: true, unique: true }, 
-  year: String, // "First Year", etc.
+  year: String, // "First Year", "Second Year" (Academic Year)
   branch: String,
   batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'StudentBatch' },
   
-  // NEW: To separate self-signed vs admin-uploaded
-  registrationType: { type: String, default: 'admin-upload' }, // 'admin-upload', 'self-signup'
-  gradYear: { type: String }, // e.g., "2026", "2027" (Derived from batch or input)
+  // Registration Info
+  registrationType: { type: String, default: 'admin-upload' }, 
+  gradYear: { type: String }, // e.g., "2026" (Crucial for your filter)
   
+  // Stats
   lastLogin: { type: Date }, 
   createdAt: { type: Date, default: Date.now }
 });
@@ -35,7 +36,7 @@ const quizSchema = new mongoose.Schema({
   title: String,
   description: String,
   questions: Array,
-  quizType: String, // 'weekly' or 'mock'
+  quizType: String,
   duration: Number,
   schedule: { start: String, end: String },
   targetYears: Array,

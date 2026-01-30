@@ -4,7 +4,7 @@ import axios from 'axios';
 import Editor from '@monaco-editor/react';
 import MDEditor from '@uiw/react-md-editor';
 import toast, { Toaster } from 'react-hot-toast'; 
-import { User, ShieldBan, Play, Clock, CheckCircle, XCircle, Info } from 'lucide-react';
+import { User, ShieldBan, Play, Clock, CheckCircle, XCircle, Info, ZoomIn } from 'lucide-react';
 
 const API_URL = 'http://localhost:3001'; 
 const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -45,8 +45,7 @@ const QuizPlayer = () => {
     axios.get(`${API_URL}/api/quizzes/${quizId}`)
       .then(res => { 
           const data = res.data;
-          // Only shuffle if it's NOT a mock test (Mock tests usually follow a learning order)
-          // But if you want shuffling everywhere, keep it.
+          // Only shuffle if not a mock test to preserve learning order
           if (data.quizType !== 'mock' && data.questions && data.questions.length > 0) {
               data.questions = shuffleArray([...data.questions]);
           }
@@ -64,8 +63,13 @@ const QuizPlayer = () => {
   const handleStart = async () => {
     if (!info.name || !info.year || !info.prn) return toast.error("Please fill all details.");
     
-    if (quizData.targetYears && quizData.targetYears.length > 0 && !quizData.targetYears.includes(info.year)) {
-        return toast.error(`Access Denied: Restricted to ${quizData.targetYears.join(', ')} students.`);
+    // --- UPDATED ACCESS CONTROL ---
+    // Allow if "All Years" is in the list, OR if the specific year matches
+    const allowedYears = quizData.targetYears || [];
+    const isAccessAllowed = allowedYears.length === 0 || allowedYears.includes('All Years') || allowedYears.includes(info.year);
+
+    if (!isAccessAllowed) {
+        return toast.error(`Access Denied: Restricted to ${allowedYears.join(', ')} students.`);
     }
 
     localStorage.setItem('quiz_student_info', JSON.stringify(info));
@@ -150,7 +154,7 @@ const QuizPlayer = () => {
   const getImageUrl = (path) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    return `${API_URL}${path}`;
+    return `${API_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   };
 
   const formatTime = (s) => {
@@ -199,23 +203,20 @@ const QuizPlayer = () => {
   const processedMarkdown = q.text ? q.text.replace(/\]\(\/uploads\//g, `](${API_URL}/uploads/`) : '';
   const isLast = currentQ === quizData.questions.length - 1;
   const isMock = quizData.quizType === 'mock';
-
-  // --- MOCK LOGIC HELPERS ---
   const hasAnswered = answers[currentQ]?.selectedIndices?.length > 0;
   
-  // Helper to determine option style (Correct/Incorrect/Neutral)
+  const hasOptionImages = q.options?.some(opt => opt.image);
+
   const getOptionStyle = (index) => {
     const isSelected = answers[currentQ]?.selectedIndices?.includes(index);
     
     if (isMock && hasAnswered) {
-        // If it's a mock test AND they have answered, show truth
         const isCorrect = q.correctIndices?.includes(index);
-        if (isCorrect) return 'border-green-500 bg-green-900/20'; // Always show correct answer in green
-        if (isSelected && !isCorrect) return 'border-red-500 bg-red-900/20'; // Show wrong selection in red
-        return 'border-slate-800 bg-slate-900 opacity-50'; // Fade out unrelated options
+        if (isCorrect) return 'border-green-500 bg-green-900/20'; 
+        if (isSelected && !isCorrect) return 'border-red-500 bg-red-900/20';
+        return 'border-slate-800 bg-slate-900 opacity-50';
     }
 
-    // Standard behavior (Weekly Test OR before answering in Mock)
     if (isSelected) return 'border-purple-500 bg-purple-900/20 shadow-[0_0_15px_rgba(168,85,247,0.15)]';
     return 'border-slate-800 bg-slate-900 hover:border-slate-600';
   };
@@ -238,40 +239,68 @@ const QuizPlayer = () => {
 
        <div className="flex-1 flex overflow-hidden">
           <div className={`flex-1 flex flex-col p-6 overflow-y-auto ${q.type === 'code' ? 'w-1/2 border-r border-slate-800' : 'max-w-3xl mx-auto w-full'}`}>
-               <div className="mb-4 text-white" data-color-mode="dark"><span className="text-purple-400 font-bold text-lg mr-2">Q{currentQ+1}.</span><MDEditor.Markdown source={processedMarkdown} style={{ backgroundColor: 'transparent', color: '#e2e8f0' }} /></div>
                
+               {/* --- QUESTION HEADER (Text + Optional Image) --- */}
+               <div className="mb-6 text-white" data-color-mode="dark">
+                   <div className="flex items-start gap-3">
+                       <span className="text-purple-400 font-bold text-lg pt-1">Q{currentQ+1}.</span>
+                       <div className="flex-1 space-y-4">
+                           {q.image && (
+                               <div className="mb-4">
+                                   <img 
+                                      src={getImageUrl(q.image)} 
+                                      alt="Question Reference" 
+                                      className="max-h-64 rounded-xl border border-slate-700 object-contain bg-slate-900" 
+                                   />
+                               </div>
+                           )}
+                           <MDEditor.Markdown source={processedMarkdown} style={{ backgroundColor: 'transparent', color: '#e2e8f0' }} />
+                       </div>
+                   </div>
+               </div>
+               
+               {/* --- OPTIONS LIST --- */}
                {q.type === 'mcq' && (
-                  <div className="space-y-4 mt-4">
+                  <div className={`mt-4 ${hasOptionImages ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}`}>
                       {q.options.map((opt, i) => (
                         <button 
                             key={i} 
-                            disabled={isMock && hasAnswered} // Lock answers in mock once clicked
+                            disabled={isMock && hasAnswered} 
                             onClick={() => {
                                 const curr = answers[currentQ]?.selectedIndices || []; 
                                 const newSel = q.isMultiSelect ? (curr.includes(i) ? curr.filter(x=>x!==i) : [...curr, i]) : [i]; 
                                 setAnswers({...answers, [currentQ]: {...answers[currentQ], selectedIndices: newSel}});
                             }} 
-                            className={`w-full p-4 text-left rounded-xl border transition-all flex items-start gap-4 group ${getOptionStyle(i)}`}
+                            className={`w-full p-4 text-left rounded-xl border transition-all flex gap-4 group relative overflow-hidden
+                                ${hasOptionImages ? 'flex-col items-center text-center' : 'items-start'}
+                                ${getOptionStyle(i)}
+                            `}
                         >
-                            <div className={`mt-1 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 
+                            {/* Checkbox */}
+                            <div className={`absolute top-4 left-4 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 z-10
                                 ${isMock && hasAnswered && q.correctIndices?.includes(i) ? 'border-green-500 bg-green-500' : 
                                   isMock && hasAnswered && answers[currentQ]?.selectedIndices?.includes(i) ? 'border-red-500 bg-red-500' :
-                                  answers[currentQ]?.selectedIndices?.includes(i) ? 'border-purple-500 bg-purple-500' : 'border-slate-600 group-hover:border-slate-400'}`}>
+                                  answers[currentQ]?.selectedIndices?.includes(i) ? 'border-purple-500 bg-purple-500' : 'border-slate-600 bg-slate-950/50 group-hover:border-slate-400'}`}>
                                 
                                 {isMock && hasAnswered && q.correctIndices?.includes(i) && <CheckCircle size={14} className="text-white"/>}
                                 {isMock && hasAnswered && answers[currentQ]?.selectedIndices?.includes(i) && !q.correctIndices?.includes(i) && <XCircle size={14} className="text-white"/>}
                                 {!isMock && answers[currentQ]?.selectedIndices?.includes(i) && <div className="w-2 h-2 bg-white rounded-full" />}
                             </div>
-                            <div className="flex-1">
-                                {opt.image && <img src={getImageUrl(opt.image)} className="mb-2 h-32 rounded object-contain" alt="option"/>}
-                                <div className="text-slate-200">{opt.text}</div>
+
+                            {/* Content */}
+                            <div className="flex-1 w-full">
+                                {opt.image && (
+                                    <div className="mb-3 w-full flex justify-center bg-slate-950/30 rounded-lg p-2">
+                                        <img src={getImageUrl(opt.image)} className="h-40 object-contain rounded-lg" alt={`Option ${i+1}`} />
+                                    </div>
+                                )}
+                                {opt.text && <div className="text-slate-200 font-medium px-6">{opt.text}</div>}
                             </div>
                         </button>
                       ))}
                   </div>
                )}
                
-               {/* --- EXPLANATION BOX (Mock Only) --- */}
                {isMock && hasAnswered && q.explanation && (
                    <div className="mt-6 p-4 bg-blue-900/20 border border-blue-800 rounded-xl animate-in fade-in slide-in-from-bottom-2">
                        <h4 className="text-blue-400 font-bold text-sm mb-2 flex items-center gap-2"><Info size={16}/> Explanation:</h4>
