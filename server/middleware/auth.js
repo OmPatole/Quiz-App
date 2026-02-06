@@ -1,29 +1,30 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'beta_secret_key_123';
+const User = require('../models/User');
 
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) return res.sendStatus(401);
+const auth = async (req, res, next) => {
+    try {
+        // Get token from header
+        const token = req.header('Authorization')?.replace('Bearer ', '');
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-};
+        if (!token) {
+            return res.status(401).json({ message: 'No token, authorization denied' });
+        }
 
-// Optional auth for student filtering
-const identifyUser = (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1];
-    if (token) {
-        jwt.verify(token, JWT_SECRET, (err, user) => {
-            if (!err) req.user = user;
-            next();
-        });
-    } else {
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Get user from token
+        const user = await User.findById(decoded.id).select('-password');
+
+        if (!user) {
+            return res.status(401).json({ message: 'Token is not valid' });
+        }
+
+        req.user = user;
         next();
+    } catch (error) {
+        res.status(401).json({ message: 'Token is not valid' });
     }
 };
 
-module.exports = { authenticateToken, identifyUser, JWT_SECRET };
+module.exports = auth;

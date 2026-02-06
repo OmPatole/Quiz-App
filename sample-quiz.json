@@ -1,0 +1,130 @@
+[
+    {
+        "title": "Chain Rule - Set 1",
+        "description": "Practice questions on the Chain Rule",
+        "quizType": "practice",
+        "duration": 30,
+        "category": "Calculus",
+        "questions": [
+            {
+                "text": "What is the derivative of sin(2x)?",
+                "marks": 5,
+                "options": [
+                    {
+                        "text": "2cos(2x)"
+                    },
+                    {
+                        "text": "cos(2x)"
+                    },
+                    {
+                        "text": "-2cos(2x)"
+                    },
+                    {
+                        "text": "2sin(2x)"
+                    }
+                ],
+                "correctIndices": [
+                    0
+                ],
+                "explanation": "Using the chain rule: d/dx[sin(2x)] = cos(2x) * 2 = 2cos(2x)"
+            },
+            {
+                "text": "What is the derivative of (3x + 1)^2?",
+                "marks": 5,
+                "options": [
+                    {
+                        "text": "6(3x + 1)"
+                    },
+                    {
+                        "text": "3(3x + 1)"
+                    },
+                    {
+                        "text": "2(3x + 1)"
+                    },
+                    {
+                        "text": "6x + 2"
+                    }
+                ],
+                "correctIndices": [
+                    0
+                ],
+                "explanation": "Using the chain rule: d/dx[(3x + 1)^2] = 2(3x + 1) * 3 = 6(3x + 1)"
+            },
+            {
+                "text": "What is the derivative of e^(3x)?",
+                "marks": 5,
+                "options": [
+                    {
+                        "text": "3e^(3x)"
+                    },
+                    {
+                        "text": "e^(3x)"
+                    },
+                    {
+                        "text": "3e^x"
+                    },
+                    {
+                        "text": "e^(3x) + 3"
+                    }
+                ],
+                "correctIndices": [
+                    0
+                ],
+                "explanation": "Using the chain rule: d/dx[e^(3x)] = e^(3x) * 3 = 3e^(3x)"
+            }
+        ]
+    },
+    {
+        "title": "Chain Rule - Set 2",
+        "description": "Advanced practice on the Chain Rule",
+        "quizType": "weekly",
+        "duration": 45,
+        "category": "Calculus",
+        "questions": [
+            {
+                "text": "What is the derivative of ln(x^2 + 1)?",
+                "marks": 10,
+                "options": [
+                    {
+                        "text": "2x / (x^2 + 1)"
+                    },
+                    {
+                        "text": "1 / (x^2 + 1)"
+                    },
+                    {
+                        "text": "2x"
+                    },
+                    {
+                        "text": "x / (x^2 + 1)"
+                    }
+                ],
+                "correctIndices": [
+                    0
+                ],
+                "explanation": "Using the chain rule: d/dx[ln(x^2 + 1)] = 1/(x^2 + 1) * 2x = 2x/(x^2 + 1)"
+            },
+            {
+                "text": "What is the derivative of sqrt(4x + 5)?",
+                "marks": 10,
+                "options": [
+                    {
+                        "text": "2 / sqrt(4x + 5)"
+                    },
+                    {
+                        "text": "4 / sqrt(4x + 5)"
+                    },
+                    {
+                        "text": "1 / sqrt(4x + 5)"
+                    },
+                    {
+                        "text": "2 / (4x + 5)"
+                    }
+                ],
+                "correctIndices": [
+                    0
+                ],
+                "explanation": "Rewrite as (4x + 5)^(1/2). Using chain rule: (1/2)(4x + 5)^(-1/2) * 4 = 2/sqrt(4x + 5)"
+            }
+        ]
+    }
+]

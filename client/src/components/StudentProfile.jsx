@@ -1,243 +1,285 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, Target, Activity, Calendar, Award, TrendingUp } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ArrowLeft, Code, GraduationCap, CheckSquare, BarChart2, Hash, Calendar } from 'lucide-react';
 
-const StudentProfile = () => {
-  const navigate = useNavigate();
-  const [profileData, setProfileData] = useState(null);
-  const [studentInfo, setStudentInfo] = useState({});
-  const [loading, setLoading] = useState(true);
+// --- HELPER: Contribution Graph Component ---
+const ActivityHeatmap = ({ activityMap }) => {
+    // 1. Determine Available Years
+    const { availableYears } = useMemo(() => {
+        const years = new Set();
+        const today = new Date();
+        const y = today.getFullYear();
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return navigate('/student-login');
+        if (Object.keys(activityMap).length > 0) {
+            Object.keys(activityMap).forEach(dateStr => {
+                years.add(new Date(dateStr).getFullYear());
+            });
+        }
+        years.add(2026);
+        years.add(y);
 
-        const storedInfo = JSON.parse(localStorage.getItem('quiz_student_info') || '{}');
-        setStudentInfo(storedInfo);
+        return {
+            availableYears: Array.from(years).sort((a, b) => b - a),
+        };
+    }, [activityMap]);
 
-        const res = await axios.get('http://localhost:3001/api/student-profile', {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        setProfileData(res.data);
-      } catch (error) {
-        console.error("Profile fetch error", error);
-      } finally {
-        setLoading(false);
-      }
+    const [selectedYear, setSelectedYear] = useState(2026);
+
+    // 2. Generate Calendar Data (Monday Start)
+    const { weeks, monthLabels } = useMemo(() => {
+        const startDate = new Date(selectedYear, 0, 1);
+        const endDate = new Date(selectedYear, 11, 31);
+
+        // Adjust Start Date to previous MONDAY to maintain grid structure
+        // (If Jan 1 is Thu, we need empty slots for Mon, Tue, Wed)
+        const dayOfWeek = (startDate.getDay() + 6) % 7;
+        const gridStartDate = new Date(startDate);
+        gridStartDate.setDate(startDate.getDate() - dayOfWeek);
+
+        const weeksData = [];
+        const monthsData = [];
+        let currentWeek = Array(7).fill(null);
+        let currentDate = new Date(gridStartDate);
+        let lastMonthLabelIndex = -1;
+
+        // Loop until we pass the end date AND finish the week
+        while (true) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const monthName = currentDate.toLocaleString('default', { month: 'short' });
+
+            // ISO Day: Mon(0) -> Sun(6)
+            const isoDayIndex = (currentDate.getDay() + 6) % 7;
+            const yearVal = currentDate.getFullYear();
+
+            if (currentDate > endDate && isoDayIndex === 0) break;
+
+            // --- Month Label Logic ---
+            if (isoDayIndex === 0) {
+                const currentWeekIndex = weeksData.length;
+                const nextWeekDate = new Date(currentDate);
+                nextWeekDate.setDate(currentDate.getDate() + 7);
+
+                // Logic: Use the month of the upcoming week to decide label
+                // This ensures if a week starts Dec 29 but ends Jan 4, we label it "Jan"
+                let labelMonth = nextWeekDate.toLocaleString('default', { month: 'short' });
+
+                // FORCE JAN START: If it's the very first column, always label it the starting month of selected year
+                if (currentWeekIndex === 0) {
+                    labelMonth = "Jan";
+                }
+
+                // Add label if month changed or it's the start
+                if (monthName !== labelMonth || currentWeekIndex === 0) {
+                    // Gap check
+                    if (currentWeekIndex - lastMonthLabelIndex > 3 || lastMonthLabelIndex === -1) {
+                        monthsData.push({ name: labelMonth, index: currentWeekIndex });
+                        lastMonthLabelIndex = currentWeekIndex;
+                    }
+                }
+            }
+
+            // --- Fill Data ---
+            if (yearVal === selectedYear) {
+                currentWeek[isoDayIndex] = {
+                    date: dateStr,
+                    count: activityMap[dateStr] || 0,
+                };
+            }
+
+            // --- Push Week ---
+            if (isoDayIndex === 6) {
+                weeksData.push(currentWeek);
+                currentWeek = Array(7).fill(null);
+            }
+
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        return { weeks: weeksData, monthLabels: monthsData };
+    }, [activityMap, selectedYear]);
+
+    // 3. Color Scale (Emerald/Green per strict monochrome request - adapted to neutral/white scaling or keeping emerald as "success" indicator is common even in monochrome dashboards, but user asked for "violet or emerald". I will use Emerald as it's cleaner for stats)
+    const getColor = (item) => {
+        if (!item) return 'bg-transparent';
+        if (item.count === 0) return 'bg-neutral-800 border border-neutral-700/50';
+        if (item.count <= 1) return 'bg-emerald-900/60 border border-emerald-900';
+        if (item.count <= 3) return 'bg-emerald-700/80 border border-emerald-700';
+        if (item.count <= 5) return 'bg-emerald-600 border border-emerald-500';
+        return 'bg-emerald-500 border border-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]';
     };
-    fetchProfile();
-  }, [navigate]);
 
-  // --- DYNAMIC HEATMAP GENERATION ---
-  const generateCalendarGrid = () => {
-      const activityMap = profileData?.activityMap || {};
-      const dates = Object.keys(activityMap).sort();
+    return (
+        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-xl mb-8 font-sans flex flex-col md:flex-row gap-6">
+            {/* --- LEFT SIDE: GRAPH --- */}
+            <div className="flex-1 overflow-hidden">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-sm font-bold text-neutral-400 uppercase flex items-center gap-2">
+                        <Calendar size={16} /> {selectedYear} Activity
+                    </h3>
+                </div>
 
-      // 1. Determine Start Date (First activity or Start of Current Month)
-      let startDate = new Date();
-      if (dates.length > 0) {
-          const firstActivity = new Date(dates[0]);
-          // Start from the 1st of that month
-          startDate = new Date(firstActivity.getFullYear(), firstActivity.getMonth(), 1);
-      } else {
-          // Default to 1st of current month
-          startDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-      }
+                <div className="flex">
 
-      // 2. Determine End Date (Today)
-      const endDate = new Date();
-      
-      // 3. Generate array of days
-      const gridData = [];
-      const currentIter = new Date(startDate);
-      
-      // Pad the beginning to align with Day of Week (0 = Sunday)
-      const startDayOfWeek = currentIter.getDay(); // 0 (Sun) to 6 (Sat)
-      for (let i = 0; i < startDayOfWeek; i++) {
-          gridData.push({ date: null }); // Empty placeholder
-      }
-
-      // Fill days
-      while (currentIter <= endDate) {
-          const dateStr = currentIter.toISOString().split('T')[0];
-          const count = activityMap[dateStr] || 0;
-          
-          // Determine Intensity
-          let intensity = 'bg-slate-800/50'; // Empty
-          if (count > 0) intensity = 'bg-purple-900/60';
-          if (count > 2) intensity = 'bg-purple-600/80';
-          if (count > 4) intensity = 'bg-purple-500';
-          if (count >= 6) intensity = 'bg-green-400';
-
-          gridData.push({
-              date: new Date(currentIter),
-              dateStr,
-              count,
-              intensity
-          });
-          
-          // Next Day
-          currentIter.setDate(currentIter.getDate() + 1);
-      }
-
-      return { gridData, startDate };
-  };
-
-  const { gridData, startDate } = profileData ? generateCalendarGrid() : { gridData: [], startDate: new Date() };
-
-  // Helper to get Month Labels based on grid position
-  const getMonthLabels = () => {
-      const labels = [];
-      let currentMonth = -1;
-      
-      gridData.forEach((cell, index) => {
-          if (!cell.date) return;
-          const m = cell.date.getMonth();
-          if (m !== currentMonth) {
-              // Calculate rough column index (index / 7 rows)
-              const colIndex = Math.floor(index / 7);
-              
-              // FIX: Precise calculation -> 12px (box) + 2px (gap) = 14px per column
-              labels.push({ name: cell.date.toLocaleString('default', { month: 'short' }), col: colIndex });
-              currentMonth = m;
-          }
-      });
-      return labels;
-  };
-
-  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500 font-mono">Loading Profile...</div>;
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-6 selection:bg-purple-500/30">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
-            <div>
-                <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition text-sm font-bold">
-                    <ArrowLeft size={16}/> Back to Dashboard
-                </button>
-                <div className="flex items-center gap-5">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-3xl font-bold text-white shadow-2xl shadow-purple-900/30 border border-white/10">
-                        {studentInfo.name?.charAt(0)}
+                    <div className="relative w-8 h-[96px] mr-2 text-[10px] text-neutral-500 font-bold">
+                        {/* Mon aligns with first box (Row 0) */}
+                        <span className="absolute top-[30px] right-0">Mon</span>
+                        {/* Wed aligns with third box (Row 2) -> 14px * 2 = 28px */}
+                        <span className="absolute top-[58px] right-0">Wed</span>
+                        {/* Fri aligns with fifth box (Row 4) -> 14px * 4 = 56px */}
+                        <span className="absolute top-[89px] right-0">Fri</span>
                     </div>
-                    <div>
-                        <h1 className="text-4xl font-extrabold text-white tracking-tight">{studentInfo.name}</h1>
-                        <div className="flex items-center gap-3 mt-1.5">
-                            <span className="text-slate-400 text-sm font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{studentInfo.prn}</span>
-                            <span className="text-slate-500 text-sm">•</span>
-                            <span className="text-slate-400 text-sm font-medium">{studentInfo.branch}</span>
+
+                    {/* Heatmap Scroll Container */}
+                    <div className="overflow-x-auto flex-1 pb-2 scrollbar-thin scrollbar-thumb-neutral-800">
+                        {/* Month Labels */}
+                        <div className="flex text-[10px] text-neutral-500 font-bold mb-2 relative h-3">
+                            {monthLabels.map((m, i) => (
+                                <span
+                                    key={i}
+                                    style={{ left: `${m.index * 14}px` }}
+                                    className="absolute top-0"
+                                >
+                                    {m.name}
+                                </span>
+                            ))}
+                        </div>
+
+                        {/* The Grid */}
+                        <div className="flex gap-[2px]">
+                            {weeks.map((week, wIndex) => (
+                                <div key={wIndex} className="flex flex-col gap-[2px]">
+                                    {week.map((day, dIndex) => (
+                                        <div
+                                            key={dIndex}
+                                            // Fixed Size: 12px x 12px
+                                            className={`w-3 h-3 rounded-[2px] transition-all duration-300 ${getColor(day)} ${day ? 'hover:scale-125 hover:z-10 cursor-pointer' : ''}`}
+                                            title={day ? `${new Date(day.date).toDateString()}: ${day.count} quizzes` : ''}
+                                        ></div>
+                                    ))}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
-            </div>
-            <div className="flex gap-3">
-                 <div className="px-5 py-3 bg-slate-900 rounded-xl border border-slate-800 text-sm font-bold text-slate-300 flex items-center gap-2 shadow-sm">
-                    <Calendar size={18} className="text-purple-400"/> Batch: {studentInfo.year}
-                 </div>
-            </div>
-        </div>
 
-        {/* STATS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <StatCard icon={<Trophy size={22}/>} label="Total Tests" value={profileData?.stats?.totalTests} color="text-yellow-400" bg="bg-yellow-400/10" border="border-yellow-400/20" />
-            <StatCard icon={<Target size={22}/>} label="Avg Score" value={profileData?.stats?.avgScore} color="text-blue-400" bg="bg-blue-400/10" border="border-blue-400/20" />
-            <StatCard icon={<Activity size={22}/>} label="Accuracy" value={`${profileData?.stats?.accuracy}%`} color="text-green-400" bg="bg-green-400/10" border="border-green-400/20" />
-            <StatCard icon={<Award size={22}/>} label="Best Score" value={profileData?.stats?.bestScore} color="text-purple-400" bg="bg-purple-400/10" border="border-purple-400/20" />
-        </div>
-
-        {/* FREQUENCY COUNTER / HEATMAP */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 mb-8 shadow-xl relative overflow-hidden">
-            <div className="flex items-center justify-between mb-6 relative z-10">
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <TrendingUp size={20} className="text-green-400"/> Frequency Counter
-                </h3>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                    {startDate.getFullYear()}
-                </div>
-            </div>
-            
-            <div className="w-full overflow-x-auto pb-2 relative z-10 scrollbar-hide">
-                <div className="min-w-max">
-                     {/* Month Labels */}
-                     <div className="flex mb-2 text-[10px] font-bold text-slate-500 h-4 relative w-full">
-                        {getMonthLabels().map((m, i) => (
-                            // Position = Column Index * (Box Width 12px + Gap 2px) = 14px
-                            <div key={i} style={{ position: 'absolute', left: `${m.col * 14}px` }}>{m.name}</div>
-                        ))}
-                     </div>
-
-                     {/* The Grid (Rows=7, Flow=Col) - FIXED GAP: 2px */}
-                     <div className="grid grid-rows-7 grid-flow-col gap-[2px]">
-                        {gridData.map((day, i) => (
-                            <div 
-                                key={i} 
-                                title={day.date ? `${day.dateStr}: ${day.count} quizzes` : ''}
-                                className={`w-3 h-3 rounded-[2px] ${day.intensity || 'invisible'} border border-transparent hover:border-white transition-all duration-150`}
-                            ></div>
-                        ))}
-                     </div>
+                {/* Legend */}
+                <div className="flex items-center gap-1.5 mt-4 text-[10px] text-neutral-500 justify-end">
+                    <span className="mr-1">Less</span>
+                    <div className="w-3 h-3 rounded-[2px] bg-neutral-800 border border-neutral-700/50"></div>
+                    <div className="w-3 h-3 rounded-[2px] bg-emerald-900/60 border border-emerald-900"></div>
+                    <div className="w-3 h-3 rounded-[2px] bg-emerald-700/80 border border-emerald-700"></div>
+                    <div className="w-3 h-3 rounded-[2px] bg-emerald-600 border border-emerald-500"></div>
+                    <div className="w-3 h-3 rounded-[2px] bg-emerald-500 border border-emerald-400"></div>
+                    <span className="ml-1">More</span>
                 </div>
             </div>
 
-            <div className="flex justify-end items-center gap-2 mt-6 text-xs text-slate-500 font-bold uppercase tracking-wider">
-                <span>Less</span>
-                <div className="w-3 h-3 rounded-[2px] bg-slate-800/50 border border-slate-700"></div>
-                <div className="w-3 h-3 rounded-[2px] bg-purple-900/60"></div>
-                <div className="w-3 h-3 rounded-[2px] bg-purple-600/80"></div>
-                <div className="w-3 h-3 rounded-[2px] bg-purple-500"></div>
-                <div className="w-3 h-3 rounded-[2px] bg-green-400"></div>
-                <span>More</span>
+            {/* --- RIGHT SIDE: YEAR SELECTOR --- */}
+            <div className="flex flex-row md:flex-col gap-2 md:pl-6 md:border-l border-neutral-800/50 text-xs font-bold text-neutral-500 min-w-[80px]">
+                {availableYears.map(year => (
+                    <button
+                        key={year}
+                        onClick={() => setSelectedYear(year)}
+                        className={`px-3 py-1.5 rounded-lg transition-all text-left w-full ${year === selectedYear ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'hover:bg-neutral-800 hover:text-neutral-300 border border-transparent'}`}
+                    >
+                        {year}
+                    </button>
+                ))}
             </div>
         </div>
-
-        {/* RECENT ACTIVITY LIST */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
-             <h3 className="text-xl font-bold text-white mb-6">Recent Attempts</h3>
-             <div className="space-y-3">
-                 {profileData?.recentActivity?.length === 0 ? (
-                     <div className="text-center py-8 text-slate-500 text-sm bg-slate-950/50 rounded-xl border border-dashed border-slate-800">
-                        No activity recorded yet. Start a quiz to build your streak!
-                     </div>
-                 ) : (
-                     profileData?.recentActivity?.map((act, i) => (
-                         <div key={i} className="flex justify-between items-center p-4 bg-slate-950 rounded-xl border border-slate-800 hover:border-purple-500/30 transition group">
-                             <div>
-                                 <div className="font-bold text-white mb-1 group-hover:text-purple-400 transition-colors">{act.quizId}</div>
-                                 <div className="text-xs text-slate-500 flex items-center gap-2">
-                                    <Calendar size={12}/> {new Date(act.submittedAt).toLocaleDateString()} 
-                                    <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-                                    {new Date(act.submittedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                 </div>
-                             </div>
-                             <div className="text-right">
-                                 <div className="font-bold text-purple-400 text-xl">{act.score}</div>
-                                 <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Marks</div>
-                             </div>
-                         </div>
-                     ))
-                 )}
-             </div>
-        </div>
-
-      </div>
-    </div>
-  );
+    );
 };
 
-const StatCard = ({ icon, label, value, color, bg, border }) => (
-    <div className={`p-6 rounded-3xl border ${border} ${bg} flex items-center gap-5 transition hover:scale-[1.02] duration-300`}>
-        <div className={`p-3.5 rounded-2xl bg-slate-950 ${color} shadow-inner ring-1 ring-inset ring-white/10`}>
-            {icon}
+const StudentProfile = ({ student, stats, onBack }) => {
+    if (!student || !stats) return null;
+
+    const profileStats = stats.stats || {};
+    const history = stats.recentActivity || [];
+    const activityMap = stats.activityMap || {};
+
+    return (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-300 pb-20 w-full">
+            {/* HEADER */}
+            <div className="flex items-center gap-4 mb-8">
+                {onBack && (
+                    <button onClick={onBack} className="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white hover:border-neutral-600 transition"><ArrowLeft size={18} /></button>
+                )}
+                <div>
+                    <h2 className="text-2xl font-bold text-white">{student.name}</h2>
+                    <div className="flex gap-3 text-sm text-neutral-400 mt-1">
+                        <span className="flex items-center gap-1"><Code size={12} /> {student.prn}</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1"><GraduationCap size={12} /> {student.branch}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* STATS CARDS */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-xl flex items-center gap-4 hover:border-neutral-700 transition">
+                    <div className="w-12 h-12 rounded-full bg-emerald-900/20 flex items-center justify-center text-emerald-400"><CheckSquare size={24} /></div>
+                    <div>
+                        <div className="text-2xl font-bold text-white">{profileStats.totalTests || 0}</div>
+                        <div className="text-xs text-neutral-500 uppercase font-bold">Total Attempts</div>
+                    </div>
+                </div>
+                <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-xl flex items-center gap-4 hover:border-neutral-700 transition">
+                    <div className="w-12 h-12 rounded-full bg-violet-900/20 flex items-center justify-center text-violet-400"><Hash size={24} /></div>
+                    <div>
+                        <div className="text-2xl font-bold text-white">{profileStats.accuracy || 0}%</div>
+                        <div className="text-xs text-neutral-500 uppercase font-bold">Accuracy</div>
+                    </div>
+                </div>
+                <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-xl flex items-center gap-4 hover:border-neutral-700 transition">
+                    <div className="w-12 h-12 rounded-full bg-amber-900/20 flex items-center justify-center text-amber-400"><BarChart2 size={24} /></div>
+                    <div>
+                        <div className="text-2xl font-bold text-white">{profileStats.avgScore || 0}</div>
+                        <div className="text-xs text-neutral-500 uppercase font-bold">Avg. Score</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- CONTRIBUTION HEATMAP --- */}
+            <ActivityHeatmap activityMap={activityMap} />
+
+            {/* RECENT ACTIVITY TABLE */}
+            <h3 className="text-lg font-bold mb-4 text-white">Recent Activity</h3>
+            <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-none">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left text-neutral-400">
+                        <thead className="text-xs text-neutral-500 uppercase bg-neutral-950/50 border-b border-neutral-800">
+                            <tr>
+                                <th className="px-6 py-4">Quiz ID</th>
+                                <th className="px-6 py-4">Submitted At</th>
+                                <th className="px-6 py-4 text-right">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {history.map((h, i) => (
+                                <tr key={i} className="border-b border-neutral-800 hover:bg-neutral-800/30 transition">
+                                    <td className="px-6 py-4 font-medium text-white">
+                                        {h.quizTitle || h.quizId || "Unknown Quiz"}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {h.submittedAt ? new Date(h.submittedAt).toLocaleDateString() : 'N/A'}
+                                    </td>
+                                    <td className="px-6 py-4 text-right font-bold text-emerald-400">
+                                        {h.score}
+                                    </td>
+                                </tr>
+                            ))}
+                            {history.length === 0 && (
+                                <tr>
+                                    <td colSpan="3" className="text-center py-8 text-neutral-500 italic">
+                                        No activity recorded yet.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        <div>
-            <div className="text-3xl font-black text-white tracking-tight">{value}</div>
-            <div className={`text-xs font-bold uppercase tracking-wider opacity-80 ${color}`}>{label}</div>
-        </div>
-    </div>
-);
+    );
+};
 
 export default StudentProfile;

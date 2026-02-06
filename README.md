@@ -1,87 +1,251 @@
-# Qizzer - Secure Quiz & Coding Assessment Platform
+# MERN Quiz Application
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Stack-MERN-blue?style=for-the-badge&logo=react" alt="MERN Stack" />
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
-</div>
+A production-ready quiz application built with the MERN stack (MongoDB, Express, React, Node.js) featuring role-based authentication, chapter-based quiz organization, and automatic scoring.
 
-<br />
+## Features
 
-**Qizzer** is a robust, full-stack assessment platform designed for conducting secure, weekly coding quizzes and technical assessments. It features a distraction-free student interface, real-time code compilation for multiple languages, and a powerful admin panel for managing quizzes.
+### Admin Features
+- **Student Management**: Bulk upload student credentials via CSV
+- **Chapter Management**: Create and organize quizzes by chapters
+- **Quiz Management**: Upload quiz JSON files or create quizzes manually
+- **CRUD Operations**: Edit and delete quizzes
 
-## 🚀 Features
+### Student Features
+- **Chapter-based Navigation**: Browse quizzes organized by chapters
+- **Quiz Taking**: Full-screen quiz interface with countdown timer
+- **Automatic Scoring**: Instant results based on correct answers
+- **Detailed Results**: View explanations for each question
 
-### 🎓 For Students
-* **Secure Environment:** Full-screen enforcement and tab-switch detection to prevent cheating.
-* **Multi-Language Compiler:** Support for **Python, JavaScript, C, C++, and Java**.
-* **LeetCode-Style Interface:** Clean coding workspace with input/output test cases and "Run Code" functionality.
-* **Instant Results:** Real-time scoring and leaderboards.
-* **Resume Capability:** "Remember Me" session handling (SessionStorage/LocalStorage).
+## Tech Stack
 
-### 🛡️ For Admins
-* **Dashboard:** manage quizzes, view schedules, and monitor status (Live, Upcoming, Ended).
-* **Rich Text Editor:** Create questions with Markdown support and image uploads.
-* **Test Case Management:** Add multiple hidden test cases for coding problems.
-* **Security:** Password-protected admin login with secure session handling.
+### Backend
+- Node.js & Express
+- MongoDB with Mongoose
+- JWT Authentication
+- Bcrypt for password hashing
+- Multer for file uploads
+- CSV Parser
 
-## 🛠️ Tech Stack
+### Frontend
+- React 18 with Vite
+- React Router v6
+- Tailwind CSS
+- Axios
+- React Dropzone
+- Lucide React Icons
 
-* **Frontend:** React (Vite), Tailwind CSS, Lucide React (Icons), Monaco Editor (Code Editor), React Hot Toast (Notifications).
-* **Backend:** Node.js, Express.js.
-* **Database (Current):** JSON-based local file storage (can be migrated to MongoDB).
-* **Compiler API:** Piston API (External execution engine).
+## Project Structure
 
-## 📦 Installation & Setup
+```
+Quiz-App/
+├── server/
+│   ├── config/
+│   │   └── db.js
+│   ├── middleware/
+│   │   ├── auth.js
+│   │   └── roleAuth.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Chapter.js
+│   │   ├── Quiz.js
+│   │   └── Result.js
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── admin.js
+│   │   ├── chapters.js
+│   │   └── quiz.js
+│   ├── uploads/
+│   ├── .env
+│   ├── .gitignore
+│   ├── package.json
+│   └── server.js
+│
+└── client/
+    ├── src/
+    │   ├── api/
+    │   │   └── axios.js
+    │   ├── components/
+    │   │   ├── admin/
+    │   │   │   ├── StudentManager.jsx
+    │   │   │   └── QuizManager.jsx
+    │   │   ├── common/
+    │   │   │   └── ProtectedRoute.jsx
+    │   │   └── student/
+    │   ├── context/
+    │   │   └── AuthContext.jsx
+    │   ├── pages/
+    │   │   ├── Login.jsx
+    │   │   ├── AdminDashboard.jsx
+    │   │   ├── StudentDashboard.jsx
+    │   │   ├── QuizTaking.jsx
+    │   │   └── QuizResult.jsx
+    │   ├── App.jsx
+    │   ├── main.jsx
+    │   └── index.css
+    ├── .env
+    ├── package.json
+    ├── tailwind.config.js
+    └── vite.config.js
+```
 
-1.  **Clone the Repository**
-    ```bash
-    git clone [https://github.com/yourusername/qizzer.git](https://github.com/yourusername/qizzer.git)
-    cd qizzer
-    ```
+## Installation & Setup
 
-2.  **Setup Server (Backend)**
-    ```bash
-    cd server
-    npm install
-    
-    # Create a .env file for admin credentials
-    echo "ADMIN_USER=admin" > .env
-    echo "ADMIN_PASS=password123" >> .env
-    
-    # Start the server (Runs on port 3001)
-    node index.js
-    ```
+### Prerequisites
+- Node.js (v16 or higher)
+- MongoDB (local or Atlas)
 
-3.  **Setup Client (Frontend)**
-    Open a new terminal window:
-    ```bash
-    cd client
-    npm install
-    
-    # Start the React app (Runs on port 5173)
-    npm run dev
-    ```
+### 1. Clone the repository
+```bash
+cd c:\Projects\Quiz-App
+```
 
-4.  **Access the App**
-    * **Student View:** `http://localhost:5173`
-    * **Admin Panel:** `http://localhost:5173/login`
+### 2. Setup Server
+```bash
+cd server
+npm install
+```
 
-## 🔒 Security Features
+Create `.env` file in server directory:
+```env
+MONGODB_URI=mongodb://localhost:27017/quiz-app
+JWT_SECRET=your_secure_jwt_secret_key
+PORT=5000
+```
 
-* **Fullscreen Lock:** Students must enter fullscreen mode to start. Exiting fullscreen auto-submits the quiz.
-* **Tab Switching:** Detects visibility changes (switching tabs) and terminates the session.
-* **Admin Auth:** Secure login using environment variables on the backend.
+### 3. Setup Client
+```bash
+cd ../client
+npm install
+```
 
-## 🤝 Contributing
+Create `.env` file in client directory:
+```env
+VITE_API_URL=http://localhost:5000/api
+```
 
-Contributions are welcome! Please fork this repository and submit a pull request.
+### 4. Start MongoDB
+Make sure MongoDB is running on your system.
 
-## 📄 License
+### 5. Run the Application
 
-This project is licensed under the MIT License.
+**Terminal 1 - Start Server:**
+```bash
+cd server
+npm run dev
+```
 
----
+**Terminal 2 - Start Client:**
+```bash
+cd client
+npm run dev
+```
 
-<p align="center">
-  Built with ❤️ by <b>Om Patole</b> for School of Engineering & Technology, Shivaji University.
-</p>
+The application will be available at:
+- Frontend: http://localhost:5173
+- Backend: http://localhost:5000
+
+## Usage
+
+### Creating an Admin User
+Since students are created via CSV upload, you need to manually create an admin user in MongoDB:
+
+```javascript
+// Connect to MongoDB and run:
+db.users.insertOne({
+  name: "Admin User",
+  email: "admin@example.com",
+  password: "$2a$10$YourHashedPasswordHere", // Use bcrypt to hash
+  role: "Admin",
+  createdAt: new Date(),
+  updatedAt: new Date()
+})
+```
+
+Or use this Node.js script:
+```javascript
+const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost:27017/quiz-app');
+
+const User = require('./models/User');
+
+async function createAdmin() {
+  const admin = new User({
+    name: 'Admin User',
+    email: 'admin@example.com',
+    password: 'admin123', // Will be hashed automatically
+    role: 'Admin'
+  });
+  await admin.save();
+  console.log('Admin created');
+  process.exit();
+}
+
+createAdmin();
+```
+
+### CSV Format for Students
+```csv
+name,email,password
+John Doe,john@example.com,password123
+Jane Smith,jane@example.com,password456
+```
+
+### Quiz JSON Format
+```json
+[
+  {
+    "title": "Quiz Set 1",
+    "description": "Practice questions on Chain Rule",
+    "quizType": "practice",
+    "duration": 30,
+    "category": "Calculus",
+    "questions": [
+      {
+        "text": "What is the derivative of sin(x)?",
+        "marks": 5,
+        "options": [
+          { "text": "cos(x)" },
+          { "text": "-cos(x)" },
+          { "text": "sin(x)" },
+          { "text": "-sin(x)" }
+        ],
+        "correctIndices": [0],
+        "explanation": "The derivative of sin(x) is cos(x)"
+      }
+    ]
+  }
+]
+```
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/login` - Login user
+
+### Admin Routes
+- `POST /api/admin/upload-students` - Upload CSV with student credentials
+- `POST /api/admin/create-chapter` - Create a new chapter
+- `POST /api/admin/upload-quiz-json` - Upload quiz JSON file
+- `GET /api/admin/chapters` - Get all chapters with quizzes
+- `PUT /api/admin/quiz/:id` - Update a quiz
+- `DELETE /api/admin/quiz/:id` - Delete a quiz
+
+### Student Routes
+- `GET /api/chapters` - Get all chapters
+- `GET /api/chapters/:id` - Get chapter with quizzes
+- `GET /api/quiz/:id` - Get quiz for taking
+- `POST /api/quiz/submit` - Submit quiz answers
+- `GET /api/quiz/results/:quizId` - Get result for a quiz
+- `GET /api/quiz/my-results` - Get all results for student
+
+## Security Features
+- JWT-based authentication
+- Password hashing with bcrypt
+- Role-based access control
+- Protected API routes
+- Automatic token refresh
+
+## License
+MIT

@@ -1,67 +1,63 @@
-import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
-// --- Public / Student Components ---
-import Home from './components/Home';
-import StudentLogin from './components/StudentLogin';
-import StudentDashboard from './components/StudentDashboard'; 
-import StudentProfile from './components/StudentProfile'; // This is the STUDENT'S view
-import QuizPlayer from './components/QuizPlayer';
-import LeaderboardList from './components/LeaderboardList';
-import Leaderboard from './components/Leaderboard';
-import StudyMaterials from './components/StudyMaterials';
-
-// --- Admin Components ---
-import AdminLogin from './components/AdminLogin';
-import AdminPanel from './components/AdminPanel';
-// IMPORT FIXED: Import the Admin-side profile with a unique name
-import AdminStudentProfile from './components/admin/students/StudentProfile'; 
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import LandingPage from './pages/LandingPage';
+import Login from './pages/Login';
+import AdminDashboard from './pages/AdminDashboard';
+import StudentDashboard from './pages/StudentDashboard';
+import QuizTaking from './pages/QuizTaking';
+import QuizResult from './pages/QuizResult';
 
 function App() {
-  const [isAuth, setIsAuth] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  // Check for existing admin session
-  useEffect(() => {
-    const session = localStorage.getItem('admin_session') || sessionStorage.getItem('admin_session');
-    if (session) setIsAuth(true);
-    setLoading(false);
-  }, []);
-
-  if (loading) return <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Loading...</div>;
-
   return (
-    <Router>
-      <Routes>
-        {/* --- Public Routes --- */}
-        <Route path="/" element={<Home />} />
-        <Route path="/student-login" element={<StudentLogin />} />
-        <Route path="/dashboard" element={<StudentDashboard />} />
-        <Route path="/profile" element={<StudentProfile />} />
-        <Route path="/study" element={<StudyMaterials />} />
-        
-        {/* --- Quiz Routes --- */}
-        <Route path="/quiz/:quizId" element={<QuizPlayer />} />
-        <Route path="/leaderboards" element={<LeaderboardList />} />
-        <Route path="/leaderboard/:quizId" element={<Leaderboard />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
 
-        {/* --- Admin Routes --- */}
-        <Route path="/login" element={!isAuth ? <AdminLogin setIsAuth={setIsAuth} /> : <Navigate to="/admin" replace />} />
-        
-        {/* FIX 1: Add '/*' so AdminPanel can handle its own sub-routes (like /admin/students) */}
-        <Route 
-          path="/admin/*" 
-          element={isAuth ? <AdminPanel setIsAuth={setIsAuth} /> : <Navigate to="/login" replace />} 
-        />
-        
-        {/* FIX 2: Register the Admin Student Profile Route */}
-        <Route 
-          path="/admin/student-profile" 
-          element={isAuth ? <AdminStudentProfile /> : <Navigate to="/login" replace />} 
-        />
-        
-      </Routes>
-    </Router>
+          {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Student Routes */}
+          <Route
+            path="/student"
+            element={
+              <ProtectedRoute allowedRoles={['Student']}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/quiz/:quizId"
+            element={
+              <ProtectedRoute allowedRoles={['Student']}>
+                <QuizTaking />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/result"
+            element={
+              <ProtectedRoute allowedRoles={['Student']}>
+                <QuizResult />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Default Route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
