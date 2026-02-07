@@ -15,6 +15,10 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
+// Initialize Scheduler
+const { initScheduler } = require('./utils/scheduler');
+initScheduler();
+
 // Middleware
 app.use(cors());
 app.use(express.json());

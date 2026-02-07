@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, GraduationCap } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
+import Logo from '../common/Logo';
 
 const Footer = () => {
     return (
@@ -8,10 +9,7 @@ const Footer = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {/* Brand Column */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-white">
-                            <GraduationCap className="w-8 h-8 text-emerald-500" />
-                            <span className="text-xl font-bold tracking-tight">AptitudePortal</span>
-                        </div>
+                        <Logo />
                         <p className="text-sm leading-relaxed">
                             Official Aptitude Enhancement Portal of the School of Engineering and Technology.
                         </p>
@@ -22,8 +20,8 @@ const Footer = () => {
                         <h3 className="text-white font-semibold mb-4">Quick Links</h3>
                         <ul className="space-y-2 text-sm">
                             <li><Link to="/" className="hover:text-emerald-400 transition-colors">Home</Link></li>
-                            <li><a href="#features" className="hover:text-emerald-400 transition-colors">Features</a></li>
-                            <li><a href="#" className="hover:text-emerald-400 transition-colors">About Us</a></li>
+                            <li><Link to="/features" className="hover:text-emerald-400 transition-colors">Features</Link></li>
+                            <li><Link to="/about" className="hover:text-emerald-400 transition-colors">About Us</Link></li>
                             <li><Link to="/login" className="hover:text-emerald-400 transition-colors">Login</Link></li>
                         </ul>
                     </div>
@@ -32,9 +30,9 @@ const Footer = () => {
                     <div>
                         <h3 className="text-white font-semibold mb-4">Legal</h3>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="#" className="hover:text-emerald-400 transition-colors">Terms of Service</a></li>
-                            <li><a href="#" className="hover:text-emerald-400 transition-colors">Privacy Policy</a></li>
-                            <li><a href="#" className="hover:text-emerald-400 transition-colors">Cookie Policy</a></li>
+                            <li><Link to="/terms" className="hover:text-emerald-400 transition-colors">Terms of Service</Link></li>
+                            <li><Link to="/data-safety" className="hover:text-emerald-400 transition-colors">Privacy Policy</Link></li>
+                            <li><Link to="/cookie-usage" className="hover:text-emerald-400 transition-colors">Cookie Policy</Link></li>
                         </ul>
                     </div>
 
@@ -44,7 +42,7 @@ const Footer = () => {
                         <ul className="space-y-3 text-sm">
                             <li className="flex items-start gap-3">
                                 <Mail className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                                <span>tnp@collegeapp.com</span>
+                                <span>tlp20@unishivaji.ac.in</span>
                             </li>
                             <li className="flex items-start gap-3">
                                 <Phone className="w-5 h-5 text-emerald-500 flex-shrink-0" />
@@ -52,7 +50,7 @@ const Footer = () => {
                             </li>
                             <li className="flex items-start gap-3">
                                 <MapPin className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                                <span>School of Engineering and Technology, Campus, Pune</span>
+                                <span>School of Engineering and Technology, Campus, Shivaji University, Vidyanagar, Kolhapur</span>
                             </li>
                         </ul>
                     </div>
@@ -60,6 +58,7 @@ const Footer = () => {
 
                 <div className="border-t border-neutral-800 mt-12 pt-8 text-center text-sm">
                     <p>&copy; {new Date().getFullYear()} School of Engineering and Technology, Training and Placement Cell. All rights reserved.</p>
+                    <p className="mt-2 text-emerald-500 font-medium">Tool made by students for students</p>
                 </div>
             </div>
         </footer>

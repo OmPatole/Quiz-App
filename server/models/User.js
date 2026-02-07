@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
     },
     academicYear: {
         type: String,
-        enum: ['First Year', 'Second Year', 'Third Year', 'Last Year'],
+        enum: ['First Year', 'Second Year', 'Third Year', 'Last Year', 'Graduated'],
         // Not required for Admin
     },
     branch: {
@@ -35,6 +35,17 @@ const userSchema = new mongoose.Schema({
     batchYear: {
         type: String
         // e.g. "2026-2027"
+    },
+    currentStreak: {
+        type: Number,
+        default: 0
+    },
+    longestStreak: {
+        type: Number,
+        default: 0
+    },
+    lastQuizDate: {
+        type: Date
     }
 }, {
     timestamps: true

@@ -1,26 +1,13 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, BarChart2, Clock, CheckCircle } from 'lucide-react';
+import { ArrowRight, BookOpen, BarChart2, Clock, CheckCircle, Briefcase, TrendingUp, BrainCircuit } from 'lucide-react';
 import Footer from '../components/layout/Footer';
+import Navbar from '../components/layout/Navbar';
 
 const LandingPage = () => {
     return (
         <div className="min-h-screen flex flex-col bg-neutral-950 text-white font-sans">
             {/* Navbar */}
-            <nav className="border-b border-emerald-900/20 bg-neutral-950/80 backdrop-blur-md sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                    <div className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                        <span className="text-emerald-500">Aptitude</span>Portal
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Link to="/login" className="text-neutral-400 hover:text-emerald-400 font-medium transition-colors">
-                            Login
-                        </Link>
-                        <Link to="/login" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all font-medium flex items-center gap-2 text-sm shadow-lg shadow-emerald-900/20">
-                            Get Started <ArrowRight className="w-4 h-4" />
-                        </Link>
-                    </div>
-                </div>
-            </nav>
+            <Navbar />
 
             {/* Hero Section */}
             <main className="flex-grow">
@@ -54,7 +41,7 @@ const LandingPage = () => {
                             <p className="text-neutral-400">Comprehensive tools designed to boost your placement readiness.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 h-auto md:h-[600px]">
+                        <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 gap-y-6 h-auto md:h-[600px]">
                             {/* Feature 1: Large Left - Live Quizzes */}
                             <div className="col-span-1 md:col-span-2 row-span-2 bg-neutral-900 rounded-3xl p-10 border border-neutral-800 hover:border-emerald-900/50 transition-all duration-300 group relative overflow-hidden shadow-2xl shadow-black/50">
                                 <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -102,6 +89,53 @@ const LandingPage = () => {
                                 <h3 className="text-xl font-bold mb-3 text-white group-hover:text-emerald-400 transition-colors">Study Library</h3>
                                 <p className="text-neutral-400 text-sm leading-relaxed">
                                     Access a curated central repository of PDF notes, cheat sheets, and previous year papers organized systematically.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* New Section: Why Upgrade Aptitude? */}
+                <section className="py-24 bg-neutral-900 border-t border-neutral-800">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                        <div className="mb-16">
+                            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">
+                                Why Aptitude Matters for Your Career?
+                            </h2>
+                            <div className="w-24 h-1 bg-emerald-500 mx-auto rounded-full"></div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 gap-y-6">
+                            {/* Card 1 */}
+                            <div className="flex flex-col items-center group">
+                                <div className="w-20 h-20 bg-neutral-800 rounded-full flex items-center justify-center mb-6 border border-neutral-700 group-hover:border-emerald-500 group-hover:scale-110 transition-all duration-300 shadow-xl">
+                                    <Briefcase className="w-10 h-10 text-emerald-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-3">Placement Ready</h3>
+                                <p className="text-neutral-400 leading-relaxed max-w-sm mx-auto">
+                                    80% of top companies (TCS, Infosys, Wipro) use aptitude tests as their first elimination round. Master it here.
+                                </p>
+                            </div>
+
+                            {/* Card 2 */}
+                            <div className="flex flex-col items-center group">
+                                <div className="w-20 h-20 bg-neutral-800 rounded-full flex items-center justify-center mb-6 border border-neutral-700 group-hover:border-emerald-500 group-hover:scale-110 transition-all duration-300 shadow-xl">
+                                    <TrendingUp className="w-10 h-10 text-emerald-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-3">Competitive Edge</h3>
+                                <p className="text-neutral-400 leading-relaxed max-w-sm mx-auto">
+                                    Ace exams like GATE, CAT, and GRE with sharp logical reasoning and quantitative skills.
+                                </p>
+                            </div>
+
+                            {/* Card 3 */}
+                            <div className="flex flex-col items-center group">
+                                <div className="w-20 h-20 bg-neutral-800 rounded-full flex items-center justify-center mb-6 border border-neutral-700 group-hover:border-emerald-500 group-hover:scale-110 transition-all duration-300 shadow-xl">
+                                    <BrainCircuit className="w-10 h-10 text-emerald-500" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-3">Real-World Logic</h3>
+                                <p className="text-neutral-400 leading-relaxed max-w-sm mx-auto">
+                                    Enhance your problem-solving speed and accuracy—skills that define great engineers.
                                 </p>
                             </div>
                         </div>

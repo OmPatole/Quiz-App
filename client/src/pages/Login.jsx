@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import Logo from '../components/common/Logo';
 
 const Login = () => {
     const [prn, setPrn] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -17,7 +20,7 @@ const Login = () => {
         setError('');
         setLoading(true);
 
-        const result = await login(prn, password);
+        const result = await login(prn, password, rememberMe);
 
         if (result.success) {
             // Redirect based on role
@@ -38,11 +41,11 @@ const Login = () => {
             <div className="w-full max-w-md">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-neutral-900 rounded-2xl mb-4 border border-neutral-800 shadow-lg shadow-emerald-900/10">
-                        <LogIn className="w-8 h-8 text-emerald-500" />
+                    <div className="flex justify-center mb-6">
+                        <Logo iconSize={12} textSize="text-3xl" />
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
-                        Welcome Back
+                        Welcome, Student
                     </h1>
                     <p className="text-neutral-400">
                         Sign in to access your aptitude dashboard
@@ -83,14 +86,40 @@ const Login = () => {
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="input-field pl-10"
+                                    className="input-field pl-10 pr-10"
                                     placeholder="••••••••"
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
                             </div>
+                            <p className="mt-2 text-xs text-neutral-500">
+                                First time? Default password is <span className="font-mono text-emerald-500">Initials@DOB(DDMMYYYY)</span>
+                                <br />
+                                (e.g., John Doe + 15-08-2004 = <span className="font-mono text-emerald-500">JD@15082004</span>)
+                            </p>
+                        </div>
+
+                        <div className="flex items-center">
+                            <input
+                                id="remember-me"
+                                name="remember-me"
+                                type="checkbox"
+                                checked={rememberMe}
+                                onChange={(e) => setRememberMe(e.target.checked)}
+                                className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-neutral-700 bg-neutral-800 rounded"
+                            />
+                            <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-400">
+                                Remember me
+                            </label>
                         </div>
 
                         <button

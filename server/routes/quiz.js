@@ -24,7 +24,7 @@ router.get('/:id', auth, roleAuth('Student'), async (req, res) => {
 });
 
 // @route   POST /api/quiz/submit
-// @desc    Submit quiz and calculate score
+// @desc    Submit quiz, calculate score, and update streak
 // @access  Student only
 router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
     try {
@@ -62,9 +62,11 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
                 score += question.marks;
             }
 
+            // Include full question details and explanation for review
             detailedResults.push({
                 questionIndex: index,
                 questionText: question.text,
+                options: question.options,
                 selectedIndices,
                 correctIndices: question.correctIndices,
                 isCorrect,
@@ -84,12 +86,59 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
 
         await result.save();
 
+        // --- Streak Logic ---
+        const User = require('../models/User');
+        const student = await User.findById(req.user._id);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to midnight
+
+        let lastDate = student.lastQuizDate ? new Date(student.lastQuizDate) : null;
+        if (lastDate) lastDate.setHours(0, 0, 0, 0);
+
+        let streakUpdated = false;
+
+        if (!lastDate) {
+            // First ever quiz
+            student.currentStreak = 1;
+            student.longestStreak = 1;
+            student.lastQuizDate = new Date();
+            streakUpdated = true;
+        } else {
+            const diffTime = Math.abs(today - lastDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) {
+                // Consecutive day
+                student.currentStreak += 1;
+                if (student.currentStreak > student.longestStreak) {
+                    student.longestStreak = student.currentStreak;
+                }
+                student.lastQuizDate = new Date();
+                streakUpdated = true;
+            } else if (diffDays > 1) {
+                // Missed a day (or more)
+                student.currentStreak = 1;
+                student.lastQuizDate = new Date();
+                streakUpdated = true;
+            }
+            // diffDays === 0 means same day, do nothing
+        }
+
+        if (streakUpdated) {
+            await student.save();
+        }
+
         res.json({
             message: 'Quiz submitted successfully',
             score,
             totalMarks,
             percentage: ((score / totalMarks) * 100).toFixed(2),
-            detailedResults
+            detailedResults,
+            streak: {
+                current: student.currentStreak,
+                longest: student.longestStreak,
+                updated: streakUpdated
+            }
         });
     } catch (error) {
         console.error(error);
@@ -128,6 +177,89 @@ router.get('/my-results', auth, roleAuth('Student'), async (req, res) => {
             .sort({ submittedAt: -1 });
 
         res.json(results);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// @route   POST /api/quiz/save-progress
+// @desc    Save current quiz progress (timeLeft, answers)
+// @access  Student only
+const QuizSession = require('../models/QuizSession');
+
+router.post('/save-progress', auth, roleAuth('Student'), async (req, res) => {
+    try {
+        const { quizId, timeLeft, answers } = req.body;
+
+        if (!quizId) {
+            return res.status(400).json({ message: 'Quiz ID is required' });
+        }
+
+        // Convert answers array structure to Map for storage if needed,
+        // or just store the same structure. The prompt asked for Map: { questionIndex: selectedOptionIndex }
+        // BUT our frontend state `answers` is likely array of objects: [{questionIndex: 0, selectedIndices: [1]}]
+        // Let's store a Map where Key = questionIndex (string), Value = selectedIndices (array)
+
+        const answersMap = {};
+        if (answers && Array.isArray(answers)) {
+            answers.forEach(ans => {
+                answersMap[ans.questionIndex] = ans.selectedIndices;
+            });
+        }
+
+        await QuizSession.findOneAndUpdate(
+            { studentId: req.user._id, quizId },
+            {
+                timeLeft,
+                answers: answersMap,
+                lastUpdated: Date.now()
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        res.json({ message: 'Progress saved' });
+    } catch (error) {
+        console.error("Save Progress Error:", error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// @route   GET /api/quiz/progress/:quizId
+// @desc    Get saved progress for a quiz
+// @access  Student only
+router.get('/progress/:quizId', auth, roleAuth('Student'), async (req, res) => {
+    try {
+        const session = await QuizSession.findOne({
+            studentId: req.user._id,
+            quizId: req.params.quizId
+        });
+
+        if (!session) {
+            return res.json({ found: false });
+        }
+
+        res.json({
+            found: true,
+            timeLeft: session.timeLeft,
+            answers: session.answers // This will come back as object/map 
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// @route   DELETE /api/quiz/progress/:quizId
+// @desc    Clear saved progress
+// @access  Student only
+router.delete('/progress/:quizId', auth, roleAuth('Student'), async (req, res) => {
+    try {
+        await QuizSession.findOneAndDelete({
+            studentId: req.user._id,
+            quizId: req.params.quizId
+        });
+        res.json({ message: 'Progress cleared' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });

@@ -7,6 +7,12 @@ import AdminDashboard from './pages/AdminDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import QuizTaking from './pages/QuizTaking';
 import QuizResult from './pages/QuizResult';
+import ChapterDetails from './pages/ChapterDetails';
+import Features from './pages/Features';
+import AboutUs from './pages/AboutUs';
+import TermsOfService from './pages/TermsOfService';
+import DataSafety from './pages/DataSafety';
+import CookieUsage from './pages/CookieUsage';
 
 function App() {
   return (
@@ -15,6 +21,11 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/data-safety" element={<DataSafety />} />
+          <Route path="/cookie-usage" element={<CookieUsage />} />
           <Route path="/login" element={<Login />} />
 
           {/* Admin Routes */}
@@ -33,6 +44,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['Student']}>
                 <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/chapter/:chapterId"
+            element={
+              <ProtectedRoute allowedRoles={['Student']}>
+                <ChapterDetails />
               </ProtectedRoute>
             }
           />

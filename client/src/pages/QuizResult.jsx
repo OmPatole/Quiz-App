@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, Award, Home, TrendingUp } from 'lucide-react';
+import { CheckCircle, XCircle, Award, Home, TrendingUp, Flame } from 'lucide-react';
 
 const QuizResult = () => {
     const location = useLocation();
@@ -68,87 +68,88 @@ const QuizResult = () => {
                     </div>
                 </div>
 
+                {/* Streak Celebration */}
+                {result.streak?.updated && (
+                    <div className="card mb-8 bg-amber-900/10 border-amber-900/30 text-center animate-in scale-90 duration-500">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-900/20 rounded-full mb-4 text-amber-500">
+                            <Flame className="w-8 h-8 fill-current animate-pulse" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-amber-500 mb-1">
+                            {result.streak.current} Day Streak!
+                        </h2>
+                        <p className="text-neutral-400">
+                            Keep practicing to beat your best of {result.streak.longest} days.
+                        </p>
+                    </div>
+                )}
+
                 {/* Detailed Results */}
-                <div className="space-y-4 mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-4">
-                        Question-wise Results
+                <div className="space-y-6 mb-8">
+                    <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                        <CheckCircle className="w-6 h-6 text-emerald-500" />
+                        Detailed Analysis
                     </h2>
 
                     {detailedResults.map((item, index) => (
                         <div
                             key={index}
-                            className={`card bg-neutral-900 border-neutral-800 ${item.isCorrect
-                                ? 'border-l-4 border-l-emerald-500'
-                                : 'border-l-4 border-l-red-500'
+                            className={`card bg-neutral-900 border-neutral-800 transition-all ${item.isCorrect
+                                ? 'border-l-4 border-l-emerald-500 shadow-emerald-900/5'
+                                : 'border-l-4 border-l-red-500 shadow-red-900/5'
                                 }`}
                         >
-                            <div className="flex items-start gap-3 mb-4">
-                                <div
-                                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border ${item.isCorrect
-                                        ? 'bg-emerald-900/20 border-emerald-900 text-emerald-500'
-                                        : 'bg-red-900/20 border-red-900 text-red-500'
-                                        }`}
-                                >
-                                    {item.isCorrect ? (
-                                        <CheckCircle className="w-5 h-5" />
-                                    ) : (
-                                        <XCircle className="w-5 h-5" />
-                                    )}
-                                </div>
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-lg font-bold text-white">
+                                    Question {index + 1}
+                                </h3>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.isCorrect ? 'bg-emerald-900/30 text-emerald-500' : 'bg-red-900/30 text-red-500'}`}>
+                                    {item.isCorrect ? `+${item.marks} Marks` : '0 Marks'}
+                                </span>
+                            </div>
 
-                                <div className="flex-1">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <p className="text-lg font-medium text-white">
-                                            Question {index + 1}
-                                        </p>
-                                        <span
-                                            className={`text-sm font-semibold ${item.isCorrect ? 'text-emerald-500' : 'text-red-500'
-                                                }`}
-                                        >
-                                            {item.marks} marks
-                                        </span>
-                                    </div>
+                            <p className="text-neutral-300 mb-6 font-medium text-lg leading-relaxed">
+                                {item.questionText}
+                            </p>
 
-                                    <p className="text-neutral-300 mb-3">
-                                        {item.questionText}
-                                    </p>
+                            {/* Options with Visual Feedback */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                                {item.options?.map((opt, optIdx) => {
+                                    const isSelected = item.selectedIndices.includes(optIdx);
+                                    const isCorrectOpt = item.correctIndices.includes(optIdx);
 
-                                    {/* Your Answer */}
-                                    <div className="mb-2">
-                                        <p className="text-sm font-semibold text-neutral-400 mb-1">
-                                            Your Answer:
-                                        </p>
-                                        <p className="text-sm text-neutral-300">
-                                            {item.selectedIndices.length > 0
-                                                ? `Option(s): ${item.selectedIndices.map(i => i + 1).join(', ')}`
-                                                : 'Not answered'}
-                                        </p>
-                                    </div>
+                                    let borderColor = 'border-neutral-800';
+                                    let bgColor = 'bg-neutral-800/50';
+                                    let icon = null;
 
-                                    {/* Correct Answer */}
-                                    {!item.isCorrect && (
-                                        <div className="mb-3">
-                                            <p className="text-sm font-semibold text-emerald-500 mb-1">
-                                                Correct Answer:
-                                            </p>
-                                            <p className="text-sm text-neutral-300">
-                                                Option(s): {item.correctIndices.map(i => i + 1).join(', ')}
-                                            </p>
+                                    if (isCorrectOpt) {
+                                        borderColor = 'border-emerald-500';
+                                        bgColor = 'bg-emerald-900/20';
+                                        icon = <CheckCircle className="w-4 h-4 text-emerald-500" />;
+                                    } else if (isSelected && !isCorrectOpt) {
+                                        borderColor = 'border-red-500';
+                                        bgColor = 'bg-red-900/20';
+                                        icon = <XCircle className="w-4 h-4 text-red-500" />;
+                                    }
+
+                                    return (
+                                        <div key={optIdx} className={`p-4 rounded-xl border ${borderColor} ${bgColor} flex items-center justify-between`}>
+                                            <span className={`text-sm ${isCorrectOpt ? 'text-emerald-400 font-bold' : isSelected ? 'text-red-400' : 'text-neutral-400'}`}>
+                                                {opt.text}
+                                            </span>
+                                            {icon}
                                         </div>
-                                    )}
+                                    )
+                                })}
+                            </div>
 
-                                    {/* Explanation */}
-                                    {item.explanation && (
-                                        <div className="mt-3 p-3 bg-neutral-950 rounded-lg border border-neutral-800">
-                                            <p className="text-sm font-semibold text-emerald-500 mb-1">
-                                                Explanation:
-                                            </p>
-                                            <p className="text-sm text-neutral-400">
-                                                {item.explanation}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
+                            {/* Explanation */}
+                            <div className="bg-neutral-950 p-6 rounded-xl border border-neutral-800">
+                                <p className="text-xs font-bold text-emerald-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                                    <TrendingUp className="w-4 h-4" /> Explanation
+                                </p>
+                                <p className="text-neutral-400 leading-relaxed">
+                                    {item.explanation || "No explanation provided for this question."}
+                                </p>
                             </div>
                         </div>
                     ))}

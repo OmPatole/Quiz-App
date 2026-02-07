@@ -15,11 +15,54 @@ const QuizTaking = () => {
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        fetchQuiz();
+        if (!quizId) return;
+
+        const loadQuizAndProgress = async () => {
+            try {
+                // Fetch Quiz
+                const response = await api.get(`/quiz/${quizId}`);
+                const quizData = response.data;
+                setQuiz(quizData);
+
+                // Fetch Progress
+                const progressRes = await api.get(`/quiz/progress/${quizId}`);
+
+                if (progressRes.data.found) {
+                    console.log("Resuming session...");
+                    setTimeRemaining(progressRes.data.timeLeft);
+
+                    // Reconstruct answers state from saved map
+                    const savedAnswers = progressRes.data.answers; // Map { "0": [1], "1": [] }
+                    const restoredAnswers = quizData.questions.map((_, index) => ({
+                        questionIndex: index,
+                        selectedIndices: savedAnswers[index.toString()] || []
+                    }));
+                    setAnswers(restoredAnswers);
+                    alert("Resumed from your previous session!");
+                } else {
+                    // New Session
+                    setTimeRemaining(quizData.duration * 60);
+                    const initialAnswers = quizData.questions.map((_, index) => ({
+                        questionIndex: index,
+                        selectedIndices: [],
+                    }));
+                    setAnswers(initialAnswers);
+                }
+            } catch (error) {
+                console.error('Error loading quiz:', error);
+                alert('Failed to load quiz');
+                navigate('/student');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadQuizAndProgress();
     }, [quizId]);
 
+    // Timer Logic
     useEffect(() => {
-        if (timeRemaining <= 0) return;
+        if (loading || timeRemaining <= 0) return;
 
         const timer = setInterval(() => {
             setTimeRemaining((prev) => {
@@ -32,28 +75,28 @@ const QuizTaking = () => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [timeRemaining]);
+    }, [timeRemaining, loading]);
 
-    const fetchQuiz = async () => {
-        try {
-            const response = await api.get(`/quiz/${quizId}`);
-            setQuiz(response.data);
-            setTimeRemaining(response.data.duration * 60); // Convert to seconds
+    // Auto-Save Logic (Every 5 seconds)
+    useEffect(() => {
+        if (loading || !quiz || submitting) return;
 
-            // Initialize answers array
-            const initialAnswers = response.data.questions.map((_, index) => ({
-                questionIndex: index,
-                selectedIndices: [],
-            }));
-            setAnswers(initialAnswers);
-        } catch (error) {
-            console.error('Error fetching quiz:', error);
-            alert('Failed to load quiz');
-            navigate('/student');
-        } finally {
-            setLoading(false);
-        }
-    };
+        const saveInterval = setInterval(async () => {
+            try {
+                await api.post('/quiz/save-progress', {
+                    quizId,
+                    timeLeft: timeRemaining,
+                    answers
+                });
+            } catch (err) {
+                console.error("Auto-save failed", err);
+            }
+        }, 5000);
+
+        return () => clearInterval(saveInterval);
+    }, [quizId, timeRemaining, answers, loading, quiz, submitting]);
+
+    // ... (fetchQuiz removed as it's merged into loadQuizAndProgress)
 
     const handleOptionSelect = (optionIndex) => {
         const updatedAnswers = [...answers];
@@ -80,8 +123,11 @@ const QuizTaking = () => {
     const handleSubmit = async () => {
         if (submitting) return;
 
-        const confirmed = confirm('Are you sure you want to submit the quiz?');
-        if (!confirmed) return;
+        // Skip confirmation if time is up (auto-submit)
+        if (timeRemaining > 0) {
+            const confirmed = confirm('Are you sure you want to submit the quiz?');
+            if (!confirmed) return;
+        }
 
         setSubmitting(true);
         try {
@@ -89,6 +135,9 @@ const QuizTaking = () => {
                 quizId,
                 answers,
             });
+
+            // Clear saved progress on successful submission
+            await api.delete(`/quiz/progress/${quizId}`);
 
             // Navigate to results page
             navigate('/student/result', { state: { result: response.data } });
@@ -147,7 +196,7 @@ const QuizTaking = () => {
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="w-full bg-neutral-800 rounded-full h-2">
+                    <div className="w-full bg-neutral-800 rounded-full h-2 mb-6">
                         <div
                             className="bg-emerald-500 h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                             style={{ width: `${progress}%` }}
@@ -162,7 +211,7 @@ const QuizTaking = () => {
                             {currentQuestion + 1}
                         </span>
                         <div className="flex-1">
-                            <p className="text-lg text-white font-medium mb-1">
+                            <p className="text-base md:text-lg text-white font-medium mb-1 leading-relaxed">
                                 {question.text}
                             </p>
                             <div className="flex gap-4 text-sm text-neutral-400">
@@ -173,9 +222,9 @@ const QuizTaking = () => {
                     </div>
 
                     {/* Options */}
-                    <div className="space-y-3">
-                        {question.options.map((option, index) => {
-                            const isSelected = currentAnswer.selectedIndices.includes(index);
+                    <div className="space-y-4">
+                        {question.options?.map((option, index) => {
+                            const isSelected = currentAnswer?.selectedIndices?.includes(index);
                             return (
                                 <div
                                     key={index}
@@ -214,39 +263,41 @@ const QuizTaking = () => {
                     </div>
                 </div>
 
-                {/* Navigation */}
-                <div className="flex items-center justify-between">
-                    <button
-                        onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
-                        disabled={currentQuestion === 0}
-                        className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        <ChevronLeft className="w-4 h-4" />
-                        Previous
-                    </button>
+                {/* Navigation - Sticky on Mobile */}
+                <div className="sticky bottom-4 md:static bg-neutral-950 md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none border border-neutral-800 md:border-0 shadow-2xl md:shadow-none">
+                    <div className="flex items-center justify-between gap-4">
+                        <button
+                            onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
+                            disabled={currentQuestion === 0}
+                            className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 flex-1 md:flex-initial justify-center"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            <span className="hidden sm:inline">Previous</span>
+                        </button>
 
-                    {currentQuestion === quiz.questions.length - 1 ? (
-                        <button
-                            onClick={handleSubmit}
-                            disabled={submitting}
-                            className="btn-primary flex items-center gap-2 disabled:opacity-50 bg-emerald-600 hover:bg-emerald-700 text-white"
-                        >
-                            <Send className="w-4 h-4" />
-                            {submitting ? 'Submitting...' : 'Submit Quiz'}
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() =>
-                                setCurrentQuestion((prev) =>
-                                    Math.min(quiz.questions.length - 1, prev + 1)
-                                )
-                            }
-                            className="btn-primary flex items-center gap-2"
-                        >
-                            Next
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    )}
+                        {currentQuestion === quiz.questions.length - 1 ? (
+                            <button
+                                onClick={handleSubmit}
+                                disabled={submitting}
+                                className="btn-primary flex items-center gap-2 disabled:opacity-50 bg-emerald-600 hover:bg-emerald-700 text-white flex-1 md:flex-initial justify-center font-bold"
+                            >
+                                <Send className="w-4 h-4" />
+                                {submitting ? 'Submitting...' : 'Submit Quiz'}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() =>
+                                    setCurrentQuestion((prev) =>
+                                        Math.min(quiz.questions.length - 1, prev + 1)
+                                    )
+                                }
+                                className="btn-primary flex items-center gap-2 flex-1 md:flex-initial justify-center"
+                            >
+                                <span className="hidden sm:inline">Next</span>
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Warning for time */}

@@ -9,7 +9,7 @@ const Chapter = require('../models/Chapter');
 // @access  Student only
 router.get('/', auth, roleAuth('Student'), async (req, res) => {
     try {
-        const chapters = await Chapter.find().select('title createdAt');
+        const chapters = await Chapter.find().populate('quizzes', 'title duration category quizType');
         res.json(chapters);
     } catch (error) {
         console.error(error);

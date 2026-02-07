@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Users, BookOpen, Library, Menu, X } from 'lucide-react';
+import { LogOut, Users, BookOpen, Library, Menu, X, BarChart2 } from 'lucide-react';
+import Logo from '../components/common/Logo';
 import StudentManager from '../components/admin/StudentManager';
 import QuizManager from '../components/admin/QuizManager';
 import MaterialsManager from '../components/admin/MaterialsManager';
+import AdminAnalytics from '../components/admin/AdminAnalytics';
 
 const AdminDashboard = () => {
     const { user, logout } = useAuth();
-    const [activeTab, setActiveTab] = useState('students');
+    const [activeTab, setActiveTab] = useState('analytics'); // Default to analytics for visibility
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const tabs = [
+        { id: 'analytics', label: 'Analytics', icon: BarChart2 },
         { id: 'students', label: 'Student Management', icon: Users },
         { id: 'quizzes', label: 'Quiz Management', icon: BookOpen },
         { id: 'materials', label: 'Study Materials', icon: Library },
@@ -27,13 +30,12 @@ const AdminDashboard = () => {
             <header className="bg-neutral-950 border-b border-neutral-800 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-xl md:text-2xl font-bold text-white">
+                        <div className="flex items-center gap-4">
+                            <Logo />
+                            <div className="hidden md:block w-px h-8 bg-neutral-800"></div>
+                            <h1 className="hidden md:block text-sm font-medium text-neutral-400">
                                 Admin Dashboard
                             </h1>
-                            <p className="hidden md:block text-sm text-neutral-400">
-                                Welcome back, {user?.name}
-                            </p>
                         </div>
 
                         <div className="flex items-center gap-4">
@@ -107,6 +109,7 @@ const AdminDashboard = () => {
 
                 {/* Tab Content */}
                 <div className="mt-6 pb-8">
+                    {activeTab === 'analytics' && <AdminAnalytics />}
                     {activeTab === 'students' && <StudentManager />}
                     {activeTab === 'quizzes' && <QuizManager />}
                     {activeTab === 'materials' && <MaterialsManager />}
