@@ -20,7 +20,10 @@ const { initScheduler } = require('./utils/scheduler');
 initScheduler();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: '*', // Allow mobile devices to connect
+    credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
