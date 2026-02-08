@@ -30,7 +30,7 @@ const ChapterDetails = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
@@ -63,11 +63,11 @@ const ChapterDetails = () => {
 
                 <div className="mb-12 relative overflow-hidden rounded-3xl bg-neutral-900 border border-neutral-800 p-8 md:p-12">
                     <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
-                        <BookOpen className="w-64 h-64 text-emerald-500" />
+                        <BookOpen className="w-64 h-64 text-yellow-400" />
                     </div>
 
                     <div className="relative z-10">
-                        <span className="text-emerald-500 font-bold uppercase tracking-wider text-sm mb-2 block">
+                        <span className="text-yellow-400 font-bold uppercase tracking-wider text-sm mb-2 block">
                             Learning Module
                         </span>
                         <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
@@ -80,7 +80,7 @@ const ChapterDetails = () => {
 
                         <div className="flex items-center gap-6 mt-8">
                             <div className="flex items-center gap-2 text-neutral-300">
-                                <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center text-emerald-500">
+                                <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center text-yellow-400">
                                     <FileText className="w-4 h-4" />
                                 </div>
                                 <span className="font-bold">{chapter.quizzes?.length || 0}</span> Quizzes
@@ -92,7 +92,7 @@ const ChapterDetails = () => {
 
                 {/* Quiz List */}
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                    <Play className="w-6 h-6 text-emerald-500" />
+                    <Play className="w-6 h-6 text-yellow-400" />
                     Available Quizzes
                 </h2>
 
@@ -106,21 +106,21 @@ const ChapterDetails = () => {
                             <div
                                 key={quiz._id}
                                 onClick={() => navigate(`/student/quiz/${quiz._id}`)}
-                                className="group bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-emerald-500/50 hover:bg-neutral-900/80 transition-all cursor-pointer relative overflow-hidden"
+                                className="group bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 hover:bg-neutral-900/80 transition-all cursor-pointer relative overflow-hidden"
                             >
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-emerald-500 group-hover:bg-emerald-600 group-hover:text-white transition-colors shadow-lg shadow-emerald-900/10">
+                                    <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-yellow-400 group-hover:bg-yellow-500 group-hover:text-black transition-colors shadow-lg shadow-yellow-900/10">
                                         <span className="font-bold text-lg">{index + 1}</span>
                                     </div>
                                     <span className={`px-3 py-1 rounded-full text-xs font-bold border ${quiz.quizType === 'Mock'
-                                            ? 'bg-purple-900/20 text-purple-400 border-purple-900/50'
-                                            : 'bg-emerald-900/20 text-emerald-400 border-emerald-900/50'
+                                        ? 'bg-purple-900/20 text-purple-400 border-purple-900/50'
+                                        : 'bg-yellow-900/20 text-yellow-400 border-yellow-900/50'
                                         }`}>
                                         {quiz.quizType || 'Practice'}
                                     </span>
                                 </div>
 
-                                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">
+                                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-yellow-400 transition-colors">
                                     {quiz.title}
                                 </h3>
 
@@ -134,7 +134,7 @@ const ChapterDetails = () => {
                                         <span>{quiz.duration} mins</span>
                                     </div>
 
-                                    <span className="flex items-center gap-1 text-emerald-500 font-bold group-hover:translate-x-1 transition-transform">
+                                    <span className="flex items-center gap-1 text-yellow-400 font-bold group-hover:translate-x-1 transition-transform">
                                         Start <ChevronLeft className="w-4 h-4 rotate-180" />
                                     </span>
                                 </div>

@@ -53,7 +53,7 @@ const Login = () => {
                 </div>
 
                 {/* Login Form */}
-                <div className="card bg-neutral-900 border-neutral-800 hover:border-emerald-900/30 transition-colors">
+                <div className="card bg-neutral-900 border-neutral-800 hover:border-yellow-900/30 transition-colors">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
                             <div className="flex items-center gap-2 p-4 bg-red-900/20 border border-red-900/50 rounded-lg text-red-400">
@@ -102,9 +102,9 @@ const Login = () => {
                                 </button>
                             </div>
                             <p className="mt-2 text-xs text-neutral-500">
-                                First time? Default password is <span className="font-mono text-emerald-500">Initials@DOB(DDMMYYYY)</span>
+                                First time? Default password is <span className="font-mono text-yellow-400">Initials@DOB(DDMMYYYY)</span>
                                 <br />
-                                (e.g., John Doe + 15-08-2004 = <span className="font-mono text-emerald-500">JD@15082004</span>)
+                                (e.g., John Doe + 15-08-2004 = <span className="font-mono text-yellow-400">JD@15082004</span>)
                             </p>
                         </div>
 
@@ -115,10 +115,10 @@ const Login = () => {
                                 type="checkbox"
                                 checked={rememberMe}
                                 onChange={(e) => setRememberMe(e.target.checked)}
-                                className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-neutral-700 bg-neutral-800 rounded"
+                                className="h-4 w-4 text-yellow-500 focus:ring-yellow-500 border-neutral-700 bg-neutral-800 rounded cursor-pointer"
                             />
-                            <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-400">
-                                Remember me
+                            <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-400 cursor-pointer select-none">
+                                Remember me for 30 days
                             </label>
                         </div>
 
@@ -129,7 +129,7 @@ const Login = () => {
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                                     Signing in...
                                 </span>
                             ) : (

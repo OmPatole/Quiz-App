@@ -2,16 +2,29 @@ import { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Plus, Trash2, BookOpen, CheckCircle, AlertCircle, FilePlus } from 'lucide-react';
 import api from '../../api/axios';
+import headers from '../../api/axios'; // Wait, standard import is just api
 import QuizBuilder from './QuizBuilder';
+import { useToast } from '../../context/ToastContext';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 const QuizManager = () => {
     const [chapters, setChapters] = useState([]);
     const [selectedChapter, setSelectedChapter] = useState('');
     const [newChapterName, setNewChapterName] = useState('');
     const [uploading, setUploading] = useState(false);
-    const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [showBuilder, setShowBuilder] = useState(false);
+
+    // Toast
+    const { toast } = useToast();
+
+    // Modal State
+    const [modalConfig, setModalConfig] = useState({
+        isOpen: false,
+        type: null, // 'chapter' or 'quiz'
+        itemId: null,
+        itemTitle: '',
+    });
 
     useEffect(() => {
         fetchChapters();
@@ -23,6 +36,7 @@ const QuizManager = () => {
             setChapters(response.data);
         } catch (error) {
             console.error('Error fetching chapters:', error);
+            toast.error('Failed to load chapters');
         }
     };
 
@@ -35,12 +49,9 @@ const QuizManager = () => {
             await api.post('/admin/create-chapter', { title: newChapterName });
             setNewChapterName('');
             fetchChapters();
-            setResult({ success: true, message: 'Chapter created successfully' });
+            toast.success('Chapter created successfully');
         } catch (error) {
-            setResult({
-                success: false,
-                message: error.response?.data?.message || 'Failed to create chapter',
-            });
+            toast.error(error.response?.data?.message || 'Failed to create chapter');
         } finally {
             setLoading(false);
         }
@@ -49,15 +60,11 @@ const QuizManager = () => {
     const onDrop = async (acceptedFiles) => {
         const file = acceptedFiles[0];
         if (!file || !selectedChapter) {
-            setResult({
-                success: false,
-                message: 'Please select a chapter first',
-            });
+            toast.error('Please select a chapter and a file');
             return;
         }
 
         setUploading(true);
-        setResult(null);
 
         try {
             const formData = new FormData();
@@ -70,16 +77,10 @@ const QuizManager = () => {
                 },
             });
 
-            setResult({
-                success: true,
-                message: `Successfully uploaded ${response.data.count} quiz(zes)`,
-            });
+            toast.success(`Successfully uploaded ${response.data.count} quiz(zes)`);
             fetchChapters();
         } catch (error) {
-            setResult({
-                success: false,
-                message: error.response?.data?.message || 'Upload failed',
-            });
+            toast.error(error.response?.data?.message || 'Upload failed');
         } finally {
             setUploading(false);
         }
@@ -93,18 +94,34 @@ const QuizManager = () => {
         maxFiles: 1,
     });
 
-    const handleDeleteQuiz = async (quizId) => {
-        if (!confirm('Are you sure you want to delete this quiz?')) return;
+    // Delete Handlers
+    const confirmDelete = (type, id, title) => {
+        setModalConfig({
+            isOpen: true,
+            type,
+            itemId: id,
+            itemTitle: title,
+        });
+    };
+
+    const handleConfirmDelete = async () => {
+        const { type, itemId } = modalConfig;
+        if (!itemId) return;
 
         try {
-            await api.delete(`/admin/quiz/${quizId}`);
+            if (type === 'chapter') {
+                await api.delete(`/admin/chapters/${itemId}`);
+                toast.success('Chapter deleted successfully');
+                if (selectedChapter === itemId) setSelectedChapter('');
+            } else if (type === 'quiz') {
+                await api.delete(`/admin/quiz/${itemId}`);
+                toast.success('Quiz deleted successfully');
+            }
             fetchChapters();
-            setResult({ success: true, message: 'Quiz deleted successfully' });
         } catch (error) {
-            setResult({
-                success: false,
-                message: error.response?.data?.message || 'Failed to delete quiz',
-            });
+            toast.error(error.response?.data?.message || `Failed to delete ${type}`);
+        } finally {
+            setModalConfig({ isOpen: false, type: null, itemId: null, itemTitle: '' });
         }
     };
 
@@ -115,7 +132,7 @@ const QuizManager = () => {
                 onSuccess={() => {
                     setShowBuilder(false);
                     fetchChapters();
-                    setResult({ success: true, message: 'Quiz created successfully' });
+                    toast.success('Quiz created successfully');
                 }}
             />
         );
@@ -126,7 +143,7 @@ const QuizManager = () => {
             <div className="flex justify-end">
                 <button
                     onClick={() => setShowBuilder(true)}
-                    className="btn-primary flex items-center gap-2"
+                    className="btn-primary flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold"
                 >
                     <FilePlus className="w-4 h-4" />
                     Create Manual Quiz
@@ -134,8 +151,8 @@ const QuizManager = () => {
             </div>
 
             {/* Create Chapter */}
-            <div className="card">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">
+            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+                <h2 className="text-xl font-bold text-white mb-4">
                     Create New Chapter
                 </h2>
                 <form onSubmit={handleCreateChapter} className="flex gap-3">
@@ -144,13 +161,13 @@ const QuizManager = () => {
                         value={newChapterName}
                         onChange={(e) => setNewChapterName(e.target.value)}
                         placeholder="Enter chapter name (e.g., Chain Rule)"
-                        className="input-field flex-1"
+                        className="flex-1 bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-yellow-500 outline-none"
                         required
                     />
                     <button
                         type="submit"
                         disabled={loading}
-                        className="btn-primary flex items-center gap-2 disabled:opacity-50"
+                        className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 disabled:opacity-50"
                     >
                         <Plus className="w-4 h-4" />
                         Create
@@ -159,20 +176,20 @@ const QuizManager = () => {
             </div>
 
             {/* Upload Quiz JSON */}
-            <div className="card">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">
+            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+                <h2 className="text-xl font-bold text-white mb-4">
                     Upload Quiz JSON
                 </h2>
 
                 {/* Chapter Selection */}
                 <div className="mb-4">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-neutral-400 mb-2">
                         Select Chapter
                     </label>
                     <select
                         value={selectedChapter}
                         onChange={(e) => setSelectedChapter(e.target.value)}
-                        className="input-field"
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-yellow-500 outline-none"
                     >
                         <option value="">-- Select a chapter --</option>
                         {chapters.map((chapter) => (
@@ -187,26 +204,26 @@ const QuizManager = () => {
                 <div
                     {...getRootProps()}
                     className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${isDragActive
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                        ? 'border-yellow-500 bg-yellow-900/20'
                         : selectedChapter
-                            ? 'border-slate-300 dark:border-slate-600 hover:border-primary-400'
-                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed'
+                            ? 'border-neutral-700 hover:border-yellow-500/50'
+                            : 'border-neutral-800 bg-neutral-950/50 cursor-not-allowed'
                         }`}
                 >
                     <input {...getInputProps()} disabled={!selectedChapter} />
                     <div className="flex flex-col items-center gap-3">
                         {uploading ? (
                             <>
-                                <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                                <p className="text-slate-600 dark:text-slate-400">Processing JSON...</p>
+                                <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                                <p className="text-neutral-400">Processing JSON...</p>
                             </>
                         ) : (
                             <>
-                                <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
-                                    <Upload className="w-6 h-6 text-primary-600" />
+                                <div className="w-12 h-12 bg-neutral-800 rounded-full flex items-center justify-center">
+                                    <Upload className="w-6 h-6 text-yellow-500" />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-slate-800 dark:text-white">
+                                    <p className="font-medium text-white">
                                         {selectedChapter
                                             ? isDragActive
                                                 ? 'Drop the JSON file here'
@@ -214,7 +231,7 @@ const QuizManager = () => {
                                             : 'Select a chapter first'}
                                     </p>
                                     {selectedChapter && (
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                        <p className="text-sm text-neutral-500 mt-1">
                                             or click to browse
                                         </p>
                                     )}
@@ -225,77 +242,62 @@ const QuizManager = () => {
                 </div>
 
                 {/* JSON Format Info */}
-                <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                <div className="mt-4 p-4 bg-neutral-950 rounded-lg border border-neutral-800">
+                    <p className="text-xs text-neutral-400">
                         <strong>Expected JSON format:</strong> Array of quiz objects with fields: title, description, quizType (practice/weekly), duration, questions (with text, marks, options, correctIndices, explanation)
                     </p>
                 </div>
             </div>
 
-            {/* Result Message */}
-            {result && (
-                <div
-                    className={`card ${result.success
-                        ? 'bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800'
-                        : 'bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800'
-                        }`}
-                >
-                    <div className="flex items-center gap-3">
-                        {result.success ? (
-                            <CheckCircle className="w-6 h-6 text-green-500" />
-                        ) : (
-                            <AlertCircle className="w-6 h-6 text-red-500" />
-                        )}
-                        <p
-                            className={`font-medium ${result.success ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
-                                }`}
-                        >
-                            {result.message}
-                        </p>
-                    </div>
-                </div>
-            )}
-
             {/* Existing Chapters and Quizzes */}
-            <div className="card">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">
+            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+                <h2 className="text-xl font-bold text-white mb-4">
                     Existing Chapters & Quizzes
                 </h2>
                 {chapters.length === 0 ? (
-                    <p className="text-slate-500 dark:text-slate-400 text-center py-8">
+                    <p className="text-neutral-500 text-center py-8">
                         No chapters created yet
                     </p>
                 ) : (
                     <div className="space-y-4">
                         {chapters.map((chapter) => (
-                            <div key={chapter._id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <BookOpen className="w-5 h-5 text-primary-600" />
-                                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
-                                        {chapter.title}
-                                    </h3>
-                                    <span className="ml-auto text-sm text-slate-500 dark:text-slate-400">
-                                        {chapter.quizzes?.length || 0} quiz(zes)
-                                    </span>
+                            <div key={chapter._id} className="border border-neutral-800 rounded-xl p-4 bg-neutral-950/30">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <BookOpen className="w-5 h-5 text-yellow-500" />
+                                        <h3 className="text-lg font-semibold text-white">
+                                            {chapter.title}
+                                        </h3>
+                                        <span className="text-sm text-neutral-500 px-2 py-0.5 bg-neutral-900 rounded-full border border-neutral-800">
+                                            {chapter.quizzes?.length || 0} quizzes
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => confirmDelete('chapter', chapter._id, chapter.title)}
+                                        className="p-2 text-neutral-500 hover:text-red-500 hover:bg-neutral-900 rounded-lg transition-colors"
+                                        title="Delete Chapter"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
                                 </div>
                                 {chapter.quizzes?.length > 0 && (
-                                    <div className="space-y-2 ml-8">
+                                    <div className="space-y-2 ml-8 border-l-2 border-neutral-800 pl-4">
                                         {chapter.quizzes.map((quiz) => (
                                             <div
                                                 key={quiz._id}
-                                                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg"
+                                                className="flex items-center justify-between p-3 bg-neutral-900 rounded-lg hover:bg-neutral-800 transition-colors border border-transparent hover:border-neutral-700"
                                             >
                                                 <div>
-                                                    <p className="font-medium text-slate-800 dark:text-white">
+                                                    <p className="font-medium text-neutral-200">
                                                         {quiz.title}
                                                     </p>
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                    <p className="text-sm text-neutral-500">
                                                         {quiz.quizType} • {quiz.duration} min • {quiz.questions?.length || 0} questions
                                                     </p>
                                                 </div>
                                                 <button
-                                                    onClick={() => handleDeleteQuiz(quiz._id)}
-                                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                    onClick={() => confirmDelete('quiz', quiz._id, quiz.title)}
+                                                    className="p-2 text-neutral-600 hover:text-red-500 hover:bg-neutral-950 rounded-lg transition-colors"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -308,6 +310,20 @@ const QuizManager = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal
+                isOpen={modalConfig.isOpen}
+                onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+                onConfirm={handleConfirmDelete}
+                title={`Delete ${modalConfig.type === 'chapter' ? 'Chapter' : 'Quiz'}`}
+                description={`Are you sure you want to delete "${modalConfig.itemTitle}"? ${modalConfig.type === 'chapter'
+                        ? 'This will also delete ALL quizzes within this chapter.' // Assuming cascade delete or just warning
+                        : 'This action cannot be undone.'
+                    }`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+            />
         </div>
     );
 };

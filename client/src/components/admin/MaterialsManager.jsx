@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Folder, FileText, Upload, Plus, ArrowLeft, Download, Trash2, ExternalLink } from 'lucide-react';
+import { Folder, FileText, Upload, Plus, ArrowLeft, Download, Trash2, ExternalLink, Link as LinkIcon, AlertTriangle } from 'lucide-react';
 import api from '../../api/axios';
+import { useToast } from '../../context/ToastContext';
+import ConfirmationModal from '../common/ConfirmationModal';
+import InputModal from '../common/InputModal';
 
 const MaterialsManager = () => {
     const [folders, setFolders] = useState([]);
@@ -8,10 +11,20 @@ const MaterialsManager = () => {
     const [currentFolder, setCurrentFolder] = useState(null);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const toast = useToast();
 
     // Upload State
     const [uploadTitle, setUploadTitle] = useState('');
+    const [materialType, setMaterialType] = useState('pdf'); // 'pdf' or 'link'
     const [uploadFile, setUploadFile] = useState(null);
+    const [externalLink, setExternalLink] = useState('');
+
+    // Delete Modal State
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [materialToDelete, setMaterialToDelete] = useState(null);
+
+    // Folder Modal State
+    const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -28,54 +41,79 @@ const MaterialsManager = () => {
             setMaterials(materialsRes.data);
         } catch (error) {
             console.error(error);
+            toast.error("Failed to load materials");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleCreateFolder = () => {
-        const name = prompt('Enter folder name:');
-        if (name && !folders.includes(name)) {
-            setCurrentFolder(name);
-            // We don't save it to backend yet until a file is uploaded
+    const handleCreateFolder = (folderName) => {
+        if (folderName && !folders.includes(folderName)) {
+            setCurrentFolder(folderName);
+        } else if (folders.includes(folderName)) {
+            setCurrentFolder(folderName);
+            toast.success(`Opened existing folder: ${folderName}`);
         }
     };
 
     const handleUpload = async (e) => {
         e.preventDefault();
-        if (!uploadFile || !uploadTitle || !currentFolder) return;
+
+        if (!uploadTitle || !currentFolder) return;
+        if (materialType === 'pdf' && !uploadFile) return;
+        if (materialType === 'link' && !externalLink) return;
 
         setUploading(true);
         try {
-            const formData = new FormData();
-            formData.append('file', uploadFile);
-            formData.append('title', uploadTitle);
-            formData.append('folderName', currentFolder);
+            if (materialType === 'pdf') {
+                const formData = new FormData();
+                formData.append('file', uploadFile);
+                formData.append('title', uploadTitle);
+                formData.append('folderName', currentFolder);
+                formData.append('type', 'pdf');
 
-            await api.post('/material/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+                await api.post('/material/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                await api.post('/material/link', {
+                    title: uploadTitle,
+                    folderName: currentFolder,
+                    url: externalLink,
+                    type: 'link'
+                });
+            }
 
             setUploadTitle('');
             setUploadFile(null);
+            setExternalLink('');
+            toast.success("Material added successfully");
             fetchData();
         } catch (error) {
-            alert('Upload failed');
+            toast.error('Upload failed');
         } finally {
             setUploading(false);
         }
     };
 
+    const confirmDelete = (material) => {
+        setMaterialToDelete(material);
+        setDeleteModalOpen(true);
+    };
 
-    const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this file?')) return;
+    const handleDelete = async () => {
+        if (!materialToDelete) return;
 
         try {
-            await api.delete(`/material/${id}`);
+            await api.delete(`/admin/materials/${materialToDelete._id}`);
+            toast.success("Material Deleted");
             fetchData();
         } catch (error) {
             console.error('Failed to delete material:', error);
-            alert('Failed to delete material');
+            toast.error('Failed to delete material');
+        } finally {
+            setDeleteModalOpen(false);
+            setMaterialToDelete(null);
         }
     };
 
@@ -89,7 +127,7 @@ const MaterialsManager = () => {
                 <h2 className="text-xl font-bold text-slate-800 dark:text-white">
                     {currentFolder ? (
                         <div className="flex items-center gap-2">
-                            <button onClick={() => setCurrentFolder(null)} className="hover:bg-slate-100 p-1 rounded">
+                            <button onClick={() => setCurrentFolder(null)} className="hover:bg-neutral-800 p-1 rounded text-neutral-400 hover:text-white transition-colors">
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
                             <span>{currentFolder}</span>
@@ -97,7 +135,7 @@ const MaterialsManager = () => {
                     ) : 'Study Materials'}
                 </h2>
                 {!currentFolder && (
-                    <button onClick={handleCreateFolder} className="btn-primary flex items-center gap-2">
+                    <button onClick={() => setIsFolderModalOpen(true)} className="btn-primary flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold">
                         <Plus className="w-4 h-4" /> New Folder
                     </button>
                 )}
@@ -105,65 +143,137 @@ const MaterialsManager = () => {
 
             {currentFolder ? (
                 <div className="space-y-6">
-                    {/* Upload Form */}
-                    <div className="card">
-                        <h3 className="font-semibold mb-4">Upload PDF to "{currentFolder}"</h3>
-                        <form onSubmit={handleUpload} className="flex gap-4 items-end">
-                            <div className="flex-1">
-                                <label className="block text-sm font-medium mb-1">Title</label>
-                                <input
-                                    type="text"
-                                    value={uploadTitle}
-                                    onChange={e => setUploadTitle(e.target.value)}
-                                    className="input-field"
-                                    placeholder="e.g. Chapter 1 Notes"
-                                    required
-                                />
+                    {/* Add Material Form */}
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+                        <h3 className="font-semibold mb-4 text-white">Add Material to "{currentFolder}"</h3>
+                        <form onSubmit={handleUpload} className="space-y-4">
+                            {/* Type Toggle */}
+                            <div className="flex bg-neutral-800 p-1 rounded-lg w-MAX inline-flex mb-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setMaterialType('pdf')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${materialType === 'pdf'
+                                        ? 'bg-yellow-500 text-black shadow-lg'
+                                        : 'text-neutral-400 hover:text-white'
+                                        }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <FileText className="w-4 h-4" />
+                                        PDF Upload
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setMaterialType('link')}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${materialType === 'link'
+                                        ? 'bg-yellow-500 text-black shadow-lg'
+                                        : 'text-neutral-400 hover:text-white'
+                                        }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <LinkIcon className="w-4 h-4" />
+                                        External Link
+                                    </span>
+                                </button>
                             </div>
-                            <div className="flex-1">
-                                <label className="block text-sm font-medium mb-1">PDF File</label>
-                                <input
-                                    type="file"
-                                    accept="application/pdf"
-                                    onChange={e => setUploadFile(e.target.files[0])}
-                                    className="input-field p-1"
-                                    required
-                                />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-neutral-400">Title</label>
+                                    <input
+                                        type="text"
+                                        value={uploadTitle || ''}
+                                        onChange={e => setUploadTitle(e.target.value)}
+                                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-yellow-500 outline-none"
+                                        placeholder="e.g. Chapter 1 Notes"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    {materialType === 'pdf' ? (
+                                        <>
+                                            <label className="block text-sm font-medium mb-1 text-neutral-400">PDF File</label>
+                                            <input
+                                                type="file"
+                                                accept="application/pdf"
+                                                onChange={e => setUploadFile(e.target.files[0])}
+                                                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-yellow-500 outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:text-neutral-900 hover:file:bg-yellow-400"
+                                                required
+                                            />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <label className="block text-sm font-medium mb-1 text-neutral-400">External URL</label>
+                                            <input
+                                                type="url"
+                                                value={externalLink || ''}
+                                                onChange={e => setExternalLink(e.target.value)}
+                                                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-yellow-500 outline-none"
+                                                placeholder="https://example.com/resource"
+                                                required
+                                            />
+                                        </>
+                                    )}
+                                </div>
                             </div>
-                            <button type="submit" disabled={uploading} className="btn-primary flex items-center gap-2">
-                                {uploading ? 'Uploading...' : <><Upload className="w-4 h-4" /> Upload</>}
-                            </button>
+
+                            <div className="flex justify-end">
+                                <button type="submit" disabled={uploading} className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 disabled:opacity-50">
+                                    {uploading ? 'Processing...' : (
+                                        <>
+                                            {materialType === 'pdf' ? <Upload className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                                            {materialType === 'pdf' ? 'Upload PDF' : 'Add Link'}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </form>
                     </div>
 
                     {/* Files List */}
                     <div className="grid grid-cols-1 gap-4">
                         {filteredMaterials.length === 0 ? (
-                            <p className="text-center text-slate-500 py-8">No files in this folder.</p>
+                            <p className="text-center text-neutral-500 py-8">No materials in this folder.</p>
                         ) : (
                             filteredMaterials.map(m => (
-                                <div key={m._id} className="card flex items-center justify-between p-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-3 bg-red-100 text-red-600 rounded-lg">
-                                            <FileText className="w-6 h-6" />
+                                <div key={m._id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex items-center justify-between hover:border-yellow-900/50 transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-3 rounded-lg ${m.type === 'link' ? 'bg-blue-500/10 text-blue-400' : 'bg-red-500/10 text-red-500'}`}>
+                                            {m.type === 'link' ? <LinkIcon className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-slate-800 dark:text-white">{m.title}</h4>
-                                            <p className="text-sm text-slate-500">Uploaded {new Date(m.uploadedAt).toLocaleDateString()}</p>
+                                            <h4 className="font-semibold text-white">{m.title}</h4>
+                                            <p className="text-sm text-neutral-500">
+                                                {m.type === 'link' ? 'External Link' : `Uploaded ${new Date(m.uploadedAt).toLocaleDateString()}`}
+                                            </p>
                                         </div>
                                     </div>
+
                                     <div className="flex gap-2">
-                                        <a
-                                            href={`http://localhost:5000${m.fileUrl}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="btn-secondary flex items-center gap-2"
-                                        >
-                                            <Download className="w-4 h-4" /> Download
-                                        </a>
+                                        {m.type === 'link' ? (
+                                            <a
+                                                href={m.linkUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                            >
+                                                <ExternalLink className="w-4 h-4" /> Open Link
+                                            </a>
+                                        ) : (
+                                            <a
+                                                href={`http://localhost:5000${m.fileUrl}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                            >
+                                                <Download className="w-4 h-4" /> Download
+                                            </a>
+                                        )}
+
                                         <button
-                                            onClick={() => handleDelete(m._id)}
-                                            className="p-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-colors"
+                                            onClick={() => confirmDelete(m)}
+                                            className="p-2 text-red-500/60 hover:text-red-500 hover:bg-neutral-800 rounded-lg transition-colors"
                                             title="Delete Material"
                                         >
                                             <Trash2 className="w-5 h-5" />
@@ -177,25 +287,47 @@ const MaterialsManager = () => {
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {folders.length === 0 && !loading && (
-                        <div className="col-span-full text-center py-12 text-slate-500">
+                        <div className="col-span-full text-center py-12 text-neutral-500">
                             No folders yet. Create one to get started.
                         </div>
                     )}
                     {folders.map(folder => (
-                        <div
+                        <button
                             key={folder}
                             onClick={() => setCurrentFolder(folder)}
-                            className="card hover:border-primary-500 cursor-pointer transition-all hover:shadow-md flex flex-col items-center gap-3 p-6"
+                            className="bg-neutral-900 border border-neutral-800 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-900/10 cursor-pointer transition-all rounded-xl flex flex-col items-center gap-4 p-8 group"
                         >
-                            <Folder className="w-12 h-12 text-primary-500" />
-                            <span className="font-medium text-lg">{folder}</span>
-                            <span className="text-sm text-slate-500">
-                                {materials.filter(m => m.folderName === folder).length} files
-                            </span>
-                        </div>
+                            <Folder className="w-16 h-16 text-yellow-600 group-hover:text-yellow-500 transition-colors" />
+                            <div className="text-center">
+                                <span className="block font-bold text-lg text-white mb-1">{folder}</span>
+                                <span className="text-sm text-neutral-500">
+                                    {materials.filter(m => m.folderName === folder).length} files
+                                </span>
+                            </div>
+                        </button>
                     ))}
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                onConfirm={handleDelete}
+                title="Delete Material?"
+                description="This cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+            />
+
+            <InputModal
+                isOpen={isFolderModalOpen}
+                onClose={() => setIsFolderModalOpen(false)}
+                onSubmit={handleCreateFolder}
+                title="Create New Folder"
+                placeholder="Enter folder name..."
+                confirmText="Create Folder"
+            />
         </div>
     );
 };

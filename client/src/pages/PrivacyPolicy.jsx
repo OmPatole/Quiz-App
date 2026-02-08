@@ -8,8 +8,8 @@ const PrivacyPolicy = () => {
             <nav className="border-b border-neutral-800 bg-neutral-950/50 backdrop-blur-md sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-2 font-bold text-xl tracking-tight cursor-pointer" onClick={() => navigate('/')}>
-                        <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white">AP</div>
-                        <span>Aptitude<span className="text-emerald-500">Portal</span></span>
+                        <div className="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center text-white">AP</div>
+                        <span>Aptitude<span className="text-yellow-500">Portal</span></span>
                     </div>
                 </div>
             </nav>
@@ -26,7 +26,7 @@ const PrivacyPolicy = () => {
                         <p>
                             We collect basic information required to facilitate your learning and track your progress. This includes:
                         </p>
-                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-emerald-500">
+                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-yellow-500">
                             <li>Personal identifiers: Name, PRN (Permanent Registration Number), Branch, and Batch.</li>
                             <li>Performance Data: Quiz scores, time taken, streaks, and engagement metrics.</li>
                             <li>Technical Data: IP address, browser type, and device information for security and optimization.</li>
@@ -38,7 +38,7 @@ const PrivacyPolicy = () => {
                         <p>
                             Your data is used entirely for educational and placement purposes:
                         </p>
-                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-emerald-500">
+                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-yellow-500">
                             <li>To generate performance analytics and identify improvement areas.</li>
                             <li>To provide personalized recommendations for study materials.</li>
                             <li>To maintain academic records for the Training & Placement Cell.</li>
@@ -51,7 +51,7 @@ const PrivacyPolicy = () => {
                         <p>
                             We do <strong>not</strong> sell your data to third parties. Your data is accessible only to:
                         </p>
-                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-emerald-500">
+                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-yellow-500">
                             <li>Authorized Faculty Administrators of the institution.</li>
                             <li>System maintainers for debugging and updates (under strict NDA).</li>
                         </ul>

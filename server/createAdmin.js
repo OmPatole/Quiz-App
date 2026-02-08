@@ -1,25 +1,28 @@
-require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
+require('dotenv').config();
 
-const createAdmin = async () => {
+const createAdminUser = async () => {
     try {
         // Connect to MongoDB
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log('Connected to MongoDB');
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/quiz-app');
+        console.log('MongoDB Connected');
 
         // Check if admin already exists
         const existingAdmin = await User.findOne({ prn: 'ADMIN' });
+
         if (existingAdmin) {
             console.log('Admin user already exists!');
+            console.log('PRN: ADMIN');
+            console.log('You can update the password if needed.');
             process.exit(0);
         }
 
         // Create admin user
         const admin = new User({
-            name: 'Admin User',
+            name: 'Administrator',
             prn: 'ADMIN',
-            password: 'admin123', // Will be hashed automatically by the pre-save hook
+            password: 'admin123', // This will be hashed by the pre-save hook
             role: 'Admin'
         });
 
@@ -27,13 +30,13 @@ const createAdmin = async () => {
         console.log('✅ Admin user created successfully!');
         console.log('PRN: ADMIN');
         console.log('Password: admin123');
-        console.log('\n⚠️  Please change the password after first login!');
+        console.log('\nYou can now login with these credentials.');
 
         process.exit(0);
     } catch (error) {
-        console.error('Error creating admin:', error);
+        console.error('Error creating admin user:', error);
         process.exit(1);
     }
 };
 
-createAdmin();
+createAdminUser();

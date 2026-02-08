@@ -38,7 +38,7 @@ const TermsOfService = () => {
                         <p>
                             You agree to use the Service only for lawful purposes. Prohibited activities include:
                         </p>
-                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-emerald-500">
+                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-yellow-500">
                             <li>Attempting to interfere with, compromise the system integrity or security, or decipher any transmissions to or from the servers running the Service.</li>
                             <li>Creating multiple accounts or impersonating another user.</li>
                             <li>Sharing your account credentials with others.</li>

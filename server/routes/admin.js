@@ -692,4 +692,34 @@ router.delete('/students/:id', auth, roleAuth('Admin'), async (req, res) => {
     }
 });
 
+// @route   DELETE /api/admin/materials/:id
+// @desc    Delete study material
+// @access  Admin only
+router.delete('/materials/:id', auth, roleAuth('Admin'), async (req, res) => {
+    try {
+        const Material = require('../models/Material');
+        const material = await Material.findById(req.params.id);
+
+        if (!material) {
+            return res.status(404).json({ message: 'Material not found' });
+        }
+
+        // Check if fileUrl exists and delete file
+        if (material.type === 'pdf' && material.fileUrl) {
+            // Assume fileUrl is relative from root or uploads folder
+            const filePath = path.join(__dirname, '..', material.fileUrl);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
+
+        await material.deleteOne();
+
+        res.json({ message: 'Material deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 module.exports = router;

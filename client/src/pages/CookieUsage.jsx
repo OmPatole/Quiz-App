@@ -31,7 +31,7 @@ const CookieUsage = () => {
                         <p>
                             We use cookies strictly for essential functionality:
                         </p>
-                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-emerald-500">
+                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-yellow-500">
                             <li><strong>Session Management:</strong> To remember your login status (via JWT stored securely) so you don't have to log in on every page refresh.</li>
                             <li><strong>Preferences:</strong> To remember user preferences such as theme settings (e.g., Dark Mode) or dashboard view filters.</li>
                             <li><strong>Security:</strong> To detect and prevent unauthorized access or malicious activity.</li>
@@ -40,7 +40,7 @@ const CookieUsage = () => {
 
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4">3. Types of Cookies We Use</h2>
-                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-emerald-500">
+                        <ul className="list-disc pl-6 mt-4 space-y-2 marker:text-yellow-500">
                             <li><strong>Strictly Necessary Cookies:</strong> Essential for you to browse the website and use its features, such as accessing secure areas.</li>
                             <li><strong>Functionality Cookies:</strong> Allow the website to remember choices you make (such as your user name, language or the region you are in).</li>
                         </ul>
@@ -50,7 +50,7 @@ const CookieUsage = () => {
                     <section>
                         <h2 className="text-2xl font-bold text-white mb-4">4. Managing Cookies</h2>
                         <p>
-                            Most web browsers allow some control of most cookies through the browser settings. To find out more about cookies, including how to see what cookies have been set and how to manage and delete them, visit <a href="http://www.aboutcookies.org" className="text-emerald-500 hover:underline">www.aboutcookies.org</a> or <a href="http://www.allaboutcookies.org" className="text-emerald-500 hover:underline">www.allaboutcookies.org</a>.
+                            Most web browsers allow some control of most cookies through the browser settings. To find out more about cookies, including how to see what cookies have been set and how to manage and delete them, visit <a href="http://www.aboutcookies.org" className="text-yellow-500 hover:underline">www.aboutcookies.org</a> or <a href="http://www.allaboutcookies.org" className="text-yellow-500 hover:underline">www.allaboutcookies.org</a>.
                         </p>
                         <p className="mt-4 text-sm text-neutral-500 bg-neutral-900 border border-neutral-800 p-4 rounded-xl">
                             <strong>Note:</strong> Since our application relies on secure tokens for authentication, disabling cookies or local storage may prevent you from logging in or using core features.

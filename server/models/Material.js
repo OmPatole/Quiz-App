@@ -13,7 +13,16 @@ const materialSchema = new mongoose.Schema({
     },
     fileUrl: {
         type: String,
-        required: true
+        required: function () { return this.type === 'pdf'; }
+    },
+    type: {
+        type: String,
+        enum: ['pdf', 'link'],
+        default: 'pdf'
+    },
+    linkUrl: {
+        type: String,
+        required: function () { return this.type === 'link'; }
     },
     uploadedAt: {
         type: Date,

@@ -3,8 +3,11 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, CheckCircle, XCircle, AlertCircle, Search, Filter, Eye, Trash2, Trophy } from 'lucide-react';
 import api from '../../api/axios';
 import StudentProfile from '../StudentProfile';
+import { useToast } from '../../context/ToastContext';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 const StudentManager = () => {
+    const { toast } = useToast();
     const [uploading, setUploading] = useState(false);
     const [result, setResult] = useState(null);
 
@@ -31,6 +34,17 @@ const StudentManager = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showUploadModal, setShowUploadModal] = useState(false);
 
+    // Confirmation Modal State
+    const [modalConfig, setModalConfig] = useState({
+        isOpen: false,
+        type: null, // 'promote', 'bulkDelete', 'deleteStudent'
+        data: null,
+        title: '',
+        description: '',
+        variant: 'danger',
+        confirmText: 'Confirm'
+    });
+
     useEffect(() => {
         fetchStudents();
     }, [filters]);
@@ -43,6 +57,7 @@ const StudentManager = () => {
             setStudents(response.data);
         } catch (error) {
             console.error('Error fetching students:', error);
+            toast.error('Failed to load students');
         } finally {
             setLoading(false);
         }
@@ -71,12 +86,18 @@ const StudentManager = () => {
             });
 
             setResult(response.data);
+            if (response.data.created > 0) {
+                toast.success(`Successfully added ${response.data.created} students`);
+            } else if (response.data.errors > 0) {
+                toast.warning(`Upload completed with ${response.data.errors} errors`);
+            }
             fetchStudents(); // Refresh list after upload
         } catch (error) {
             setResult({
                 message: 'Upload failed',
                 errors: [error.response?.data?.message || 'An error occurred'],
             });
+            toast.error('Upload failed');
         } finally {
             setUploading(false);
         }
@@ -99,7 +120,7 @@ const StudentManager = () => {
             setSelectedStudentStats(response.data);
         } catch (error) {
             console.error("Error fetching student stats:", error);
-            alert("Failed to fetch student statistics");
+            toast.error("Failed to fetch student statistics");
             setSelectedStudentId(null);
         } finally {
             setLoadingStats(false);
@@ -127,52 +148,74 @@ const StudentManager = () => {
         );
     }
 
-    // Handlers
-    const handlePromoteAll = async () => {
-        if (!window.confirm("Are you sure you want to promote ALL students to the next academic year? (e.g. Third Year -> Last Year). This action is irreversible.")) return;
-
-        setProcessingAction(true);
-        try {
-            const res = await api.post('/admin/promote-students');
-            alert(res.data.message + ` (${res.data.count} students promoted)`);
-            fetchStudents();
-        } catch (error) {
-            alert(error.response?.data?.message || 'Promotion failed');
-        } finally {
-            setProcessingAction(false);
-        }
+    // Modal Triggers
+    const triggerPromoteAll = () => {
+        setModalConfig({
+            isOpen: true,
+            type: 'promote',
+            title: 'Promote All Students',
+            description: "Are you sure you want to promote ALL students to the next academic year? (e.g. Third Year -> Last Year). This action is irreversible.",
+            variant: 'warning',
+            confirmText: 'Promote All'
+        });
     };
 
-    const handleBulkDelete = async () => {
+    const triggerBulkDelete = () => {
         if (!bulkDeleteTarget.academicYear && !bulkDeleteTarget.batchYear) {
-            alert("Please select an Academic Year or Batch Year to delete.");
+            toast.error("Please select an Academic Year or Batch Year to delete.");
             return;
         }
+        setModalConfig({
+            isOpen: true,
+            type: 'bulkDelete',
+            title: 'Confirm Bulk Delete',
+            description: `Are you sure you want to delete all students in ${bulkDeleteTarget.academicYear || bulkDeleteTarget.batchYear}? This will delete ALL associated data including quiz results.`,
+            variant: 'danger',
+            confirmText: 'Delete All'
+        });
+    };
 
+    const triggerDeleteStudent = (studentId) => {
+        setModalConfig({
+            isOpen: true,
+            type: 'deleteStudent',
+            data: studentId,
+            title: 'Delete Student',
+            description: "Are you sure you want to delete this student account? This will remove all their quiz results.",
+            variant: 'danger',
+            confirmText: 'Delete'
+        });
+    };
+
+    // Unified Action Handler
+    const handleConfirmAction = async () => {
+        const { type, data } = modalConfig;
         setProcessingAction(true);
+
         try {
-            const res = await api.delete('/admin/students/delete-bulk', { data: bulkDeleteTarget });
-            alert(res.data.message + ` (${res.data.deletedCount} students deleted)`);
-            setShowBulkDeleteModal(false);
-            setBulkDeleteTarget({ academicYear: '', batchYear: '' });
-            fetchStudents();
+            if (type === 'promote') {
+                const res = await api.post('/admin/promote-students');
+                toast.success(res.data.message + ` (${res.data.count} students promoted)`);
+                fetchStudents();
+            } else if (type === 'bulkDelete') {
+                const res = await api.delete('/admin/students/delete-bulk', { data: bulkDeleteTarget });
+                toast.success(res.data.message + ` (${res.data.deletedCount} students deleted)`);
+                setShowBulkDeleteModal(false);
+                setBulkDeleteTarget({ academicYear: '', batchYear: '' });
+                fetchStudents();
+            } else if (type === 'deleteStudent') {
+                await api.delete(`/admin/students/${data}`);
+                toast.success("Student deleted successfully");
+                fetchStudents();
+            }
         } catch (error) {
-            alert(error.response?.data?.message || 'Bulk delete failed');
+            toast.error(error.response?.data?.message || 'Action failed');
         } finally {
             setProcessingAction(false);
+            setModalConfig(prev => ({ ...prev, isOpen: false }));
         }
     };
 
-    const handleDeleteStudent = async (studentId) => {
-        if (!window.confirm("Are you sure you want to delete this student account? This will remove all their quiz results.")) return;
-
-        try {
-            await api.delete(`/admin/students/${studentId}`);
-            fetchStudents();
-        } catch (error) {
-            alert("Failed to delete student");
-        }
-    };
 
     // Filter Students
     const filteredStudents = students.filter(student => {
@@ -199,7 +242,7 @@ const StudentManager = () => {
     return (
         <div className="space-y-6">
             {/* Batch Actions */}
-            <div className="card border-l-4 border-l-emerald-500">
+            <div className="card border-l-4 border-l-yellow-500">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
                         <h2 className="text-lg font-bold text-white">Batch Lifecycle Actions</h2>
@@ -207,9 +250,9 @@ const StudentManager = () => {
                     </div>
                     <div className="flex gap-3">
                         <button
-                            onClick={handlePromoteAll}
+                            onClick={triggerPromoteAll}
                             disabled={processingAction}
-                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-black rounded-lg font-medium transition-colors disabled:opacity-50"
                         >
                             <Trophy className="w-4 h-4" />
                             Promote All Students
@@ -226,7 +269,7 @@ const StudentManager = () => {
                 </div>
             </div>
 
-            {/* Bulk Delete Modal */}
+            {/* Bulk Delete Selection Modal (Not the confirmation modal, but the filter selection) */}
             {showBulkDeleteModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                     <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
@@ -239,7 +282,7 @@ const StudentManager = () => {
                             <div>
                                 <label className="block text-sm font-medium text-neutral-300 mb-2">By Academic Year</label>
                                 <select
-                                    className="input-field w-full"
+                                    className="input-field w-full bg-neutral-950/50 border-neutral-700 focus:border-yellow-500 text-white"
                                     value={bulkDeleteTarget.academicYear}
                                     onChange={(e) => setBulkDeleteTarget({ ...bulkDeleteTarget, academicYear: e.target.value, batchYear: '' })}
                                 >
@@ -259,7 +302,7 @@ const StudentManager = () => {
                             <div>
                                 <label className="block text-sm font-medium text-neutral-300 mb-2">By Batch Year</label>
                                 <select
-                                    className="input-field w-full"
+                                    className="input-field w-full bg-neutral-950/50 border-neutral-700 focus:border-yellow-500 text-white"
                                     value={bulkDeleteTarget.batchYear}
                                     onChange={(e) => setBulkDeleteTarget({ ...bulkDeleteTarget, batchYear: e.target.value, academicYear: '' })}
                                 >
@@ -280,11 +323,11 @@ const StudentManager = () => {
                                 Cancel
                             </button>
                             <button
-                                onClick={handleBulkDelete}
-                                disabled={!bulkDeleteTarget.academicYear && !bulkDeleteTarget.batchYear || processingAction}
+                                onClick={triggerBulkDelete}
+                                disabled={!bulkDeleteTarget.academicYear && !bulkDeleteTarget.batchYear}
                                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold disabled:opacity-50"
                             >
-                                {processingAction ? 'Deleting...' : 'Confirm Delete'}
+                                Proceed to Confirm
                             </button>
                         </div>
                     </div>
@@ -302,14 +345,14 @@ const StudentManager = () => {
                                 placeholder="Search by Name or PRN..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="input-field pl-10 w-full bg-neutral-950 border-neutral-800 focus:border-emerald-500"
+                                className="input-field pl-10 w-full bg-neutral-950 border-neutral-800 focus:border-yellow-500"
                             />
                         </div>
 
                         <div className="flex items-center gap-2 w-full md:w-auto">
                             <button
                                 onClick={() => setShowUploadModal(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors"
                             >
                                 <Upload className="w-4 h-4" />
                                 Import CSV
@@ -317,7 +360,7 @@ const StudentManager = () => {
                             {(searchTerm || filters.academicYear || filters.branch || filters.batchYear) && (
                                 <button
                                     onClick={clearFilters}
-                                    className="px-3 py-2 text-sm text-neutral-400 hover:text-white transition-colors border border-neutral-800 rounded-lg hover:border-neutral-600"
+                                    className="px-3 py-2 text-sm text-black hover:text-white transition-colors border border-neutral-800 rounded-lg hover:border-neutral-600"
                                 >
                                     Clear Filters
                                 </button>
@@ -360,7 +403,7 @@ const StudentManager = () => {
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                    <FileText className="w-6 h-6 text-emerald-500" />
+                                    <FileText className="w-6 h-6 text-yellow-500" />
                                     Bulk Import Students
                                 </h3>
                                 <p className="text-neutral-400 text-sm mt-1">Upload a CSV file to add multiple students at once.</p>
@@ -373,7 +416,7 @@ const StudentManager = () => {
                         <div className="space-y-4 mb-6">
                             <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 text-sm text-neutral-400">
                                 <p className="mb-2 font-medium text-white">Required CSV Columns:</p>
-                                <code className="block bg-neutral-900 p-2 rounded text-emerald-400 mb-2">
+                                <code className="block bg-neutral-900 p-2 rounded text-yellow-400 mb-2">
                                     Name, PRN, DOB, Academic Year, Branch, Batch Year
                                 </code>
                                 <ul className="list-disc list-inside space-y-1 text-xs">
@@ -385,21 +428,21 @@ const StudentManager = () => {
                             <div
                                 {...getRootProps()}
                                 className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${isDragActive
-                                    ? 'border-emerald-500 bg-emerald-900/10'
-                                    : 'border-neutral-700 hover:border-emerald-500 hover:bg-neutral-800'
+                                    ? 'border-yellow-500 bg-yellow-900/10'
+                                    : 'border-neutral-700 hover:border-yellow-500 hover:bg-neutral-800'
                                     }`}
                             >
                                 <input {...getInputProps()} />
                                 <div className="flex flex-col items-center gap-4">
                                     {uploading ? (
                                         <>
-                                            <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                                            <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
                                             <p className="text-white font-medium">Processing CSV...</p>
                                         </>
                                     ) : (
                                         <>
-                                            <div className="w-12 h-12 bg-neutral-800 rounded-full flex items-center justify-center group-hover:bg-emerald-900/50 transition-colors">
-                                                <Upload className="w-6 h-6 text-neutral-400 group-hover:text-emerald-500" />
+                                            <div className="w-12 h-12 bg-neutral-800 rounded-full flex items-center justify-center group-hover:bg-yellow-900/50 transition-colors">
+                                                <Upload className="w-6 h-6 text-neutral-400 group-hover:text-yellow-500" />
                                             </div>
                                             <div>
                                                 <p className="text-lg font-medium text-white mb-1">
@@ -413,7 +456,7 @@ const StudentManager = () => {
                             </div>
 
                             {result && (
-                                <div className={`p-4 rounded-lg flex items-start gap-3 ${result.created > 0 ? 'bg-emerald-900/20 text-emerald-400' : 'bg-red-900/20 text-red-400'}`}>
+                                <div className={`p-4 rounded-lg flex items-start gap-3 ${result.created > 0 ? 'bg-yellow-900/20 text-yellow-400' : 'bg-red-900/20 text-red-400'}`}>
                                     {result.created > 0 ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
                                     <div className="text-sm">
                                         <p className="font-bold">{result.message}</p>
@@ -469,13 +512,13 @@ const StudentManager = () => {
                                             <td className="p-3 flex items-center gap-2">
                                                 <button
                                                     onClick={() => handleViewProfile(student)}
-                                                    className="text-neutral-400 hover:text-emerald-500 transition-colors p-1"
+                                                    className="text-neutral-400 hover:text-yellow-500 transition-colors p-1"
                                                     title="View Profile"
                                                 >
                                                     <Eye className="w-5 h-5" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDeleteStudent(student._id)}
+                                                    onClick={() => triggerDeleteStudent(student._id)}
                                                     className="text-neutral-400 hover:text-red-500 transition-colors p-1"
                                                     title="Delete Student"
                                                 >

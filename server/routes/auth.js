@@ -3,10 +3,10 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// @route   POST /api/auth/login
-// @desc    Login user and return JWT
+// @route   POST /api/session/signin
+// @desc    User signin and return JWT
 // @access  Public
-router.post('/login', async (req, res) => {
+router.post('/signin', async (req, res) => {
     try {
         const { prn, password } = req.body;
 
@@ -33,10 +33,17 @@ router.post('/login', async (req, res) => {
             role: user.role
         };
 
+        // Set expiration based on role (Admin: 2h, Student: 30d)
+        const expiresIn = user.role === 'Admin' ? '2h' : '30d';
+
         // Sign token
         const token = jwt.sign(payload, process.env.JWT_SECRET, {
-            expiresIn: '7d'
+            expiresIn
         });
+
+        // Set headers to avoid tracker detection
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('X-Frame-Options', 'DENY');
 
         res.json({
             token,

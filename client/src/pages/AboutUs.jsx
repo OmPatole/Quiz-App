@@ -16,11 +16,11 @@ const AboutUs = () => {
             <main className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
                 {/* Hero */}
                 <div className="text-center mb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <span className="inline-block px-4 py-1 rounded-full bg-emerald-900/30 border border-emerald-900 text-emerald-500 text-sm font-bold mb-4">
+                    <span className="inline-block px-4 py-1 rounded-full bg-yellow-900/30 border border-yellow-900 text-yellow-400 text-sm font-bold mb-4">
                         Our Story
                     </span>
                     <h1 className="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight">
-                        Empowering <span className="text-emerald-500">Engineers.</span>
+                        Empowering <span className="text-yellow-400">Engineers.</span>
                     </h1>
                     <p className="text-neutral-400 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
                         An initiative by the Training and Placement Cell, School of Engineering and Technology, dedicated to bridging the gap between academic learning and industry requirements.
@@ -30,7 +30,7 @@ const AboutUs = () => {
                 {/* Mission & Vision */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24">
                     <div className="card bg-neutral-900 border-neutral-800 p-8 rounded-3xl">
-                        <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-emerald-500 mb-6">
+                        <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-yellow-400 mb-6">
                             <Target className="w-6 h-6" />
                         </div>
                         <h2 className="text-2xl font-bold text-white mb-4">Our Mission</h2>
@@ -40,7 +40,7 @@ const AboutUs = () => {
                     </div>
 
                     <div className="card bg-neutral-900 border-neutral-800 p-8 rounded-3xl">
-                        <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-emerald-500 mb-6">
+                        <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-yellow-400 mb-6">
                             <Shield className="w-6 h-6" />
                         </div>
                         <h2 className="text-2xl font-bold text-white mb-4">Our Vision</h2>
@@ -60,7 +60,7 @@ const AboutUs = () => {
                                 <Users className="w-10 h-10" />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-1">Faculty Coordinator</h3>
-                            <p className="text-emerald-500 text-sm font-medium mb-3">T&P Cell</p>
+                            <p className="text-yellow-400 text-sm font-medium mb-3">T&P Cell</p>
                             <p className="text-neutral-400 text-sm">Guiding the strategic vision and curriculum alignment.</p>
                         </div>
 
@@ -70,7 +70,7 @@ const AboutUs = () => {
                                 <Users className="w-10 h-10" />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-1">Student Developers</h3>
-                            <p className="text-emerald-500 text-sm font-medium mb-3">Development Team</p>
+                            <p className="text-yellow-400 text-sm font-medium mb-3">Development Team</p>
                             <p className="text-neutral-400 text-sm">Building and maintaining the platform architecture.</p>
                         </div>
 
@@ -80,7 +80,7 @@ const AboutUs = () => {
                                 <Users className="w-10 h-10" />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-1">Content Team</h3>
-                            <p className="text-emerald-500 text-sm font-medium mb-3">Curriculum</p>
+                            <p className="text-yellow-400 text-sm font-medium mb-3">Curriculum</p>
                             <p className="text-neutral-400 text-sm">Curating high-quality questions and study materials.</p>
                         </div>
                     </div>

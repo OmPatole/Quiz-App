@@ -1,16 +1,20 @@
+/* Import Inter Font for Modern Typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-neutral-950 text-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-300;
+    @apply bg-neutral-950 text-white min-h-screen antialiased selection:bg-yellow-500/30 selection:text-yellow-300;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg transition-all duration-200 active:scale-95 border-none shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40;
+    @apply bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 px-6 rounded-lg transition-all duration-200 active:scale-95 border-none shadow-lg shadow-yellow-900/20 hover:shadow-yellow-900/40;
   }
 
   .btn-secondary {
@@ -22,6 +26,32 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all duration-200;
+    @apply w-full px-4 py-3 bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all duration-200;
+  }
+
+  /* Chapter Card Styles */
+  .chapter-card {
+    @apply bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/20 transition-all duration-300 relative overflow-hidden;
+  }
+
+  .chapter-card-icon {
+    @apply w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-yellow-400;
+  }
+
+  .chapter-watermark {
+    @apply absolute top-0 right-0 p-6 opacity-5 pointer-events-none;
+  }
+
+  .progress-bar-track {
+    @apply w-full bg-neutral-800 rounded-full h-1.5 overflow-hidden;
+  }
+
+  .progress-bar-fill {
+    @apply bg-yellow-500 h-full rounded-full transition-all duration-500;
+  }
+
+  /* Quiz Set Row */
+  .quiz-set-row {
+    @apply bg-neutral-950 rounded-lg border border-neutral-800 p-4 flex items-center justify-between hover:border-yellow-500/30 transition-all cursor-pointer group;
   }
 }

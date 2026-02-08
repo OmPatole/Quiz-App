@@ -11,9 +11,9 @@ import { Filter, User, TrendingUp, Award, Grid } from 'lucide-react';
 const AdminAnalytics = () => {
     // --- State ---
     const [filters, setFilters] = useState({
-        academicYear: 'Third Year',
-        branch: 'CST',
-        batchYear: '2024-2025'
+        academicYear: 'All Years',
+        branch: 'All Branches',
+        batchYear: 'All Batches'
     });
     const [data, setData] = useState({
         activityTrends: [],
@@ -24,17 +24,28 @@ const AdminAnalytics = () => {
     const [loading, setLoading] = useState(true);
 
     // --- Options ---
-    const academicYears = ['First Year', 'Second Year', 'Third Year', 'Last Year'];
-    const branches = ['CST', 'E&TC', 'Mechanical', 'Food', 'Chemical'];
-    const batchYears = ['2023-2024', '2024-2025', '2025-2026', '2026-2027'];
+    const academicYears = ['All Years', 'First Year', 'Second Year', 'Third Year', 'Last Year'];
+    const branches = ['All Branches', 'CST', 'E&TC', 'Mechanical', 'Food', 'Chemical'];
+    const batchYears = ['All Batches', '2023-2024', '2024-2025', '2025-2026', '2026-2027'];
 
     // --- Fetch Data ---
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const queryParams = new URLSearchParams(filters).toString();
-                const response = await api.get(`/admin/analytics?${queryParams}`);
+                const queryParams = new URLSearchParams();
+
+                if (filters.academicYear && filters.academicYear !== 'All Years') {
+                    queryParams.append('academicYear', filters.academicYear);
+                }
+                if (filters.branch && filters.branch !== 'All Branches') {
+                    queryParams.append('branch', filters.branch);
+                }
+                if (filters.batchYear && filters.batchYear !== 'All Batches') {
+                    queryParams.append('batchYear', filters.batchYear);
+                }
+
+                const response = await api.get(`/admin/analytics?${queryParams.toString()}`);
                 setData(response.data);
             } catch (error) {
                 console.error("Failed to fetch analytics:", error);
@@ -56,7 +67,7 @@ const AdminAnalytics = () => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-neutral-900 border border-neutral-700 p-3 rounded-lg shadow-xl">
-                    <p className="text-emerald-400 font-bold mb-1">{label}</p>
+                    <p className="text-yellow-400 font-bold mb-1">{label}</p>
                     <p className="text-neutral-300 text-sm">
                         {payload[0].name}: <span className="text-white font-bold">{payload[0].value}</span>
                     </p>
@@ -67,7 +78,7 @@ const AdminAnalytics = () => {
     };
 
     // --- Colors ---
-    const COLORS = ['#10b981', '#ef4444']; // Emerald (Pass), Red (Fail)
+    const COLORS = ['#f1e100dc', '#ef4444']; // Yellow (Pass), Red (Fail)
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -75,7 +86,7 @@ const AdminAnalytics = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-neutral-900 border border-neutral-800 p-6 rounded-2xl">
                 <div>
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <TrendingUp className="text-emerald-500" />
+                        <TrendingUp className="text-yellow-500" />
                         Performance Analytics
                     </h2>
                     <p className="text-neutral-400 text-sm mt-1">
@@ -89,9 +100,8 @@ const AdminAnalytics = () => {
                             name="academicYear"
                             value={filters.academicYear}
                             onChange={handleFilterChange}
-                            className="appearance-none bg-neutral-950 border border-neutral-700 text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                            className="appearance-none bg-neutral-950 border border-neutral-700 text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-colors"
                         >
-                            <option value="">All Years</option>
                             {academicYears.map(y => <option key={y} value={y}>{y}</option>)}
                         </select>
                         <Filter className="w-4 h-4 text-neutral-500 absolute right-3 top-3 pointer-events-none" />
@@ -102,9 +112,8 @@ const AdminAnalytics = () => {
                             name="branch"
                             value={filters.branch}
                             onChange={handleFilterChange}
-                            className="appearance-none bg-neutral-950 border border-neutral-700 text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                            className="appearance-none bg-neutral-950 border border-neutral-700 text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-colors"
                         >
-                            <option value="">All Branches</option>
                             {branches.map(b => <option key={b} value={b}>{b}</option>)}
                         </select>
                         <Filter className="w-4 h-4 text-neutral-500 absolute right-3 top-3 pointer-events-none" />
@@ -115,9 +124,8 @@ const AdminAnalytics = () => {
                             name="batchYear"
                             value={filters.batchYear}
                             onChange={handleFilterChange}
-                            className="appearance-none bg-neutral-950 border border-neutral-700 text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                            className="appearance-none bg-neutral-950 border border-neutral-700 text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-colors"
                         >
-                            <option value="">All Batches</option>
                             {batchYears.map(b => <option key={b} value={b}>{b}</option>)}
                         </select>
                         <Filter className="w-4 h-4 text-neutral-500 absolute right-3 top-3 pointer-events-none" />
@@ -127,7 +135,7 @@ const AdminAnalytics = () => {
 
             {loading ? (
                 <div className="flex items-center justify-center h-64">
-                    <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -136,7 +144,7 @@ const AdminAnalytics = () => {
                     <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl shadow-lg">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <TrendingUp size={18} className="text-emerald-500" />
+                                <TrendingUp size={18} className="text-yellow-500" />
                                 30-Day Activity Trend
                             </h3>
                         </div>
@@ -180,7 +188,7 @@ const AdminAnalytics = () => {
                     <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl shadow-lg">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Grid size={18} className="text-emerald-500" />
+                                <Grid size={18} className="text-yellow-500" />
                                 Category Performance (Avg %)
                             </h3>
                         </div>
@@ -215,7 +223,7 @@ const AdminAnalytics = () => {
                     <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl shadow-lg">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <Award size={18} className="text-emerald-500" />
+                                <Award size={18} className="text-yellow-500" />
                                 Pass / Fail Ratio
                             </h3>
                         </div>
@@ -252,7 +260,7 @@ const AdminAnalytics = () => {
                     <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl shadow-lg">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <User size={18} className="text-emerald-500" />
+                                <User size={18} className="text-yellow-500" />
                                 Top Performers
                             </h3>
                         </div>
@@ -278,10 +286,10 @@ const AdminAnalytics = () => {
                                                     {index + 1}
                                                 </span>
                                             </td>
-                                            <td className="py-4 font-medium text-white group-hover:text-emerald-400 transition-colors">
+                                            <td className="py-4 font-medium text-white group-hover:text-yellow-400 transition-colors">
                                                 {student.name}
                                             </td>
-                                            <td className="py-4 text-right font-bold text-emerald-500">
+                                            <td className="py-4 text-right font-bold text-yellow-500">
                                                 {student.avgScore}%
                                             </td>
                                         </tr>

@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, ChevronLeft, ChevronRight, Send, AlertCircle } from 'lucide-react';
 import api from '../api/axios';
+import { useToast } from '../context/ToastContext';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 
 const QuizTaking = () => {
     const { quizId } = useParams();
     const navigate = useNavigate();
+    const { toast } = useToast();
 
     const [quiz, setQuiz] = useState(null);
     const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -13,6 +16,7 @@ const QuizTaking = () => {
     const [timeRemaining, setTimeRemaining] = useState(0);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     useEffect(() => {
         if (!quizId) return;
@@ -38,7 +42,7 @@ const QuizTaking = () => {
                         selectedIndices: savedAnswers[index.toString()] || []
                     }));
                     setAnswers(restoredAnswers);
-                    alert("Resumed from your previous session!");
+                    toast.success("Resumed from your previous session!");
                 } else {
                     // New Session
                     setTimeRemaining(quizData.duration * 60);
@@ -50,7 +54,7 @@ const QuizTaking = () => {
                 }
             } catch (error) {
                 console.error('Error loading quiz:', error);
-                alert('Failed to load quiz');
+                toast.error('Failed to load quiz');
                 navigate('/student');
             } finally {
                 setLoading(false);
@@ -60,6 +64,37 @@ const QuizTaking = () => {
         loadQuizAndProgress();
     }, [quizId]);
 
+    // Submission Logic
+    const processSubmission = useCallback(async () => {
+        if (submitting) return;
+        setSubmitting(true);
+        try {
+            const response = await api.post('/quiz/submit', {
+                quizId,
+                answers,
+            });
+
+            // Clear saved progress on successful submission
+            await api.delete(`/quiz/progress/${quizId}`);
+
+            // Navigate to results page
+            navigate('/student/result', { state: { result: response.data } });
+            toast.success("Quiz submitted successfully!");
+        } catch (error) {
+            console.error('Error submitting quiz:', error);
+            toast.error('Failed to submit quiz. Please try again.');
+            setSubmitting(false);
+        }
+    }, [submitting, quizId, answers, navigate, toast]);
+
+    const handleAttemptSubmit = () => {
+        if (timeRemaining > 0) {
+            setIsConfirmOpen(true);
+        } else {
+            processSubmission();
+        }
+    };
+
     // Timer Logic
     useEffect(() => {
         if (loading || timeRemaining <= 0) return;
@@ -67,7 +102,7 @@ const QuizTaking = () => {
         const timer = setInterval(() => {
             setTimeRemaining((prev) => {
                 if (prev <= 1) {
-                    handleSubmit();
+                    processSubmission();
                     return 0;
                 }
                 return prev - 1;
@@ -75,7 +110,7 @@ const QuizTaking = () => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [timeRemaining, loading]);
+    }, [timeRemaining, loading, processSubmission]);
 
     // Auto-Save Logic (Every 5 seconds)
     useEffect(() => {
@@ -96,7 +131,6 @@ const QuizTaking = () => {
         return () => clearInterval(saveInterval);
     }, [quizId, timeRemaining, answers, loading, quiz, submitting]);
 
-    // ... (fetchQuiz removed as it's merged into loadQuizAndProgress)
 
     const handleOptionSelect = (optionIndex) => {
         const updatedAnswers = [...answers];
@@ -120,34 +154,6 @@ const QuizTaking = () => {
         setAnswers(updatedAnswers);
     };
 
-    const handleSubmit = async () => {
-        if (submitting) return;
-
-        // Skip confirmation if time is up (auto-submit)
-        if (timeRemaining > 0) {
-            const confirmed = confirm('Are you sure you want to submit the quiz?');
-            if (!confirmed) return;
-        }
-
-        setSubmitting(true);
-        try {
-            const response = await api.post('/quiz/submit', {
-                quizId,
-                answers,
-            });
-
-            // Clear saved progress on successful submission
-            await api.delete(`/quiz/progress/${quizId}`);
-
-            // Navigate to results page
-            navigate('/student/result', { state: { result: response.data } });
-        } catch (error) {
-            console.error('Error submitting quiz:', error);
-            alert('Failed to submit quiz. Please try again.');
-            setSubmitting(false);
-        }
-    };
-
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -156,8 +162,8 @@ const QuizTaking = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="min-h-screen flex items-center justify-center bg-black">
+                <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
@@ -169,13 +175,13 @@ const QuizTaking = () => {
     const progress = ((currentQuestion + 1) / quiz.questions.length) * 100;
 
     return (
-        <div className="min-h-screen bg-neutral-950 font-sans text-white p-4">
+        <div className="min-h-screen bg-black font-sans text-white p-4">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
-                <div className="card mb-6 bg-neutral-900 border-neutral-800">
+                <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 mb-6">
                     <div className="flex items-center justify-between mb-4">
                         <div>
-                            <h1 className="text-2xl font-bold text-white">
+                            <h1 className="text-2xl font-bold text-white mb-1">
                                 {quiz.title}
                             </h1>
                             <p className="text-sm text-neutral-400">
@@ -185,9 +191,9 @@ const QuizTaking = () => {
 
                         {/* Timer */}
                         <div
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold ${timeRemaining < 60
-                                ? 'bg-red-900/30 text-red-500 border border-red-900'
-                                : 'bg-emerald-900/30 text-emerald-500 border border-emerald-900'
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold border transition-colors ${timeRemaining < 60
+                                ? 'bg-red-900/20 text-red-500 border-red-900/50'
+                                : 'bg-yellow-900/20 text-yellow-500 border-yellow-900/50'
                                 }`}
                         >
                             <Clock className="w-5 h-5" />
@@ -196,33 +202,33 @@ const QuizTaking = () => {
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="w-full bg-neutral-800 rounded-full h-2 mb-6">
+                    <div className="w-full bg-neutral-800 rounded-full h-2">
                         <div
-                            className="bg-emerald-500 h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                            className="bg-yellow-500 h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(234,179,8,0.3)]"
                             style={{ width: `${progress}%` }}
                         ></div>
                     </div>
                 </div>
 
                 {/* Question Card */}
-                <div className="card mb-6 bg-neutral-900 border-neutral-800">
-                    <div className="flex items-start gap-3 mb-6">
-                        <span className="flex-shrink-0 w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold shadow-lg shadow-emerald-900/20">
+                <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 mb-6">
+                    <div className="flex items-start gap-4 mb-8">
+                        <span className="flex-shrink-0 w-10 h-10 bg-neutral-800 text-yellow-500 border border-neutral-700 rounded-full flex items-center justify-center font-bold text-lg">
                             {currentQuestion + 1}
                         </span>
-                        <div className="flex-1">
-                            <p className="text-base md:text-lg text-white font-medium mb-1 leading-relaxed">
+                        <div className="flex-1 mt-1">
+                            <p className="text-lg md:text-xl text-white font-medium mb-3 leading-relaxed">
                                 {question.text}
                             </p>
-                            <div className="flex gap-4 text-sm text-neutral-400">
-                                <span>Marks: {question.marks}</span>
-                                {question.isMultiSelect && <span className="text-emerald-500 font-medium">(Select all that apply)</span>}
+                            <div className="flex gap-4 text-sm text-neutral-500 font-medium">
+                                <span className="px-2 py-0.5 bg-neutral-950 rounded border border-neutral-800">Marks: {question.marks}</span>
+                                {question.isMultiSelect && <span className="text-yellow-500">(Select all that apply)</span>}
                             </div>
                         </div>
                     </div>
 
                     {/* Options */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 pl-0 md:pl-14">
                         {question.options?.map((option, index) => {
                             const isSelected = currentAnswer?.selectedIndices?.includes(index);
                             return (
@@ -230,23 +236,23 @@ const QuizTaking = () => {
                                     key={index}
                                     onClick={() => handleOptionSelect(index)}
                                     className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${isSelected
-                                        ? 'border-emerald-500 bg-emerald-900/20 shadow-lg shadow-emerald-900/10'
-                                        : 'border-neutral-800 hover:border-emerald-500/50 hover:bg-neutral-800'
+                                        ? 'border-yellow-500 bg-yellow-900/10'
+                                        : 'border-neutral-800 hover:border-yellow-500/50 hover:bg-neutral-800'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-4">
                                         <div
-                                            className={`w-5 h-5 border-2 flex items-center justify-center ${question.isMultiSelect ? 'rounded' : 'rounded-full'
+                                            className={`w-6 h-6 border-2 flex items-center justify-center flex-shrink-0 ${question.isMultiSelect ? 'rounded' : 'rounded-full'
                                                 } ${isSelected
-                                                    ? 'border-emerald-500 bg-emerald-500'
+                                                    ? 'border-yellow-500 bg-yellow-500'
                                                     : 'border-neutral-600'
                                                 }`}
                                         >
                                             {isSelected && (
-                                                <div className={`w-2 h-2 bg-white ${question.isMultiSelect ? 'rounded-sm' : 'rounded-full'}`}></div>
+                                                <div className={`w-2.5 h-2.5 bg-black ${question.isMultiSelect ? 'rounded-sm' : 'rounded-full'}`}></div>
                                             )}
                                         </div>
-                                        <span className="text-white">
+                                        <span className="text-neutral-200 text-lg">
                                             {option.text}
                                         </span>
                                     </div>
@@ -254,7 +260,7 @@ const QuizTaking = () => {
                                         <img
                                             src={option.image}
                                             alt={`Option ${index + 1}`}
-                                            className="mt-3 ml-8 max-w-xs rounded-lg border border-neutral-700"
+                                            className="mt-4 ml-10 max-w-sm rounded-lg border border-neutral-700"
                                         />
                                     )}
                                 </div>
@@ -264,24 +270,24 @@ const QuizTaking = () => {
                 </div>
 
                 {/* Navigation - Sticky on Mobile */}
-                <div className="sticky bottom-4 md:static bg-neutral-950 md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none border border-neutral-800 md:border-0 shadow-2xl md:shadow-none">
+                <div className="sticky bottom-4 md:static bg-black/90 backdrop-blur-md md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none border border-neutral-800 md:border-0 shadow-2xl md:shadow-none z-10">
                     <div className="flex items-center justify-between gap-4">
                         <button
                             onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
                             disabled={currentQuestion === 0}
-                            className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 flex-1 md:flex-initial justify-center"
+                            className="px-6 py-3 rounded-lg font-bold text-neutral-400 hover:text-white hover:bg-neutral-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border border-transparent hover:border-neutral-800 transition-all"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-5 h-5" />
                             <span className="hidden sm:inline">Previous</span>
                         </button>
 
                         {currentQuestion === quiz.questions.length - 1 ? (
                             <button
-                                onClick={handleSubmit}
+                                onClick={handleAttemptSubmit}
                                 disabled={submitting}
-                                className="btn-primary flex items-center gap-2 disabled:opacity-50 bg-emerald-600 hover:bg-emerald-700 text-white flex-1 md:flex-initial justify-center font-bold"
+                                className="bg-yellow-500 hover:bg-yellow-400 text-black px-8 py-3 rounded-lg font-bold flex items-center gap-2 disabled:opacity-50 transition-all shadow-lg shadow-yellow-900/20"
                             >
-                                <Send className="w-4 h-4" />
+                                <Send className="w-5 h-5" />
                                 {submitting ? 'Submitting...' : 'Submit Quiz'}
                             </button>
                         ) : (
@@ -291,10 +297,10 @@ const QuizTaking = () => {
                                         Math.min(quiz.questions.length - 1, prev + 1)
                                     )
                                 }
-                                className="btn-primary flex items-center gap-2 flex-1 md:flex-initial justify-center"
+                                className="bg-white hover:bg-neutral-200 text-black px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-all"
                             >
                                 <span className="hidden sm:inline">Next</span>
-                                <ChevronRight className="w-4 h-4" />
+                                <ChevronRight className="w-5 h-5" />
                             </button>
                         )}
                     </div>
@@ -302,14 +308,25 @@ const QuizTaking = () => {
 
                 {/* Warning for time */}
                 {timeRemaining < 60 && (
-                    <div className="mt-4 card bg-red-900/20 border-2 border-red-900/50">
-                        <div className="flex items-center gap-2 text-red-400">
-                            <AlertCircle className="w-5 h-5" />
-                            <p className="font-medium">Less than 1 minute remaining!</p>
-                        </div>
+                    <div className="mt-6 p-4 rounded-xl bg-red-900/10 border border-red-900/50 flex items-center gap-3 animate-pulse">
+                        <AlertCircle className="w-6 h-6 text-red-500" />
+                        <p className="font-bold text-red-500">Less than 1 minute remaining!</p>
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={() => {
+                    setIsConfirmOpen(false);
+                    processSubmission();
+                }}
+                title="Submit Quiz?"
+                description="Are you sure you want to finish and submit this quiz? You cannot change your answers after submission."
+                confirmText="Yes, Submit"
+                variant="warning"
+            />
         </div>
     );
 };

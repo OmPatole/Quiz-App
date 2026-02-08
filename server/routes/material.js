@@ -82,6 +82,35 @@ router.get('/folders', auth, async (req, res) => {
     }
 });
 
+// @route   POST /api/material/link
+// @desc    Add external link study material
+// @access  Admin only
+router.post('/link', auth, roleAuth('Admin'), async (req, res) => {
+    try {
+        const { title, folderName, url } = req.body;
+
+        if (!title || !folderName || !url) {
+            return res.status(400).json({ message: 'Title, Folder Name, and URL are required' });
+        }
+
+        const material = new Material({
+            title,
+            folderName,
+            type: 'link',
+            linkUrl: url,
+            fileUrl: '' // Not used for links
+        });
+
+        await material.save();
+        res.status(201).json(material);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+module.exports = router;
+
 // @route   DELETE /api/material/:id
 // @desc    Delete study material
 // @access  Admin only
@@ -92,12 +121,19 @@ router.delete('/:id', auth, roleAuth('Admin'), async (req, res) => {
             return res.status(404).json({ message: 'Material not found' });
         }
 
-        // Try to delete file from filesystem
-        const fs = require('fs');
-        const filePath = path.join(__dirname, '..', material.fileUrl);
+        // Only delete file if it's a PDF
+        if (material.type === 'pdf' && material.fileUrl) {
+            const fs = require('fs');
+            const path = require('path');
+            const filePath = path.join(__dirname, '..', material.fileUrl);
 
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+            if (fs.existsSync(filePath)) {
+                try {
+                    fs.unlinkSync(filePath);
+                } catch (err) {
+                    console.error('File deletion error:', err);
+                }
+            }
         }
 
         await material.deleteOne();
@@ -107,5 +143,3 @@ router.delete('/:id', auth, roleAuth('Admin'), async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-
-module.exports = router;

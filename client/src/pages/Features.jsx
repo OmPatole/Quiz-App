@@ -44,9 +44,6 @@ const Features = () => {
             <nav className="border-b border-neutral-800 bg-neutral-950/50 backdrop-blur-md sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                     <Logo />
-                    <button onClick={() => navigate('/login')} className="text-sm font-medium hover:text-emerald-500 transition-colors">
-                        Login
-                    </button>
                 </div>
             </nav>
 
@@ -54,7 +51,7 @@ const Features = () => {
                 {/* Hero Section */}
                 <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <h1 className="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight">
-                        Tools to <span className="text-emerald-500">Build Your Future.</span>
+                        Tools to <span className="text-yellow-400">Build Your Future.</span>
                     </h1>
                     <p className="text-neutral-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
                         A comprehensive suite of features designed to transform how you prepare for placements and competitive exams.
@@ -66,18 +63,18 @@ const Features = () => {
                     {features.map((feature, index) => (
                         <div
                             key={index}
-                            className={`${feature.colSpan} group bg-neutral-900 border border-neutral-800 rounded-3xl p-8 hover:border-emerald-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-900/10 cursor-default relative overflow-hidden`}
+                            className={`${feature.colSpan} group bg-neutral-900 border border-neutral-800 rounded-3xl p-8 hover:border-yellow-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-yellow-900/10 cursor-default relative overflow-hidden`}
                         >
                             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-                                <feature.icon className="w-32 h-32 text-emerald-500" />
+                                <feature.icon className="w-32 h-32 text-yellow-400" />
                             </div>
 
                             <div className="relative z-10 h-full flex flex-col items-start">
-                                <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-emerald-500 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-yellow-400 mb-6 group-hover:bg-yellow-500 group-hover:text-black transition-colors">
                                     <feature.icon className="w-6 h-6" />
                                 </div>
 
-                                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-emerald-400 transition-colors">
+                                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-yellow-400 transition-colors">
                                     {feature.title}
                                 </h3>
 
@@ -90,14 +87,14 @@ const Features = () => {
                 </div>
 
                 {/* Footer Call to Action */}
-                <div className="text-center bg-gradient-to-br from-emerald-900/20 to-neutral-900 border border-emerald-900/30 rounded-3xl p-12">
+                <div className="text-center bg-gradient-to-br from-yellow-900/20 to-neutral-900 border border-yellow-900/30 rounded-3xl p-12">
                     <h2 className="text-3xl font-bold text-white mb-4">Ready to start your journey?</h2>
                     <p className="text-neutral-400 mb-8 max-w-xl mx-auto">
                         Join thousands of students mastering their aptitude skills today.
                     </p>
                     <button
                         onClick={() => navigate('/login')}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-emerald-900/20 hover:scale-105 transition-all inline-flex items-center gap-2"
+                        className="bg-yellow-500 hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-bold shadow-lg shadow-yellow-900/20 hover:scale-105 transition-all inline-flex items-center gap-2"
                     >
                         Get Started Now <Play className="w-4 h-4 fill-current" />
                     </button>
