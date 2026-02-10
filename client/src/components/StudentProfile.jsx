@@ -97,29 +97,29 @@ const ActivityHeatmap = ({ activityMap }) => {
         return { weeks: weeksData, monthLabels: monthsData };
     }, [activityMap, selectedYear]);
 
-    // 3. Color Scale (Emerald/Green per strict monochrome request - adapted to neutral/white scaling or keeping emerald as "success" indicator is common even in monochrome dashboards, but user asked for "violet or emerald". I will use Emerald as it's cleaner for stats)
+    // 3. Color Scale
     const getColor = (item) => {
         if (!item) return 'bg-transparent';
-        if (item.count === 0) return 'bg-neutral-800 border border-neutral-700/50';
-        if (item.count <= 1) return 'bg-emerald-900/60 border border-emerald-900';
-        if (item.count <= 3) return 'bg-emerald-700/80 border border-emerald-700';
-        if (item.count <= 5) return 'bg-emerald-600 border border-emerald-500';
-        return 'bg-emerald-500 border border-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]';
+        if (item.count === 0) return 'bg-gray-200 dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700/50';
+        if (item.count <= 1) return 'bg-blue-200 dark:bg-blue-900/60 border border-blue-300 dark:border-blue-900';
+        if (item.count <= 3) return 'bg-blue-400 dark:bg-blue-700/80 border border-blue-500 dark:border-blue-700';
+        if (item.count <= 5) return 'bg-blue-600 border border-blue-700 dark:border-blue-500';
+        return 'bg-blue-700 dark:bg-blue-500 border border-blue-800 dark:border-blue-400 shadow-[0_0_8px_rgba(59,130,246,0.5)]';
     };
 
     return (
-        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-xl mb-8 font-sans flex flex-col md:flex-row gap-6">
+        <div className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-6 rounded-xl mb-8 font-sans flex flex-col md:flex-row gap-6">
             {/* --- LEFT SIDE: GRAPH --- */}
             <div className="flex-1 overflow-hidden">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-sm font-bold text-neutral-400 uppercase flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-gray-600 dark:text-neutral-400 uppercase flex items-center gap-2">
                         <Calendar size={16} /> {selectedYear} Activity
                     </h3>
                 </div>
 
                 <div className="flex">
 
-                    <div className="relative w-8 h-[96px] mr-2 text-[10px] text-neutral-500 font-bold">
+                    <div className="relative w-8 h-[96px] mr-2 text-[10px] text-gray-500 dark:text-neutral-500 font-bold">
                         {/* Mon aligns with first box (Row 0) */}
                         <span className="absolute top-[30px] right-0">Mon</span>
                         {/* Wed aligns with third box (Row 2) -> 14px * 2 = 28px */}
@@ -129,9 +129,9 @@ const ActivityHeatmap = ({ activityMap }) => {
                     </div>
 
                     {/* Heatmap Scroll Container */}
-                    <div className="overflow-x-auto flex-1 pb-2 scrollbar-thin scrollbar-thumb-neutral-800">
+                    <div className="overflow-x-auto flex-1 pb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-neutral-800">
                         {/* Month Labels */}
-                        <div className="flex text-[10px] text-neutral-500 font-bold mb-2 relative h-3">
+                        <div className="flex text-[10px] text-gray-500 dark:text-neutral-500 font-bold mb-2 relative h-3">
                             {monthLabels.map((m, i) => (
                                 <span
                                     key={i}
@@ -150,7 +150,6 @@ const ActivityHeatmap = ({ activityMap }) => {
                                     {week.map((day, dIndex) => (
                                         <div
                                             key={dIndex}
-                                            // Fixed Size: 12px x 12px
                                             className={`w-3 h-3 rounded-[2px] transition-all duration-300 ${getColor(day)} ${day ? 'hover:scale-125 hover:z-10 cursor-pointer' : ''}`}
                                             title={day ? `${new Date(day.date).toDateString()}: ${day.count} quizzes` : ''}
                                         ></div>
@@ -162,24 +161,24 @@ const ActivityHeatmap = ({ activityMap }) => {
                 </div>
 
                 {/* Legend */}
-                <div className="flex items-center gap-1.5 mt-4 text-[10px] text-neutral-500 justify-end">
+                <div className="flex items-center gap-1.5 mt-4 text-[10px] text-gray-500 dark:text-neutral-500 justify-end">
                     <span className="mr-1">Less</span>
-                    <div className="w-3 h-3 rounded-[2px] bg-neutral-800 border border-neutral-700/50"></div>
-                    <div className="w-3 h-3 rounded-[2px] bg-emerald-900/60 border border-emerald-900"></div>
-                    <div className="w-3 h-3 rounded-[2px] bg-emerald-700/80 border border-emerald-700"></div>
-                    <div className="w-3 h-3 rounded-[2px] bg-emerald-600 border border-emerald-500"></div>
-                    <div className="w-3 h-3 rounded-[2px] bg-emerald-500 border border-emerald-400"></div>
+                    <div className="w-3 h-3 rounded-[2px] bg-gray-200 dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700/50"></div>
+                    <div className="w-3 h-3 rounded-[2px] bg-blue-200 dark:bg-blue-900/60 border border-blue-300 dark:border-blue-900"></div>
+                    <div className="w-3 h-3 rounded-[2px] bg-blue-400 dark:bg-blue-700/80 border border-blue-500 dark:border-blue-700"></div>
+                    <div className="w-3 h-3 rounded-[2px] bg-blue-600 border border-blue-700 dark:border-blue-500"></div>
+                    <div className="w-3 h-3 rounded-[2px] bg-blue-700 dark:bg-blue-500 border border-blue-800 dark:border-blue-400"></div>
                     <span className="ml-1">More</span>
                 </div>
             </div>
 
             {/* --- RIGHT SIDE: YEAR SELECTOR --- */}
-            <div className="flex flex-row md:flex-col gap-2 md:pl-6 md:border-l border-neutral-800/50 text-xs font-bold text-neutral-500 min-w-[80px]">
+            <div className="flex flex-row md:flex-col gap-2 md:pl-6 md:border-l border-gray-200 dark:border-neutral-800/50 text-xs font-bold text-gray-500 dark:text-neutral-500 min-w-[80px]">
                 {availableYears.map(year => (
                     <button
                         key={year}
                         onClick={() => setSelectedYear(year)}
-                        className={`px-3 py-1.5 rounded-lg transition-all text-left w-full ${year === selectedYear ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'hover:bg-neutral-800 hover:text-neutral-300 border border-transparent'}`}
+                        className={`px-3 py-1.5 rounded-lg transition-all text-left w-full ${year === selectedYear ? 'bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-500/30' : 'hover:bg-gray-100 dark:hover:bg-neutral-800 hover:text-gray-700 dark:hover:text-neutral-300 border border-transparent'}`}
                     >
                         {year}
                     </button>
@@ -201,11 +200,11 @@ const StudentProfile = ({ student, stats, onBack }) => {
             {/* HEADER */}
             <div className="flex items-center gap-4 mb-8">
                 {onBack && (
-                    <button onClick={onBack} className="w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white hover:border-neutral-600 transition"><ArrowLeft size={18} /></button>
+                    <button onClick={onBack} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 flex items-center justify-center text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-neutral-600 transition"><ArrowLeft size={18} /></button>
                 )}
                 <div>
-                    <h2 className="text-2xl font-bold text-white">{student.name}</h2>
-                    <div className="flex gap-3 text-sm text-neutral-400 mt-1">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{student.name}</h2>
+                    <div className="flex gap-3 text-sm text-gray-600 dark:text-neutral-400 mt-1">
                         <span className="flex items-center gap-1"><Code size={12} /> {student.prn}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1"><GraduationCap size={12} /> {student.branch}</span>
@@ -215,25 +214,25 @@ const StudentProfile = ({ student, stats, onBack }) => {
 
             {/* STATS CARDS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-xl flex items-center gap-4 hover:border-neutral-700 transition">
-                    <div className="w-12 h-12 rounded-full bg-emerald-900/20 flex items-center justify-center text-emerald-400"><CheckSquare size={24} /></div>
+                <div className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-6 rounded-xl flex items-center gap-4 hover:border-gray-300 dark:hover:border-neutral-700 transition">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400"><CheckSquare size={24} /></div>
                     <div>
-                        <div className="text-2xl font-bold text-white">{profileStats.totalTests || 0}</div>
-                        <div className="text-xs text-neutral-500 uppercase font-bold">Total Attempts</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">{profileStats.totalTests || 0}</div>
+                        <div className="text-xs text-gray-500 dark:text-neutral-500 uppercase font-bold">Total Attempts</div>
                     </div>
                 </div>
-                <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-xl flex items-center gap-4 hover:border-neutral-700 transition">
-                    <div className="w-12 h-12 rounded-full bg-violet-900/20 flex items-center justify-center text-violet-400"><Hash size={24} /></div>
+                <div className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-6 rounded-xl flex items-center gap-4 hover:border-gray-300 dark:hover:border-neutral-700 transition">
+                    <div className="w-12 h-12 rounded-full bg-violet-100 dark:bg-violet-900/20 flex items-center justify-center text-violet-600 dark:text-violet-400"><Hash size={24} /></div>
                     <div>
-                        <div className="text-2xl font-bold text-white">{profileStats.accuracy || 0}%</div>
-                        <div className="text-xs text-neutral-500 uppercase font-bold">Accuracy</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">{profileStats.accuracy || 0}%</div>
+                        <div className="text-xs text-gray-500 dark:text-neutral-500 uppercase font-bold">Accuracy</div>
                     </div>
                 </div>
-                <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-xl flex items-center gap-4 hover:border-neutral-700 transition">
-                    <div className="w-12 h-12 rounded-full bg-amber-900/20 flex items-center justify-center text-amber-400"><BarChart2 size={24} /></div>
+                <div className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-6 rounded-xl flex items-center gap-4 hover:border-gray-300 dark:hover:border-neutral-700 transition">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400"><BarChart2 size={24} /></div>
                     <div>
-                        <div className="text-2xl font-bold text-white">{profileStats.avgScore || 0}</div>
-                        <div className="text-xs text-neutral-500 uppercase font-bold">Avg. Score</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">{profileStats.avgScore || 0}</div>
+                        <div className="text-xs text-gray-500 dark:text-neutral-500 uppercase font-bold">Avg. Score</div>
                     </div>
                 </div>
             </div>
@@ -242,11 +241,11 @@ const StudentProfile = ({ student, stats, onBack }) => {
             <ActivityHeatmap activityMap={activityMap} />
 
             {/* RECENT ACTIVITY TABLE */}
-            <h3 className="text-lg font-bold mb-4 text-white">Recent Activity</h3>
-            <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow-none">
+            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Recent Activity</h3>
+            <div className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-none">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-neutral-400">
-                        <thead className="text-xs text-neutral-500 uppercase bg-neutral-950/50 border-b border-neutral-800">
+                    <table className="w-full text-sm text-left text-gray-600 dark:text-neutral-400">
+                        <thead className="text-xs text-gray-500 dark:text-neutral-500 uppercase bg-gray-100 dark:bg-neutral-950/50 border-b border-gray-200 dark:border-neutral-800">
                             <tr>
                                 <th className="px-6 py-4">Quiz ID</th>
                                 <th className="px-6 py-4">Submitted At</th>
@@ -255,21 +254,21 @@ const StudentProfile = ({ student, stats, onBack }) => {
                         </thead>
                         <tbody>
                             {history.map((h, i) => (
-                                <tr key={i} className="border-b border-neutral-800 hover:bg-neutral-800/30 transition">
-                                    <td className="px-6 py-4 font-medium text-white">
+                                <tr key={i} className="border-b border-gray-200 dark:border-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-800/30 transition">
+                                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
                                         {h.quizTitle || h.quizId || "Unknown Quiz"}
                                     </td>
                                     <td className="px-6 py-4">
                                         {h.submittedAt ? new Date(h.submittedAt).toLocaleDateString() : 'N/A'}
                                     </td>
-                                    <td className="px-6 py-4 text-right font-bold text-emerald-400">
+                                    <td className="px-6 py-4 text-right font-bold text-blue-600 dark:text-blue-400">
                                         {h.score}
                                     </td>
                                 </tr>
                             ))}
                             {history.length === 0 && (
                                 <tr>
-                                    <td colSpan="3" className="text-center py-8 text-neutral-500 italic">
+                                    <td colSpan="3" className="text-center py-8 text-gray-500 dark:text-neutral-500 italic">
                                         No activity recorded yet.
                                     </td>
                                 </tr>

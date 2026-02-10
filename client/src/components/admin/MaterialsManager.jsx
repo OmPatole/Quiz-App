@@ -124,10 +124,10 @@ const MaterialsManager = () => {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                     {currentFolder ? (
                         <div className="flex items-center gap-2">
-                            <button onClick={() => setCurrentFolder(null)} className="hover:bg-neutral-800 p-1 rounded text-neutral-400 hover:text-white transition-colors">
+                            <button onClick={() => setCurrentFolder(null)} className="hover:bg-gray-100 dark:hover:bg-neutral-800 p-1 rounded text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
                             <span>{currentFolder}</span>
@@ -135,7 +135,7 @@ const MaterialsManager = () => {
                     ) : 'Study Materials'}
                 </h2>
                 {!currentFolder && (
-                    <button onClick={() => setIsFolderModalOpen(true)} className="btn-primary flex items-center gap-2 bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold">
+                    <button onClick={() => setIsFolderModalOpen(true)} className="btn-primary flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-all shadow-lg shadow-blue-500/20">
                         <Plus className="w-4 h-4" /> New Folder
                     </button>
                 )}
@@ -144,17 +144,17 @@ const MaterialsManager = () => {
             {currentFolder ? (
                 <div className="space-y-6">
                     {/* Add Material Form */}
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-                        <h3 className="font-semibold mb-4 text-white">Add Material to "{currentFolder}"</h3>
+                    <div className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-6">
+                        <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Add Material to "{currentFolder}"</h3>
                         <form onSubmit={handleUpload} className="space-y-4">
                             {/* Type Toggle */}
-                            <div className="flex bg-neutral-800 p-1 rounded-lg w-MAX inline-flex mb-2">
+                            <div className="flex bg-gray-100 dark:bg-neutral-800 p-1 rounded-lg w-max inline-flex mb-2">
                                 <button
                                     type="button"
                                     onClick={() => setMaterialType('pdf')}
                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${materialType === 'pdf'
-                                        ? 'bg-yellow-500 text-black shadow-lg'
-                                        : 'text-neutral-400 hover:text-white'
+                                        ? 'bg-blue-600 text-white shadow-lg'
+                                        : 'text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
                                         }`}
                                 >
                                     <span className="flex items-center gap-2">
@@ -166,7 +166,7 @@ const MaterialsManager = () => {
                                     type="button"
                                     onClick={() => setMaterialType('link')}
                                     className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${materialType === 'link'
-                                        ? 'bg-yellow-500 text-black shadow-lg'
+                                        ? 'bg-blue-600 text-white shadow-lg'
                                         : 'text-neutral-400 hover:text-white'
                                         }`}
                                 >
@@ -184,7 +184,7 @@ const MaterialsManager = () => {
                                         type="text"
                                         value={uploadTitle || ''}
                                         onChange={e => setUploadTitle(e.target.value)}
-                                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-yellow-500 outline-none"
+                                        className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                                         placeholder="e.g. Chapter 1 Notes"
                                         required
                                     />
@@ -193,23 +193,23 @@ const MaterialsManager = () => {
                                 <div>
                                     {materialType === 'pdf' ? (
                                         <>
-                                            <label className="block text-sm font-medium mb-1 text-neutral-400">PDF File</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-neutral-400">PDF File</label>
                                             <input
                                                 type="file"
                                                 accept="application/pdf"
                                                 onChange={e => setUploadFile(e.target.files[0])}
-                                                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-yellow-500 outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:text-neutral-900 hover:file:bg-yellow-400"
+                                                className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"
                                                 required
                                             />
                                         </>
                                     ) : (
                                         <>
-                                            <label className="block text-sm font-medium mb-1 text-neutral-400">External URL</label>
+                                            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-neutral-400">External URL</label>
                                             <input
                                                 type="url"
                                                 value={externalLink || ''}
                                                 onChange={e => setExternalLink(e.target.value)}
-                                                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-yellow-500 outline-none"
+                                                className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                                                 placeholder="https://example.com/resource"
                                                 required
                                             />
@@ -219,7 +219,7 @@ const MaterialsManager = () => {
                             </div>
 
                             <div className="flex justify-end">
-                                <button type="submit" disabled={uploading} className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 disabled:opacity-50">
+                                <button type="submit" disabled={uploading} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 disabled:opacity-50">
                                     {uploading ? 'Processing...' : (
                                         <>
                                             {materialType === 'pdf' ? <Upload className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -234,17 +234,17 @@ const MaterialsManager = () => {
                     {/* Files List */}
                     <div className="grid grid-cols-1 gap-4">
                         {filteredMaterials.length === 0 ? (
-                            <p className="text-center text-neutral-500 py-8">No materials in this folder.</p>
+                            <p className="text-center text-gray-500 dark:text-neutral-500 py-8">No materials in this folder.</p>
                         ) : (
                             filteredMaterials.map(m => (
-                                <div key={m._id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex items-center justify-between hover:border-yellow-900/50 transition-colors">
+                                <div key={m._id} className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-4 flex items-center justify-between hover:border-blue-500 dark:hover:border-blue-900/50 transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className={`p-3 rounded-lg ${m.type === 'link' ? 'bg-blue-500/10 text-blue-400' : 'bg-red-500/10 text-red-500'}`}>
                                             {m.type === 'link' ? <LinkIcon className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-white">{m.title}</h4>
-                                            <p className="text-sm text-neutral-500">
+                                            <h4 className="font-semibold text-gray-900 dark:text-white">{m.title}</h4>
+                                            <p className="text-sm text-gray-500 dark:text-neutral-500">
                                                 {m.type === 'link' ? 'External Link' : `Uploaded ${new Date(m.uploadedAt).toLocaleDateString()}`}
                                             </p>
                                         </div>
@@ -256,7 +256,7 @@ const MaterialsManager = () => {
                                                 href={m.linkUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                                className="px-4 py-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 text-gray-900 dark:text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
                                             >
                                                 <ExternalLink className="w-4 h-4" /> Open Link
                                             </a>
@@ -265,7 +265,7 @@ const MaterialsManager = () => {
                                                 href={`http://localhost:5000${m.fileUrl}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                                className="px-4 py-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 text-gray-900 dark:text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
                                             >
                                                 <Download className="w-4 h-4" /> Download
                                             </a>
@@ -273,7 +273,7 @@ const MaterialsManager = () => {
 
                                         <button
                                             onClick={() => confirmDelete(m)}
-                                            className="p-2 text-red-500/60 hover:text-red-500 hover:bg-neutral-800 rounded-lg transition-colors"
+                                            className="p-2 text-red-500/60 hover:text-red-600 dark:hover:text-red-500 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
                                             title="Delete Material"
                                         >
                                             <Trash2 className="w-5 h-5" />
@@ -287,7 +287,7 @@ const MaterialsManager = () => {
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {folders.length === 0 && !loading && (
-                        <div className="col-span-full text-center py-12 text-neutral-500">
+                        <div className="col-span-full text-center py-12 text-gray-500 dark:text-neutral-500">
                             No folders yet. Create one to get started.
                         </div>
                     )}
@@ -295,12 +295,12 @@ const MaterialsManager = () => {
                         <button
                             key={folder}
                             onClick={() => setCurrentFolder(folder)}
-                            className="bg-neutral-900 border border-neutral-800 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-900/10 cursor-pointer transition-all rounded-xl flex flex-col items-center gap-4 p-8 group"
+                            className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 hover:border-blue-500 dark:hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-blue-900/10 cursor-pointer transition-all rounded-xl flex flex-col items-center gap-4 p-8 group"
                         >
-                            <Folder className="w-16 h-16 text-yellow-600 group-hover:text-yellow-500 transition-colors" />
+                            <Folder className="w-16 h-16 text-blue-600 dark:text-blue-600 group-hover:text-blue-500 transition-colors" />
                             <div className="text-center">
-                                <span className="block font-bold text-lg text-white mb-1">{folder}</span>
-                                <span className="text-sm text-neutral-500">
+                                <span className="block font-bold text-lg text-gray-900 dark:text-white mb-1">{folder}</span>
+                                <span className="text-sm text-gray-500 dark:text-neutral-500">
                                     {materials.filter(m => m.folderName === folder).length} files
                                 </span>
                             </div>

@@ -18,10 +18,11 @@ const QuizResult = () => {
         <div className="min-h-screen bg-neutral-950 text-white p-4 py-8 font-sans">
             <div className="max-w-4xl mx-auto">
                 {/* Score Card */}
+                {/* Score Card */}
                 <div className="card mb-8 text-center bg-neutral-900 border-neutral-800">
                     <div
                         className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 border ${passed
-                            ? 'bg-yellow-900/20 border-yellow-900 text-yellow-400'
+                            ? 'bg-blue-900/20 border-blue-900 text-blue-400'
                             : 'bg-red-900/20 border-red-900 text-red-500'
                             }`}
                     >
@@ -34,7 +35,7 @@ const QuizResult = () => {
 
                     <div className="flex items-center justify-center gap-8 mt-6">
                         <div>
-                            <p className="text-4xl font-bold text-yellow-400 mb-1">
+                            <p className="text-4xl font-bold text-blue-400 mb-1">
                                 {score}/{totalMarks}
                             </p>
                             <p className="text-sm text-neutral-400">
@@ -46,7 +47,7 @@ const QuizResult = () => {
 
                         <div>
                             <p
-                                className={`text-4xl font-bold mb-1 ${passed ? 'text-yellow-400' : 'text-red-500'
+                                className={`text-4xl font-bold mb-1 ${passed ? 'text-blue-400' : 'text-red-500'
                                     }`}
                             >
                                 {percentage}%
@@ -58,9 +59,9 @@ const QuizResult = () => {
                     </div>
 
                     <div className="mt-6 flex items-center justify-center gap-2">
-                        <TrendingUp className={`w-5 h-5 ${passed ? 'text-yellow-400' : 'text-red-500'}`} />
+                        <TrendingUp className={`w-5 h-5 ${passed ? 'text-blue-400' : 'text-red-500'}`} />
                         <p
-                            className={`font-semibold ${passed ? 'text-yellow-400' : 'text-red-500'
+                            className={`font-semibold ${passed ? 'text-blue-400' : 'text-red-500'
                                 }`}
                         >
                             {passed ? 'Great job! You passed!' : 'Keep practicing!'}
@@ -70,11 +71,11 @@ const QuizResult = () => {
 
                 {/* Streak Celebration */}
                 {result.streak?.updated && (
-                    <div className="card mb-8 bg-amber-900/10 border-amber-900/30 text-center animate-in scale-90 duration-500">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-900/20 rounded-full mb-4 text-amber-500">
+                    <div className="card mb-8 bg-blue-900/10 border-blue-900/30 text-center animate-in scale-90 duration-500">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-900/20 rounded-full mb-4 text-blue-500">
                             <Flame className="w-8 h-8 fill-current animate-pulse" />
                         </div>
-                        <h2 className="text-2xl font-bold text-amber-500 mb-1">
+                        <h2 className="text-2xl font-bold text-blue-500 mb-1">
                             {result.streak.current} Day Streak!
                         </h2>
                         <p className="text-neutral-400">
@@ -86,7 +87,7 @@ const QuizResult = () => {
                 {/* Detailed Results */}
                 <div className="space-y-6 mb-8">
                     <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                        <CheckCircle className="w-6 h-6 text-yellow-400" />
+                        <CheckCircle className="w-6 h-6 text-blue-400" />
                         Detailed Analysis
                     </h2>
 
@@ -94,7 +95,7 @@ const QuizResult = () => {
                         <div
                             key={index}
                             className={`card bg-neutral-900 border-neutral-800 transition-all ${item.isCorrect
-                                ? 'border-l-4 border-l-yellow-500 shadow-yellow-900/5'
+                                ? 'border-l-4 border-l-blue-500 shadow-blue-900/5'
                                 : 'border-l-4 border-l-red-500 shadow-red-900/5'
                                 }`}
                         >
@@ -102,7 +103,7 @@ const QuizResult = () => {
                                 <h3 className="text-lg font-bold text-white">
                                     Question {index + 1}
                                 </h3>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.isCorrect ? 'bg-yellow-900/30 text-yellow-400' : 'bg-red-900/30 text-red-500'}`}>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.isCorrect ? 'bg-blue-900/30 text-blue-400' : 'bg-red-900/30 text-red-500'}`}>
                                     {item.isCorrect ? `+${item.marks} Marks` : '0 Marks'}
                                 </span>
                             </div>
@@ -122,9 +123,9 @@ const QuizResult = () => {
                                     let icon = null;
 
                                     if (isCorrectOpt) {
-                                        borderColor = 'border-yellow-500';
-                                        bgColor = 'bg-yellow-900/20';
-                                        icon = <CheckCircle className="w-4 h-4 text-yellow-400" />;
+                                        borderColor = 'border-blue-500';
+                                        bgColor = 'bg-blue-900/20';
+                                        icon = <CheckCircle className="w-4 h-4 text-blue-400" />;
                                     } else if (isSelected && !isCorrectOpt) {
                                         borderColor = 'border-red-500';
                                         bgColor = 'bg-red-900/20';
@@ -133,7 +134,7 @@ const QuizResult = () => {
 
                                     return (
                                         <div key={optIdx} className={`p-4 rounded-xl border ${borderColor} ${bgColor} flex items-center justify-between`}>
-                                            <span className={`text-sm ${isCorrectOpt ? 'text-yellow-400 font-bold' : isSelected ? 'text-red-400' : 'text-neutral-400'}`}>
+                                            <span className={`text-sm ${isCorrectOpt ? 'text-blue-400 font-bold' : isSelected ? 'text-red-400' : 'text-neutral-400'}`}>
                                                 {opt.text}
                                             </span>
                                             {icon}
@@ -144,7 +145,7 @@ const QuizResult = () => {
 
                             {/* Explanation */}
                             <div className="bg-neutral-950 p-6 rounded-xl border border-neutral-800">
-                                <p className="text-xs font-bold text-yellow-400 uppercase tracking-wide mb-2 flex items-center gap-2">
+                                <p className="text-xs font-bold text-blue-400 uppercase tracking-wide mb-2 flex items-center gap-2">
                                     <TrendingUp className="w-4 h-4" /> Explanation
                                 </p>
                                 <p className="text-neutral-400 leading-relaxed">

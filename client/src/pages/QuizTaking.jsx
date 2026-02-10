@@ -163,7 +163,7 @@ const QuizTaking = () => {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-black">
-                <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
@@ -193,7 +193,7 @@ const QuizTaking = () => {
                         <div
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold border transition-colors ${timeRemaining < 60
                                 ? 'bg-red-900/20 text-red-500 border-red-900/50'
-                                : 'bg-yellow-900/20 text-yellow-500 border-yellow-900/50'
+                                : 'bg-blue-900/20 text-blue-500 border-blue-900/50'
                                 }`}
                         >
                             <Clock className="w-5 h-5" />
@@ -204,7 +204,7 @@ const QuizTaking = () => {
                     {/* Progress Bar */}
                     <div className="w-full bg-neutral-800 rounded-full h-2">
                         <div
-                            className="bg-yellow-500 h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(234,179,8,0.3)]"
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(37,99,235,0.3)]"
                             style={{ width: `${progress}%` }}
                         ></div>
                     </div>
@@ -213,7 +213,7 @@ const QuizTaking = () => {
                 {/* Question Card */}
                 <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 mb-6">
                     <div className="flex items-start gap-4 mb-8">
-                        <span className="flex-shrink-0 w-10 h-10 bg-neutral-800 text-yellow-500 border border-neutral-700 rounded-full flex items-center justify-center font-bold text-lg">
+                        <span className="flex-shrink-0 w-10 h-10 bg-neutral-800 text-blue-500 border border-neutral-700 rounded-full flex items-center justify-center font-bold text-lg">
                             {currentQuestion + 1}
                         </span>
                         <div className="flex-1 mt-1">
@@ -222,7 +222,7 @@ const QuizTaking = () => {
                             </p>
                             <div className="flex gap-4 text-sm text-neutral-500 font-medium">
                                 <span className="px-2 py-0.5 bg-neutral-950 rounded border border-neutral-800">Marks: {question.marks}</span>
-                                {question.isMultiSelect && <span className="text-yellow-500">(Select all that apply)</span>}
+                                {question.isMultiSelect && <span className="text-blue-500">(Select all that apply)</span>}
                             </div>
                         </div>
                     </div>
@@ -236,20 +236,20 @@ const QuizTaking = () => {
                                     key={index}
                                     onClick={() => handleOptionSelect(index)}
                                     className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${isSelected
-                                        ? 'border-yellow-500 bg-yellow-900/10'
-                                        : 'border-neutral-800 hover:border-yellow-500/50 hover:bg-neutral-800'
+                                        ? 'border-blue-500 bg-blue-900/10'
+                                        : 'border-neutral-800 hover:border-blue-500/50 hover:bg-neutral-800'
                                         }`}
                                 >
                                     <div className="flex items-center gap-4">
                                         <div
                                             className={`w-6 h-6 border-2 flex items-center justify-center flex-shrink-0 ${question.isMultiSelect ? 'rounded' : 'rounded-full'
                                                 } ${isSelected
-                                                    ? 'border-yellow-500 bg-yellow-500'
+                                                    ? 'border-blue-500 bg-blue-600'
                                                     : 'border-neutral-600'
                                                 }`}
                                         >
                                             {isSelected && (
-                                                <div className={`w-2.5 h-2.5 bg-black ${question.isMultiSelect ? 'rounded-sm' : 'rounded-full'}`}></div>
+                                                <div className={`w-2.5 h-2.5 bg-neutral-200 ${question.isMultiSelect ? 'rounded-sm' : 'rounded-full'}`}></div>
                                             )}
                                         </div>
                                         <span className="text-neutral-200 text-lg">
@@ -285,7 +285,7 @@ const QuizTaking = () => {
                             <button
                                 onClick={handleAttemptSubmit}
                                 disabled={submitting}
-                                className="bg-yellow-500 hover:bg-yellow-400 text-black px-8 py-3 rounded-lg font-bold flex items-center gap-2 disabled:opacity-50 transition-all shadow-lg shadow-yellow-900/20"
+                                className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 disabled:opacity-50 transition-all shadow-lg shadow-blue-900/20"
                             >
                                 <Send className="w-5 h-5" />
                                 {submitting ? 'Submitting...' : 'Submit Quiz'}
@@ -297,7 +297,7 @@ const QuizTaking = () => {
                                         Math.min(quiz.questions.length - 1, prev + 1)
                                     )
                                 }
-                                className="bg-white hover:bg-neutral-200 text-black px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-all"
+                                className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-900/20"
                             >
                                 <span className="hidden sm:inline">Next</span>
                                 <ChevronRight className="w-5 h-5" />

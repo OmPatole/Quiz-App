@@ -46,7 +46,16 @@ const userSchema = new mongoose.Schema({
     },
     lastQuizDate: {
         type: Date
-    }
+    },
+    email: {
+        type: String,
+        unique: true,
+        sparse: true, // Allows null/undefined values for students who might not have emails
+        lowercase: true,
+        trim: true
+    },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date
 }, {
     timestamps: true
 });

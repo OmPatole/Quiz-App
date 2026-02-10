@@ -154,7 +154,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Create New Quiz</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create New Quiz</h2>
                 <div className="flex gap-2">
                     <button onClick={onCancel} className="btn-secondary">Cancel</button>
                     <button onClick={handleSubmit} disabled={loading} className="btn-primary flex gap-2">
@@ -165,7 +165,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
             </div>
 
             {error && (
-                <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+                <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg border border-red-200 dark:border-red-900/50">
                     {error}
                 </div>
             )}
@@ -215,7 +215,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
             {/* Questions */}
             <div className="space-y-4">
                 {quizData.questions.map((q, qIdx) => (
-                    <div key={qIdx} className="card relative transition-all border border-slate-200 dark:border-slate-700">
+                    <div key={qIdx} className="card relative transition-all border border-gray-200 dark:border-neutral-700">
                         <div className="absolute top-4 right-4">
                             <button onClick={() => removeQuestion(qIdx)} className="text-red-500 hover:text-red-700">
                                 <Trash2 className="w-5 h-5" />
@@ -250,7 +250,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                                 <div key={oIdx} className="flex items-center gap-2">
                                     <button
                                         onClick={() => toggleCorrectOption(qIdx, oIdx)}
-                                        className={`w-6 h-6 flex items-center justify-center rounded-full border ${opt.isCorrect ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300 text-transparent hover:border-slate-400'}`}
+                                        className={`w-6 h-6 flex items-center justify-center rounded-full border ${opt.isCorrect ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-neutral-600 text-transparent hover:border-gray-400 dark:hover:border-neutral-500'}`}
                                         title={opt.isCorrect ? "Correct Answer" : "Mark as Correct"}
                                     >
                                         <CheckCircle className="w-4 h-4" />
@@ -262,7 +262,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                                         className={`flex-1 input-field ${opt.isCorrect ? 'border-green-500 bg-green-50 dark:bg-green-900/10' : ''}`}
                                         placeholder={`Option ${oIdx + 1}`}
                                     />
-                                    <button onClick={() => removeOption(qIdx, oIdx)} className="text-slate-400 hover:text-red-500">
+                                    <button onClick={() => removeOption(qIdx, oIdx)} className="text-gray-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-500">
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -279,7 +279,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                     </div>
                 ))}
 
-                <button onClick={addQuestion} className="w-full py-4 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-slate-500 hover:border-primary-500 hover:text-primary-600 transition-colors flex flex-col items-center gap-2">
+                <button onClick={addQuestion} className="w-full py-4 border-2 border-dashed border-gray-300 dark:border-neutral-600 rounded-xl text-gray-500 dark:text-neutral-400 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-500 transition-colors flex flex-col items-center gap-2">
                     <Plus className="w-6 h-6" />
                     <span className="font-medium">Add New Question</span>
                 </button>

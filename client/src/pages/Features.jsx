@@ -39,21 +39,27 @@ const Features = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-neutral-950 font-sans text-white">
-            {/* Navbar Placeholder - In a real app this would be a shared component */}
-            <nav className="border-b border-neutral-800 bg-neutral-950/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="min-h-screen bg-black font-sans text-white relative overflow-hidden">
+            {/* Background Effects */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+            </div>
+
+            {/* Navbar */}
+            <nav className="border-b border-white/10 bg-black/80 backdrop-blur-xl sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                     <Logo />
                 </div>
             </nav>
 
-            <main className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+            <main className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 relative z-10">
                 {/* Hero Section */}
-                <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <h1 className="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight">
-                        Tools to <span className="text-yellow-400">Build Your Future.</span>
+                <div className="text-center mb-16 animate-fade-in">
+                    <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
+                        Tools to <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Build Your Future.</span>
                     </h1>
-                    <p className="text-neutral-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
                         A comprehensive suite of features designed to transform how you prepare for placements and competitive exams.
                     </p>
                 </div>
@@ -63,22 +69,20 @@ const Features = () => {
                     {features.map((feature, index) => (
                         <div
                             key={index}
-                            className={`${feature.colSpan} group bg-neutral-900 border border-neutral-800 rounded-3xl p-8 hover:border-yellow-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-yellow-900/10 cursor-default relative overflow-hidden`}
+                            className={`${feature.colSpan} group bg-gradient-to-br from-white/5 to-transparent border border-white/10 rounded-3xl p-8 hover:border-white/20 transition-all duration-300 cursor-default relative overflow-hidden backdrop-blur-sm`}
                         >
-                            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-                                <feature.icon className="w-32 h-32 text-yellow-400" />
-                            </div>
+                            <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl group-hover:bg-blue-500/30 transition-all duration-500"></div>
 
                             <div className="relative z-10 h-full flex flex-col items-start">
-                                <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-yellow-400 mb-6 group-hover:bg-yellow-500 group-hover:text-black transition-colors">
+                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform shadow-md">
                                     <feature.icon className="w-6 h-6" />
                                 </div>
 
-                                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-yellow-400 transition-colors">
+                                <h3 className="text-2xl font-bold text-white mb-3">
                                     {feature.title}
                                 </h3>
 
-                                <p className="text-neutral-400 leading-relaxed">
+                                <p className="text-gray-400 leading-relaxed">
                                     {feature.description}
                                 </p>
                             </div>
@@ -87,14 +91,14 @@ const Features = () => {
                 </div>
 
                 {/* Footer Call to Action */}
-                <div className="text-center bg-gradient-to-br from-yellow-900/20 to-neutral-900 border border-yellow-900/30 rounded-3xl p-12">
+                <div className="text-center bg-gradient-to-br from-white/5 to-transparent border border-white/10 rounded-3xl p-12 backdrop-blur-sm">
                     <h2 className="text-3xl font-bold text-white mb-4">Ready to start your journey?</h2>
-                    <p className="text-neutral-400 mb-8 max-w-xl mx-auto">
+                    <p className="text-gray-400 mb-8 max-w-xl mx-auto">
                         Join thousands of students mastering their aptitude skills today.
                     </p>
                     <button
                         onClick={() => navigate('/login')}
-                        className="bg-yellow-500 hover:bg-yellow-400 text-black px-8 py-3 rounded-xl font-bold shadow-lg shadow-yellow-900/20 hover:scale-105 transition-all inline-flex items-center gap-2"
+                        className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white px-8 py-3 rounded-xl font-semibold shadow-lg shadow-blue-900/30 hover:scale-105 transition-all inline-flex items-center gap-2"
                     >
                         Get Started Now <Play className="w-4 h-4 fill-current" />
                     </button>

@@ -18,7 +18,13 @@ const initializeAdmin = async () => {
         const adminExists = await User.findOne({ prn: 'SYS_ADMIN' });
 
         if (adminExists) {
-            console.log('✅ Secure System Administrator exists');
+            if (!adminExists.email) {
+                adminExists.email = 'testmail@gmail.com';
+                await adminExists.save();
+                console.log('✅ Secure System Administrator exists (Updated email to testmail@gmail.com)');
+            } else {
+                console.log('✅ Secure System Administrator exists');
+            }
             return;
         }
 
@@ -26,6 +32,7 @@ const initializeAdmin = async () => {
         const admin = new User({
             name: 'System Administrator',
             prn: 'SYS_ADMIN',
+            email: 'testmail@gmail.com',
             password: 'Secure_Admin_2026!', // Will be hashed by pre-save hook
             role: 'Admin'
         });
@@ -33,6 +40,7 @@ const initializeAdmin = async () => {
         await admin.save();
         console.log('🔒 Secure System Administrator created');
         console.log('   PRN: SYS_ADMIN');
+        console.log('   Email: testmail@gmail.com');
         console.log('   Password: Secure_Admin_2026!');
         console.log('   Policy: 2-hour session (No permanent login)');
     } catch (error) {

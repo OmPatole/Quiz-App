@@ -57,13 +57,13 @@ const Toast = ({ toast, onClose }) => {
     const icons = {
         success: <CheckCircle className="w-5 h-5 text-green-500" />,
         error: <XCircle className="w-5 h-5 text-red-500" />,
-        warning: <AlertCircle className="w-5 h-5 text-yellow-500" />,
+        warning: <AlertCircle className="w-5 h-5 text-blue-500" />,
     };
 
     const borderColors = {
         success: 'border-green-500',
         error: 'border-red-500',
-        warning: 'border-yellow-500',
+        warning: 'border-blue-500',
     };
 
     return (
