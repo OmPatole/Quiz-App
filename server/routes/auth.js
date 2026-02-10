@@ -29,6 +29,22 @@ router.post('/signin', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
+        // Calculate Streak on Login
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const lastDate = user.lastQuizDate ? new Date(user.lastQuizDate) : null;
+        if (lastDate) lastDate.setHours(0, 0, 0, 0);
+
+        if (lastDate) {
+            const diffTime = Math.abs(today - lastDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 1) {
+                user.currentStreak = 0;
+                await user.save();
+            }
+        }
+
         // Create JWT payload
         const payload = {
             id: user._id,
@@ -53,7 +69,8 @@ router.post('/signin', async (req, res) => {
                 id: user._id,
                 name: user.name,
                 prn: user.prn,
-                role: user.role
+                role: user.role,
+                currentStreak: user.currentStreak // Return updated streak
             }
         });
     } catch (error) {

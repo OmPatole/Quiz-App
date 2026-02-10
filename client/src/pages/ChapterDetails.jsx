@@ -1,29 +1,37 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Play, Clock, BookOpen, AlertCircle, FileText } from 'lucide-react';
+import { ChevronLeft, Play, Clock, BookOpen, AlertCircle, FileText, CheckCircle } from 'lucide-react';
 import api from '../api/axios';
 
 const ChapterDetails = () => {
     const { chapterId } = useParams();
     const navigate = useNavigate();
     const [chapter, setChapter] = useState(null);
+    const [completedQuizIds, setCompletedQuizIds] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchChapter = async () => {
+        const fetchData = async () => {
             try {
-                const response = await api.get(`/chapters/${chapterId}`);
-                setChapter(response.data);
-            } catch (error) {
-                console.error('Error fetching chapter:', error);
+                const [chapterRes, resultsRes] = await Promise.all([
+                    api.get(`/chapters/${chapterId}`),
+                    api.get('/quiz/my-results')
+                ]);
 
+                setChapter(chapterRes.data);
+
+                // Extract completed quiz IDs
+                const completedIds = resultsRes.data.map(r => r.quizId._id || r.quizId);
+                setCompletedQuizIds(completedIds);
+            } catch (error) {
+                console.error('Error fetching data:', error);
             } finally {
                 setLoading(false);
             }
         };
 
         if (chapterId) {
-            fetchChapter();
+            fetchData();
         }
     }, [chapterId]);
 
@@ -102,44 +110,61 @@ const ChapterDetails = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {chapter.quizzes.map((quiz, index) => (
-                            <div
-                                key={quiz._id}
-                                onClick={() => navigate(`/student/quiz/${quiz._id}`)}
-                                className="group bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-2xl p-6 hover:border-blue-500/50 dark:hover:border-blue-500/50 hover:bg-gray-100 dark:hover:bg-neutral-900/80 transition-all cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md dark:shadow-none"
-                            >
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="w-12 h-12 bg-gray-100 dark:bg-neutral-800 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 dark:group-hover:bg-blue-500 group-hover:text-white transition-colors shadow-lg shadow-blue-500/10 dark:shadow-blue-900/10">
-                                        <span className="font-bold text-lg">{index + 1}</span>
-                                    </div>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${quiz.quizType === 'Mock'
-                                        ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-900/50'
-                                        : 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50'
-                                        }`}>
-                                        {quiz.quizType || 'Practice'}
-                                    </span>
-                                </div>
-
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                    {quiz.title}
-                                </h3>
-
-                                <p className="text-sm text-gray-500 dark:text-neutral-500 mb-6 line-clamp-2">
-                                    {quiz.description || "Test your knowledge with this practice set."}
-                                </p>
-
-                                <div className="flex items-center justify-between text-sm text-gray-400 dark:text-neutral-400 border-t border-gray-100 dark:border-neutral-800 pt-4">
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="w-4 h-4" />
-                                        <span>{quiz.duration} mins</span>
+                        {chapter.quizzes.map((quiz, index) => {
+                            const isCompleted = completedQuizIds.includes(quiz._id);
+                            return (
+                                <div
+                                    key={quiz._id}
+                                    onClick={() => navigate(`/student/quiz/${quiz._id}`)}
+                                    className={`group border rounded-2xl p-6 transition-all cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md dark:shadow-none
+                                        ${isCompleted
+                                            ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-900/50 hover:border-green-500/50'
+                                            : 'bg-gray-50 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 hover:border-blue-500/50 hover:bg-gray-100 dark:hover:bg-neutral-900/80'
+                                        }`}
+                                >
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors shadow-lg
+                                            ${isCompleted
+                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 shadow-green-500/10'
+                                                : 'bg-gray-100 dark:bg-neutral-800 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 dark:group-hover:bg-blue-500 group-hover:text-white shadow-blue-500/10'
+                                            }`}>
+                                            {isCompleted ? <CheckCircle className="w-6 h-6" /> : <span className="font-bold text-lg">{index + 1}</span>}
+                                        </div>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${quiz.quizType === 'Mock'
+                                            ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-900/50'
+                                            : 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50'
+                                            }`}>
+                                            {quiz.quizType || 'Practice'}
+                                        </span>
                                     </div>
 
-                                    <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform">
-                                        Start <ChevronLeft className="w-4 h-4 rotate-180" />
-                                    </span>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                        {quiz.title}
+                                    </h3>
+
+                                    <p className="text-sm text-gray-500 dark:text-neutral-500 mb-6 line-clamp-2">
+                                        {quiz.description || "Test your knowledge with this practice set."}
+                                    </p>
+
+                                    <div className="flex items-center justify-between text-sm text-gray-400 dark:text-neutral-400 border-t border-gray-100 dark:border-neutral-800 pt-4">
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="w-4 h-4" />
+                                            <span>{quiz.duration} mins</span>
+                                        </div>
+
+                                        {isCompleted ? (
+                                            <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-bold">
+                                                Completed
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform">
+                                                Start <ChevronLeft className="w-4 h-4 rotate-180" />
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

@@ -1,27 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
 const roleAuth = require('../middleware/roleAuth');
 const Quiz = require('../models/Quiz');
 const Result = require('../models/Result');
 
-// @route   GET /api/quiz/:id
-// @desc    Get quiz for taking (without correct answers)
-// @access  Student only
-router.get('/:id', auth, roleAuth('Student'), async (req, res) => {
-    try {
-        const quiz = await Quiz.findById(req.params.id).select('-questions.correctIndices -questions.explanation');
-
-        if (!quiz) {
-            return res.status(404).json({ message: 'Quiz not found' });
-        }
-
-        res.json(quiz);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
+// @route   GET /api/quiz/:id (Moved to bottom)
 
 // @route   POST /api/quiz/submit
 // @desc    Submit quiz, calculate score, and update streak
@@ -75,16 +60,37 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
             });
         });
 
-        // Save result
-        const result = new Result({
-            studentId: req.user._id,
-            quizId,
-            score,
-            totalMarks,
-            answers
+        // Save result - Always update if exists, create if new
+        // Ensure quizId is properly converted to ObjectId
+        const quizObjectId = mongoose.Types.ObjectId.isValid(quizId) 
+            ? new mongoose.Types.ObjectId(quizId) 
+            : quizId;
+
+        let result = await Result.findOne({ 
+            studentId: req.user._id, 
+            quizId: quizObjectId 
         });
 
-        await result.save();
+        if (result) {
+            // Update existing result with latest attempt
+            result.score = score;
+            result.totalMarks = totalMarks;
+            result.answers = answers;
+            result.submittedAt = new Date();
+            await result.save();
+            console.log(`Updated existing result for student ${req.user._id}, quiz ${quizObjectId}`);
+        } else {
+            // Create new result for first attempt
+            result = new Result({
+                studentId: req.user._id,
+                quizId: quizObjectId,
+                score,
+                totalMarks,
+                answers
+            });
+            await result.save();
+            console.log(`Created new result for student ${req.user._id}, quiz ${quizObjectId}`);
+        }
 
         // --- Streak Logic ---
         const User = require('../models/User');
@@ -260,6 +266,23 @@ router.delete('/progress/:quizId', auth, roleAuth('Student'), async (req, res) =
             quizId: req.params.quizId
         });
         res.json({ message: 'Progress cleared' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+// @route   GET /api/quiz/:id
+// @desc    Get quiz for taking (without correct answers)
+// @access  Student only
+router.get('/:id', auth, roleAuth('Student'), async (req, res) => {
+    try {
+        const quiz = await Quiz.findById(req.params.id).select('-questions.correctIndices -questions.explanation');
+
+        if (!quiz) {
+            return res.status(404).json({ message: 'Quiz not found' });
+        }
+
+        res.json(quiz);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });

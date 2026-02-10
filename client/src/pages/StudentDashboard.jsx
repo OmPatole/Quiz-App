@@ -144,10 +144,10 @@ const StudentDashboard = () => {
                                 <div>
                                     <div className="flex items-center gap-2 text-blue-400 font-bold text-sm mb-2 uppercase tracking-wide">
                                         <Flame className="w-4 h-4" /> Daily Motivation
-                                        {user?.currentStreak > 0 && (
+                                        {(profileStats?.student?.currentStreak > 0 || user?.currentStreak > 0) && (
                                             <span className="ml-4 flex items-center gap-1 text-blue-500">
                                                 <Flame className="w-4 h-4 fill-current" />
-                                                {user.currentStreak} Day Streak
+                                                {profileStats?.student?.currentStreak || user.currentStreak} Day Streak
                                             </span>
                                         )}
                                     </div>
@@ -221,46 +221,55 @@ const StudentDashboard = () => {
                                 </div>
                             ) : chapters.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {chapters.map((chapter) => (
-                                        <div
-                                            key={chapter._id}
-                                            className="group bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-900/10 transition-all cursor-pointer relative overflow-hidden"
-                                            onClick={() => navigate(`/student/chapter/${chapter._id}`)}
-                                        >
-                                            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
-                                                <BookOpen className="w-32 h-32 text-blue-400" />
-                                            </div>
+                                    {chapters.map((chapter) => {
+                                        const completedCount = chapter.quizzes?.filter(q => profileStats?.completedQuizIds?.includes(q._id)).length || 0;
+                                        const totalCount = chapter.quizzes?.length || 0;
+                                        const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-                                            <div className="relative z-10">
-                                                <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-blue-400 mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                                    <BookOpen className="w-6 h-6" />
+                                        return (
+                                            <div
+                                                key={chapter._id}
+                                                className="group bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-900/10 transition-all cursor-pointer relative overflow-hidden"
+                                                onClick={() => navigate(`/student/chapter/${chapter._id}`)}
+                                            >
+                                                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                                                    <BookOpen className="w-32 h-32 text-blue-400" />
                                                 </div>
 
-                                                <h4 className="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
-                                                    {chapter.title}
-                                                </h4>
-
-                                                <p className="text-neutral-500 text-sm mb-6">
-                                                    {chapter.quizzes?.length || 0} Quizzes Available
-                                                </p>
-
-                                                {/* Progress Mockup */}
-                                                <div className="mb-6">
-                                                    <div className="flex justify-between text-xs text-neutral-400 mb-2">
-                                                        <span>Progress</span>
-                                                        <span>0%</span>
+                                                <div className="relative z-10">
+                                                    <div className="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center text-blue-400 mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                                        <BookOpen className="w-6 h-6" />
                                                     </div>
-                                                    <div className="w-full bg-neutral-800 rounded-full h-1.5 overflow-hidden">
-                                                        <div className="bg-blue-600 w-0 h-full rounded-full group-hover:w-2 transition-all duration-1000"></div>
+
+                                                    <h4 className="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+                                                        {chapter.title}
+                                                    </h4>
+
+                                                    <p className="text-neutral-500 text-sm mb-6">
+                                                        {chapter.quizzes?.length || 0} Quizzes Available
+                                                    </p>
+
+                                                    {/* Progress Bar */}
+                                                    <div className="mb-6">
+                                                        <div className="flex justify-between text-xs text-neutral-400 mb-2">
+                                                            <span>Progress</span>
+                                                            <span>{progress}%</span>
+                                                        </div>
+                                                        <div className="w-full bg-neutral-800 rounded-full h-1.5 overflow-hidden">
+                                                            <div
+                                                                className="bg-blue-600 h-full rounded-full group-hover:bg-blue-500 transition-all duration-1000"
+                                                                style={{ width: `${progress}%` }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-6 flex items-center text-sm font-medium text-blue-400 group-hover:translate-x-2 transition-transform duration-300">
+                                                        Start Learning <ArrowRight className="w-4 h-4 ml-2" />
                                                     </div>
                                                 </div>
-
-                                                <div className="mt-6 flex items-center text-sm font-medium text-blue-400 group-hover:translate-x-2 transition-transform duration-300">
-                                                    Start Learning <ArrowRight className="w-4 h-4 ml-2" />
-                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             ) : (
                                 <div className="text-center py-20 bg-neutral-900 rounded-3xl border border-neutral-800 border-dashed">

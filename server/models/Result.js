@@ -39,7 +39,7 @@ const resultSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index for faster queries
+// Index for faster queries (not unique, allows multiple attempts)
 resultSchema.index({ studentId: 1, quizId: 1 });
 
 module.exports = mongoose.model('Result', resultSchema);

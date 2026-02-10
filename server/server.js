@@ -65,8 +65,23 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
+// Helper function to get network IP
+const getNetworkIP = () => {
+    const os = require('os');
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return 'localhost';
+};
+
 app.listen(PORT, '0.0.0.0', () => {
+    const networkIP = getNetworkIP();
     console.log(`Server is running on port ${PORT}`);
     console.log(`Local: http://localhost:${PORT}`);
-    console.log(`Network: http://172.16.128.89:${PORT}`);
+    console.log(`Network: http://${networkIP}:${PORT}`);
 });

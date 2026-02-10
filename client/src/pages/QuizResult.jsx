@@ -1,10 +1,34 @@
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, Award, Home, TrendingUp, Flame } from 'lucide-react';
+import { CheckCircle, XCircle, Award, Home, TrendingUp, Flame, ChevronDown, RotateCcw, BookOpen, User, ArrowDown } from 'lucide-react';
 
 const QuizResult = () => {
+    const [showNavMenu, setShowNavMenu] = useState(false);
+    const [showScrollButton, setShowScrollButton] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const result = location.state?.result;
+
+    useEffect(() => {
+        const handleScroll = () => {
+            // Show button when not at bottom
+            const scrollPosition = window.scrollY + window.innerHeight;
+            const pageHeight = document.documentElement.scrollHeight;
+            setShowScrollButton(scrollPosition < pageHeight - 100);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        handleScroll(); // Check initial position
+
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToBottom = () => {
+        window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'smooth'
+        });
+    };
 
     if (!result) {
         navigate('/student');
@@ -157,16 +181,66 @@ const QuizResult = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-center">
-                    <button
-                        onClick={() => navigate('/student')}
-                        className="btn-primary flex items-center gap-2"
-                    >
-                        <Home className="w-4 h-4" />
-                        Back to Dashboard
-                    </button>
+                <div className="flex justify-center mb-12">
+                    <div className="relative inline-flex rounded-md shadow-sm">
+                        <button
+                            onClick={() => navigate('/student')}
+                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-l-xl flex items-center gap-2 transition-colors border-r border-blue-700"
+                        >
+                            <Home className="w-5 h-5" />
+                            Back to Dashboard
+                        </button>
+
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowNavMenu(!showNavMenu)}
+                                className="px-3 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-r-xl transition-colors h-full flex items-center"
+                            >
+                                <ChevronDown className="w-5 h-5" />
+                            </button>
+
+                            {showNavMenu && (
+                                <div className="absolute right-0 bottom-full mb-2 w-56 rounded-xl border border-neutral-800 bg-neutral-900 shadow-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="p-1">
+                                        <button
+                                            onClick={() => navigate(`/student/quiz/${result.quizId}`)}
+                                            className="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white rounded-lg flex items-center gap-3 transition-colors"
+                                        >
+                                            <RotateCcw className="w-4 h-4 text-blue-500" />
+                                            Retake Quiz
+                                        </button>
+                                        <button
+                                            onClick={() => navigate('/student/library')}
+                                            className="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white rounded-lg flex items-center gap-3 transition-colors"
+                                        >
+                                            <BookOpen className="w-4 h-4 text-purple-500" />
+                                            Browse Library
+                                        </button>
+                                        <button
+                                            onClick={() => navigate('/student?tab=profile')}
+                                            className="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white rounded-lg flex items-center gap-3 transition-colors"
+                                        >
+                                            <User className="w-4 h-4 text-green-500" />
+                                            My Profile
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {/* Scroll to Bottom Button */}
+            {showScrollButton && (
+                <button
+                    onClick={scrollToBottom}
+                    className="fixed bottom-8 right-8 w-12 h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg shadow-blue-900/50 flex items-center justify-center transition-all hover:scale-110 animate-bounce z-50"
+                    aria-label="Scroll to bottom"
+                >
+                    <ArrowDown className="w-5 h-5" />
+                </button>
+            )}
         </div>
     );
 };

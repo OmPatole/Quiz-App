@@ -385,48 +385,208 @@ router.get('/student-stats/:studentId', auth, async (req, res) => {
         const Result = require('../models/Result');
         const User = require('../models/User');
 
-        const student = await User.findById(studentId).select('name prn branch');
+        const student = await User.findById(studentId);
         if (!student) {
             return res.status(404).json({ message: 'Student not found' });
         }
 
-        // 1. Fetch all results for this student
-        const results = await Result.find({ studentId }).populate('quizId', 'title').sort({ submittedAt: -1 });
+        // Fetch user results
+        const results = await Result.find({ studentId }).populate('quizId', 'title category duration');
 
-        // 2. Calculate Stats
+        // 5. Calculate Effective Streak
+        let currentStreak = student.currentStreak || 0;
+        const lastDate = student.lastQuizDate ? new Date(student.lastQuizDate) : null;
+
+        if (lastDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const last = new Date(lastDate);
+            last.setHours(0, 0, 0, 0);
+
+            const diffTime = Math.abs(today - last);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            // If gap > 1 day, streak is broken (0). 
+            // If gap == 1 (yesterday) or 0 (today), streak is valid.
+            if (diffDays > 1) {
+                currentStreak = 0;
+            }
+        } else {
+            currentStreak = 0;
+        }
+
+        // Calculate stats from results
         const totalTests = results.length;
-        const totalScore = results.reduce((acc, r) => acc + r.score, 0);
-        const totalMaxMarks = results.reduce((acc, r) => acc + r.totalMarks, 0);
+        const totalScore = results.reduce((acc, r) => acc + (r.score || 0), 0);
+        const totalMax = results.reduce((acc, r) => acc + (r.totalMarks || 0), 0);
+        const avgScore = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
 
-        const avgScore = totalTests > 0 ? Math.round(totalScore / totalTests) : 0;
-        const accuracy = totalMaxMarks > 0 ? Math.round((totalScore / totalMaxMarks) * 100) : 0;
+        // Calculate accuracy (correct answers / total questions attempted)
+        // Approximate accuracy using score percentage for now
+        const accuracy = avgScore;
 
-        // 3. Activity Map (YYYY-MM-DD -> Count)
+        // 6. Completed Quizzes List
+        const completedQuizIds = results.map(r => r.quizId?._id);
+
+        // Activity Map (Last 365 days)
         const activityMap = {};
         results.forEach(r => {
-            const dateStr = new Date(r.submittedAt).toISOString().split('T')[0];
-            activityMap[dateStr] = (activityMap[dateStr] || 0) + 1;
+            const date = new Date(r.submittedAt).toISOString().split('T')[0];
+            activityMap[date] = (activityMap[date] || 0) + 1;
         });
 
-        // 4. Recent Activity
+        // Recent Activity
         const recentActivity = results.slice(0, 5).map(r => ({
-            quizId: r.quizId?._id,
-            quizTitle: r.quizId?.title || 'Deleted Quiz',
+            _id: r._id,
+            quizTitle: r.quizId?.title || 'Unknown Quiz',
             score: r.score,
-            submittedAt: r.submittedAt
+            totalMarks: r.totalMarks,
+            date: r.submittedAt
         }));
 
         res.json({
-            student,
+            student: {
+                ...student.toObject(),
+                currentStreak // Return calculated/verified streak
+            },
             stats: {
                 totalTests,
                 avgScore,
                 accuracy
             },
             activityMap,
-            recentActivity
+            recentActivity,
+            completedQuizIds
         });
 
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// @route   GET /api/admin/reports/monthly
+// @desc    Generate monthly report
+// @access  Admin only
+router.get('/reports/monthly', auth, roleAuth('Admin'), async (req, res) => {
+    try {
+        const { month } = req.query; // YYYY-MM
+        if (!month) {
+            return res.status(400).json({ message: 'Month is required (YYYY-MM)' });
+        }
+
+        const year = parseInt(month.split('-')[0]);
+        const monthIndex = parseInt(month.split('-')[1]) - 1; // 0-indexed
+
+        const startDate = new Date(year, monthIndex, 1);
+        const endDate = new Date(year, monthIndex + 1, 0, 23, 59, 59); // Last day of month
+
+        const Result = require('../models/Result');
+        const Quiz = require('../models/Quiz');
+
+        // 1. Fetch Results for the month
+        const results = await Result.find({
+            submittedAt: { $gte: startDate, $lte: endDate }
+        }).populate('quizId', 'title category');
+
+        // 2. Aggregate Data
+        const totalQuizzesTaken = results.length;
+        const uniqueStudents = new Set(results.map(r => r.studentId.toString())).size;
+
+        const totalScore = results.reduce((acc, r) => acc + (r.score || 0), 0);
+        const totalMax = results.reduce((acc, r) => acc + (r.totalMarks || 0), 0);
+        const averageScore = totalQuizzesTaken > 0 ? Math.round((totalScore / totalMax) * 100) : 0; // Percentage
+
+        // 3. Weekly Breakdown
+        const weeklyBreakdown = {};
+        results.forEach(r => {
+            const date = new Date(r.submittedAt);
+            // Simple week calculation: Day of month / 7
+            const weekNum = Math.ceil(date.getDate() / 7);
+            const weekKey = `Week ${weekNum}`;
+            weeklyBreakdown[weekKey] = (weeklyBreakdown[weekKey] || 0) + 1;
+        });
+
+        // 4. Quiz Metadata (Active quizzes)
+        const activeQuizIds = [...new Set(results.map(r => r.quizId?._id.toString()))];
+        // Also include quizzes created in this month
+        const createdQuizzes = await Quiz.find({
+            createdAt: { $gte: startDate, $lte: endDate }
+        });
+        const createdQuizIds = createdQuizzes.map(q => q._id.toString());
+
+        const allRelevantQuizIds = [...new Set([...activeQuizIds, ...createdQuizIds])];
+
+        const quizMetadata = await Promise.all(allRelevantQuizIds.map(async (qId) => {
+            const quiz = await Quiz.findById(qId).select('title category');
+            if (!quiz) return null;
+
+            // Calc avg for this quiz in this month
+            const quizResults = results.filter(r => r.quizId?._id.toString() === qId);
+            let quizAvg = 0;
+            if (quizResults.length > 0) {
+                const qs = quizResults.reduce((a, r) => a + r.score, 0);
+                const qt = quizResults.reduce((a, r) => a + r.totalMarks, 0);
+                quizAvg = qt > 0 ? Math.round((qs / qt) * 100) : 0;
+            }
+
+            return {
+                _id: quiz._id,
+                title: quiz.title,
+                category: quiz.category,
+                attempts: quizResults.length,
+                averageScore: quizAvg
+            };
+        }));
+
+        res.json({
+            month,
+            totalQuizzesTaken,
+            uniqueStudents,
+            averageScore,
+            weeklyBreakdown,
+            quizMetadata: quizMetadata.filter(q => q !== null)
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// @route   GET /api/admin/questions/bank
+// @desc    Get all unique questions from question bank
+// @access  Admin only
+router.get('/questions/bank', auth, roleAuth('Admin'), async (req, res) => {
+    try {
+        const Quiz = require('../models/Quiz');
+        const quizzes = await Quiz.find({});
+
+        const allQuestions = [];
+        const seenQuestions = new Set();
+
+        quizzes.forEach(quiz => {
+            if (quiz.questions) {
+                quiz.questions.forEach(q => {
+                    // Use question text as unique key
+                    const qKey = q.text.trim().toLowerCase();
+                    if (!seenQuestions.has(qKey)) {
+                        seenQuestions.add(qKey);
+                        allQuestions.push({
+                            _id: q._id || new Date().getTime() + Math.random(), // Ensure ID
+                            questionText: q.text,
+                            options: q.options,
+                            correctIndices: q.correctIndices,
+                            explanation: q.explanation,
+                            marks: q.marks,
+                            fromQuiz: quiz.title
+                        });
+                    }
+                });
+            }
+        });
+
+        res.json(allQuestions);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
@@ -718,6 +878,89 @@ router.delete('/materials/:id', auth, roleAuth('Admin'), async (req, res) => {
         res.json({ message: 'Material deleted successfully' });
     } catch (error) {
         console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// @route   GET /api/admin/reports/monthly-performance
+// @desc    Generate detailed monthly attendance and performance report for Weekly/Test quizzes
+// @access  Admin only
+router.get('/reports/monthly-performance', auth, roleAuth('Admin'), async (req, res) => {
+    try {
+        const { month } = req.query; // YYYY-MM
+        if (!month) {
+            return res.status(400).json({ message: 'Month is required (YYYY-MM)' });
+        }
+
+        const year = parseInt(month.split('-')[0]);
+        const monthIndex = parseInt(month.split('-')[1]) - 1; // 0-indexed
+
+        const startDate = new Date(year, monthIndex, 1);
+        const endDate = new Date(year, monthIndex + 1, 0, 23, 59, 59);
+
+        const Result = require('../models/Result');
+        const User = require('../models/User');
+
+        // 1. Find Results for the month, populating Quiz to filter by type
+        const results = await Result.find({
+            submittedAt: { $gte: startDate, $lte: endDate }
+        }).populate({
+            path: 'quizId',
+            select: 'title quizType',
+            match: { quizType: 'weekly' } // Only include weekly quizzes
+        }).populate('studentId', 'name prn branch academicYear batchYear');
+
+        // 2. Aggregate Data by Student
+        const studentStats = {};
+
+        results.forEach(result => {
+            // Skip if quiz mismatch (due to populate match filtering) or no student
+            if (!result.quizId || !result.studentId) return;
+
+            const student = result.studentId;
+            const sId = student._id.toString();
+
+            if (!studentStats[sId]) {
+                studentStats[sId] = {
+                    studentDetails: {
+                        name: student.name,
+                        prn: student.prn,
+                        branch: student.branch,
+                        academicYear: student.academicYear,
+                        batchYear: student.batchYear
+                    },
+                    uniqueQuizzes: new Set(),
+                    totalPercentage: 0,
+                    attemptCount: 0
+                };
+            }
+
+            // Track unique quiz
+            studentStats[sId].uniqueQuizzes.add(result.quizId._id.toString());
+
+            // Calculate percentage for this result
+            const percentage = result.totalMarks > 0 ? (result.score / result.totalMarks) * 100 : 0;
+            studentStats[sId].totalPercentage += percentage;
+            studentStats[sId].attemptCount += 1;
+        });
+
+        // 3. Format Response
+        const reportData = Object.values(studentStats).map(stat => {
+            const avgScore = stat.attemptCount > 0
+                ? Math.round(stat.totalPercentage / stat.attemptCount)
+                : 0;
+
+            return {
+                ...stat.studentDetails,
+                quizzesAttended: stat.uniqueQuizzes.size,
+                avgScore
+            };
+        });
+
+        res.json(reportData);
+
+    } catch (error) {
+        console.error("Monthly Performance Report Error:", error);
         res.status(500).json({ message: 'Server error' });
     }
 });
