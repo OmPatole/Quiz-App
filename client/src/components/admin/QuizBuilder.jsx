@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, X, Save, Clock, Calendar, CheckCircle, ChevronDown, ChevronUp, Database, Search, Shuffle, List } from 'lucide-react';
+import { Plus, Trash2, X, Save, Clock, Calendar, CheckCircle2, ChevronDown, ChevronUp, Database, Search, Shuffle, List } from 'lucide-react';
 import api from '../../api/axios';
 
 const QuizBuilder = ({ onCancel, onSuccess }) => {
@@ -389,7 +389,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                                             className={`w-6 h-6 flex items-center justify-center rounded-full border ${opt.isCorrect ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-neutral-600 text-transparent hover:border-gray-400 dark:hover:border-neutral-500'}`}
                                             title={opt.isCorrect ? "Correct Answer" : "Mark as Correct"}
                                         >
-                                            <CheckCircle className="w-4 h-4" />
+                                            <CheckCircle2 className="w-4 h-4" />
                                         </button>
                                         <input
                                             type="text"
@@ -478,7 +478,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                                                 >
                                                     <div className="flex items-start gap-3">
                                                         <div className={`w-5 h-5 rounded border flex items-center justify-center mt-1 ${isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-400'}`}>
-                                                            {isSelected && <CheckCircle className="w-3 h-3 text-white" />}
+                                                            {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
                                                         </div>
                                                         <div>
                                                             <p className="font-medium text-gray-900 dark:text-white">{benz.questionText}</p>
@@ -585,7 +585,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                                                                 >
                                                                     <div className="flex items-start gap-3">
                                                                         <div className={`w-5 h-5 rounded border flex items-center justify-center mt-1 ${isSelected ? 'bg-green-500 border-green-500' : 'border-gray-400'}`}>
-                                                                            {isSelected && <CheckCircle className="w-3 h-3 text-white" />}
+                                                                            {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
                                                                         </div>
                                                                         <div className="flex-1">
                                                                             <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">{q.text}</p>

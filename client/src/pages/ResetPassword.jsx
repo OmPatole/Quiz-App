@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import Logo from '../components/common/Logo';
 
 const ResetPassword = () => {
@@ -80,7 +80,7 @@ const ResetPassword = () => {
                     {success ? (
                         <div className="text-center space-y-4">
                             <div className="flex justify-center">
-                                <CheckCircle className="w-16 h-16 text-green-500" />
+                                <CheckCircle2 className="w-16 h-16 text-green-500" />
                             </div>
                             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Password Reset!</h3>
                             <p className="text-gray-600 dark:text-gray-400">

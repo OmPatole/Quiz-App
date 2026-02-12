@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, X } from 'lucide-react';
 
 const ToastContext = createContext(null);
 
@@ -55,7 +55,7 @@ const ToastContainer = ({ toasts, removeToast }) => {
 
 const Toast = ({ toast, onClose }) => {
     const icons = {
-        success: <CheckCircle className="w-5 h-5 text-green-500" />,
+        success: <CheckCircle2 className="w-5 h-5 text-green-500" />,
         error: <XCircle className="w-5 h-5 text-red-500" />,
         warning: <AlertCircle className="w-5 h-5 text-blue-500" />,
     };

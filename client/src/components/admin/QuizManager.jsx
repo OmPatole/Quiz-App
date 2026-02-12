@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Plus, Trash2, BookOpen, CheckCircle, AlertCircle, FilePlus } from 'lucide-react';
+import { Upload, Plus, Trash2, BookOpen, CheckCircle2, AlertCircle, FilePlus } from 'lucide-react';
 import api from '../../api/axios';
 import headers from '../../api/axios'; // Wait, standard import is just api
 import QuizBuilder from './QuizBuilder';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Play, Clock, BookOpen, AlertCircle, FileText, CheckCircle } from 'lucide-react';
+import { ChevronLeft, Play, Clock, BookOpen, AlertCircle, FileText, CheckCircle2 } from 'lucide-react';
 import api from '../api/axios';
 import Logo from '../components/common/Logo';
 
@@ -136,7 +136,7 @@ const ChapterDetails = () => {
                                                 ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 shadow-green-500/10'
                                                 : 'bg-gray-100 dark:bg-neutral-800 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 dark:group-hover:bg-blue-500 group-hover:text-white shadow-blue-500/10'
                                             }`}>
-                                            {isCompleted ? <CheckCircle className="w-6 h-6" /> : <span className="font-bold text-lg">{index + 1}</span>}
+                                            {isCompleted ? <CheckCircle2 className="w-6 h-6" /> : <span className="font-bold text-lg">{index + 1}</span>}
                                         </div>
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold border ${quiz.quizType === 'Mock'
                                             ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-900/50'

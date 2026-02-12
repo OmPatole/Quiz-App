@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, CheckCircle, XCircle, AlertCircle, Search, Filter, Eye, Trash2, Trophy } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, XCircle, AlertCircle, Search, Filter, Eye, Trash2, Trophy } from 'lucide-react';
 import api from '../../api/axios';
 import StudentProfile from '../StudentProfile';
 import { useToast } from '../../context/ToastContext';
@@ -457,7 +457,7 @@ const StudentManager = () => {
 
                             {result && (
                                 <div className={`p-4 rounded-lg flex items-start gap-3 ${result.created > 0 ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'}`}>
-                                    {result.created > 0 ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
+                                    {result.created > 0 ? <CheckCircle2 className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
                                     <div className="text-sm">
                                         <p className="font-bold">{result.message}</p>
                                         {result.created > 0 && <p>Successfully added {result.created} students.</p>}

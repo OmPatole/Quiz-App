@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, BarChart2, Clock, CheckCircle, Briefcase, TrendingUp, BrainCircuit, LayoutDashboard, Sparkles, Target, Award, Zap } from 'lucide-react';
+import { ArrowRight, BookOpen, BarChart2, Clock, Briefcase, TrendingUp, BrainCircuit, LayoutDashboard, Sparkles, Target, Award, Zap, CheckCircle2 } from 'lucide-react';
 import Footer from '../components/layout/Footer';
 import Navbar from '../components/layout/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -76,15 +76,15 @@ const LandingPage = () => {
                             {/* Trust Indicators */}
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-500">
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
                                     <span>100% Free for Students</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
                                     <span>Official T&P Initiative</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
                                     <span>Real-time Analytics</span>
                                 </div>
                             </div>

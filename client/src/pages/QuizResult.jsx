@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, Award, Home, TrendingUp, Flame, ChevronDown, RotateCcw, BookOpen, User, ArrowDown } from 'lucide-react';
+import { CheckCircle2, XCircle, Award, Home, TrendingUp, Flame, ChevronDown, RotateCcw, BookOpen, User, ArrowDown } from 'lucide-react';
 import Logo from '../components/common/Logo';
 
 const QuizResult = () => {
@@ -125,7 +125,7 @@ const QuizResult = () => {
                 {/* Detailed Results */}
                 <div className="space-y-6 mb-8">
                     <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                        <CheckCircle className="w-6 h-6 text-blue-400" />
+                        <CheckCircle2 className="w-6 h-6 text-blue-400" />
                         Detailed Analysis
                     </h2>
 
@@ -163,7 +163,7 @@ const QuizResult = () => {
                                     if (isCorrectOpt) {
                                         borderColor = 'border-blue-500';
                                         bgColor = 'bg-blue-900/20';
-                                        icon = <CheckCircle className="w-4 h-4 text-blue-400" />;
+                                        icon = <CheckCircle2 className="w-4 h-4 text-blue-400" />;
                                     } else if (isSelected && !isCorrectOpt) {
                                         borderColor = 'border-red-500';
                                         bgColor = 'bg-red-900/20';

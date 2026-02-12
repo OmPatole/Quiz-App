@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, ArrowRight, Play, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, ArrowRight, Play, CheckCircle2 } from 'lucide-react';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -141,7 +141,7 @@ const WeeklyQuizzes = ({ completedQuizIds }) => {
                                     >
                                         {isCompleted ? (
                                             <>
-                                                <CheckCircle className="w-4 h-4" />
+                                                <CheckCircle2 className="w-4 h-4" />
                                                 Review Results
                                             </>
                                         ) : isUpcoming ? (

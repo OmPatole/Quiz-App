@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, BookOpen, Clock, Award, Library, Menu, X, User, ArrowRight, Play, FileText, CheckCircle, Flame, Calendar, Search, Filter } from 'lucide-react';
+import { LogOut, BookOpen, Clock, Award, Library, Menu, X, User, ArrowRight, Play, FileText, CheckCircle2, Flame, Calendar, Search, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import StudentLibrary from './StudentLibrary';
@@ -191,7 +191,7 @@ const StudentDashboard = () => {
                             {/* Card 1 */}
                             <div className="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl flex items-center gap-4 hover:border-neutral-700 transition-colors">
                                 <div className="w-12 h-12 rounded-xl bg-neutral-800 flex items-center justify-center text-blue-400">
-                                    <CheckCircle className="w-6 h-6" />
+                                    <CheckCircle2 className="w-6 h-6" />
                                 </div>
                                 <div>
                                     <p className="text-neutral-500 text-xs font-bold uppercase">Quizzes Crushed</p>
