@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, BookOpen, Clock, Award, Library, Menu, X, User, ArrowRight, Play, FileText, CheckCircle, Flame } from 'lucide-react';
+import { LogOut, BookOpen, Clock, Award, Library, Menu, X, User, ArrowRight, Play, FileText, CheckCircle, Flame, Calendar, Search, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import StudentLibrary from './StudentLibrary';
+import WeeklyQuizzes from './WeeklyQuizzes';
 import StudentProfile from '../components/StudentProfile';
 import Logo from '../components/common/Logo';
 
 const StudentDashboard = () => {
     const { user, logout } = useAuth();
     const [chapters, setChapters] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, library, profile
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -66,74 +68,89 @@ const StudentDashboard = () => {
         navigate('/');
     };
 
+    const filteredChapters = chapters.filter(chapter =>
+        chapter.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="min-h-screen bg-neutral-950 font-sans text-white">
             {/* Header */}
-            <header className="bg-neutral-950 border-b border-neutral-800 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
+            <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-xl">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                         <Logo />
+                    </div>
 
-                        {/* Desktop Nav */}
-                        <div className="hidden md:flex items-center gap-1 bg-neutral-900 p-1 rounded-xl border border-neutral-800">
-                            {[
-                                { id: 'dashboard', label: 'Dashboard', icon: BookOpen },
-                                { id: 'library', label: 'Library', icon: Library },
-                                { id: 'profile', label: 'Profile', icon: User },
-                            ].map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                                        ? 'bg-neutral-800 text-white shadow-sm'
-                                        : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'
-                                        }`}
-                                >
-                                    <tab.icon className="w-4 h-4" />
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="flex items-center gap-4">
+                    {/* Desktop Nav */}
+                    <div className="hidden md:flex items-center gap-1 bg-neutral-900 p-1 rounded-xl border border-neutral-800">
+                        {[
+                            { id: 'dashboard', label: 'Dashboard', icon: BookOpen },
+                            { id: 'weekly', label: 'Weekly Quizzes', icon: Calendar },
+                            { id: 'library', label: 'Library', icon: Library },
+                            { id: 'profile', label: 'Profile', icon: User },
+                        ].map((tab) => (
                             <button
-                                onClick={handleLogout}
-                                className="hidden md:flex items-center gap-2 text-sm font-medium text-neutral-400 hover:text-red-500 transition-colors"
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
+                                    ? 'bg-neutral-800 text-white shadow-sm'
+                                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'
+                                    }`}
                             >
-                                <LogOut className="w-4 h-4" />
-                                Logout
+                                <tab.icon className="w-4 h-4" />
+                                {tab.label}
                             </button>
+                        ))}
+                    </div>
 
-                            <button
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="md:hidden p-2 text-white hover:bg-neutral-800 rounded-lg"
-                            >
-                                {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={handleLogout}
+                            className="hidden md:flex items-center gap-2 text-sm font-medium text-neutral-400 hover:text-red-500 transition-colors"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Logout
+                        </button>
+
+                        <button
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className="md:hidden p-2 text-white hover:bg-neutral-800 rounded-lg"
+                        >
+                            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mobile Menu Overlay */}
+                <div
+                    className={`md:hidden absolute top-full left-0 w-full bg-neutral-900/95 backdrop-blur-xl border-b border-neutral-800 transition-all duration-300 ease-in-out shadow-2xl ${isMenuOpen
+                        ? 'opacity-100 translate-y-0 pointer-events-auto'
+                        : 'opacity-0 -translate-y-4 pointer-events-none'
+                        }`}
+                >
+                    <div className="px-4 py-4 space-y-2">
+                        <button onClick={() => { setActiveTab('dashboard'); setIsMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-neutral-800'}`}>
+                            <BookOpen className="w-5 h-5" /> Dashboard
+                        </button>
+                        <button onClick={() => { setActiveTab('weekly'); setIsMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'weekly' ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-neutral-800'}`}>
+                            <Calendar className="w-5 h-5" /> Weekly Quizzes
+                        </button>
+                        <button onClick={() => { setActiveTab('library'); setIsMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'library' ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-neutral-800'}`}>
+                            <Library className="w-5 h-5" /> Library
+                        </button>
+                        <button onClick={() => { setActiveTab('profile'); setIsMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'profile' ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-neutral-800'}`}>
+                            <User className="w-5 h-5" /> Profile
+                        </button>
+                        <div className="pt-2 border-t border-neutral-800">
+                            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-neutral-800">
+                                <LogOut className="w-5 h-5" /> Logout
                             </button>
                         </div>
                     </div>
                 </div>
-
-                {/* Mobile Menu */}
-                {isMenuOpen && (
-                    <div className="md:hidden bg-neutral-900 border-t border-neutral-800 px-4 py-2 space-y-2 animate-in slide-in-from-top-2">
-                        <button onClick={() => { setActiveTab('dashboard'); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-300 hover:bg-neutral-800">
-                            <BookOpen className="w-5 h-5" /> Dashboard
-                        </button>
-                        <button onClick={() => { setActiveTab('library'); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-300 hover:bg-neutral-800">
-                            <Library className="w-5 h-5" /> Library
-                        </button>
-                        <button onClick={() => { setActiveTab('profile'); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-neutral-300 hover:bg-neutral-800">
-                            <User className="w-5 h-5" /> Profile
-                        </button>
-                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-neutral-800">
-                            <LogOut className="w-5 h-5" /> Logout
-                        </button>
-                    </div>
-                )}
             </header>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 pb-32 animate-in fade-in duration-500">
                 {activeTab === 'dashboard' && (
                     <>
                         {/* 1. Welcome Hero Section */}
@@ -207,21 +224,34 @@ const StudentDashboard = () => {
 
                         {/* 3. Curriculum Grid */}
                         <div id="curriculum" className="mb-12">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                    <BookOpen className="w-5 h-5 text-blue-400" />
-                                    Learning Modules
-                                </h3>
-                                <p className="text-sm text-neutral-500">Select a module to practice</p>
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                                <div>
+                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                        <BookOpen className="w-5 h-5 text-blue-400" />
+                                        Learning Modules
+                                    </h3>
+                                    <p className="text-sm text-neutral-500 mt-1">Select a module to practice</p>
+                                </div>
+
+                                <div className="relative group max-w-md w-full">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-blue-400 transition-colors" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search modules (e.g. Quantitative, Logical...)"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    />
+                                </div>
                             </div>
 
                             {loading ? (
                                 <div className="flex justify-center py-20">
                                     <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                                 </div>
-                            ) : chapters.length > 0 ? (
+                            ) : filteredChapters.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {chapters.map((chapter) => {
+                                    {filteredChapters.map((chapter) => {
                                         const completedCount = chapter.quizzes?.filter(q => profileStats?.completedQuizIds?.includes(q._id)).length || 0;
                                         const totalCount = chapter.quizzes?.length || 0;
                                         const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -317,6 +347,8 @@ const StudentDashboard = () => {
                     </>
                 )}
 
+                {activeTab === 'weekly' && <WeeklyQuizzes completedQuizIds={profileStats?.completedQuizIds} />}
+
                 {activeTab === 'library' && <StudentLibrary />}
 
                 {activeTab === 'profile' && (
@@ -327,7 +359,7 @@ const StudentDashboard = () => {
                     />
                 )}
             </main>
-        </div>
+        </div >
     );
 };
 

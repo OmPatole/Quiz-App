@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Play, TrendingUp, BookOpen, Flame, Smartphone, Calendar } from 'lucide-react';
-import Logo from '../components/common/Logo';
+import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
 
 const Features = () => {
     const navigate = useNavigate();
@@ -39,21 +40,16 @@ const Features = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-black font-sans text-white relative overflow-hidden">
+        <div className="min-h-screen bg-black font-sans text-white relative overflow-hidden flex flex-col">
+            <Navbar />
+
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
                 <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
             </div>
 
-            {/* Navbar */}
-            <nav className="border-b border-white/10 bg-black/80 backdrop-blur-xl sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-                    <Logo />
-                </div>
-            </nav>
-
-            <main className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 relative z-10">
+            <main className="flex-grow max-w-7xl mx-auto px-4 py-32 sm:px-6 lg:px-8 relative z-10">
                 {/* Hero Section */}
                 <div className="text-center mb-16 animate-fade-in">
                     <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
@@ -105,13 +101,7 @@ const Features = () => {
                 </div>
             </main>
 
-            <footer className="border-t border-neutral-800 bg-neutral-950 py-12">
-                <div className="max-w-7xl mx-auto px-4 text-center">
-                    <p className="text-neutral-500 text-sm">
-                        &copy; {new Date().getFullYear()} Aptitude Portal. Built for students, by students.
-                    </p>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 };

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, BrainCircuit, User, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, User, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import Logo from '../common/Logo';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -38,17 +39,10 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 dark:border-white/10 bg-gray-50/90 dark:bg-black/80 backdrop-blur-xl">
+        <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-xl">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                 {/* Brand Logo */}
-                <Link to="/" className="flex items-center gap-2 group">
-                    <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center group-hover:from-blue-500 group-hover:to-cyan-500 transition-all">
-                        <BrainCircuit className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
-                        Aptitude Portal
-                    </span>
-                </Link>
+                <Logo />
 
                 {/* Desktop Navigation */}
                 <div className="hidden md:flex items-center gap-4">
@@ -184,7 +178,7 @@ const Navbar = () => {
                     aria-hidden="true"
                 />
             )}
-        </nav>
+        </header>
     );
 };
 

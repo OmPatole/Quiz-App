@@ -189,11 +189,11 @@ const QuizManager = () => {
                     <select
                         value={selectedChapter}
                         onChange={(e) => setSelectedChapter(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+                        className="w-full bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors [color-scheme:dark]"
                     >
-                        <option value="">-- Select a chapter --</option>
+                        <option value="" className="bg-white dark:bg-neutral-900 text-gray-900 dark:text-white">-- Select a chapter --</option>
                         {chapters.map((chapter) => (
-                            <option key={chapter._id} value={chapter._id}>
+                            <option key={chapter._id} value={chapter._id} className="bg-white dark:bg-neutral-900 text-gray-900 dark:text-white">
                                 {chapter.title} ({chapter.quizzes?.length || 0} quizzes)
                             </option>
                         ))}

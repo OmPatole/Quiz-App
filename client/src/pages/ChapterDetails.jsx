@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Play, Clock, BookOpen, AlertCircle, FileText, CheckCircle } from 'lucide-react';
 import api from '../api/axios';
+import Logo from '../components/common/Logo';
 
 const ChapterDetails = () => {
     const { chapterId } = useParams();
@@ -59,15 +60,22 @@ const ChapterDetails = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 font-sans text-gray-900 dark:text-white p-4 md:p-8 animate-in fade-in duration-500">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <button
-                    onClick={() => navigate('/student')}
-                    className="mb-8 flex items-center gap-2 text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                    <ChevronLeft className="w-4 h-4" /> Back to Dashboard
-                </button>
+        <div className="min-h-screen bg-neutral-950 font-sans text-white">
+            {/* Header */}
+            <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-xl">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                    <Logo />
+                    <button
+                        onClick={() => navigate('/student')}
+                        className="text-sm font-medium text-neutral-400 hover:text-white transition-colors flex items-center gap-2"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        Back to Dashboard
+                    </button>
+                </div>
+            </header>
+
+            <div className="max-w-7xl mx-auto p-4 md:p-8 pt-24 animate-in fade-in duration-500">
 
                 <div className="mb-12 relative overflow-hidden rounded-3xl bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-8 md:p-12 shadow-sm dark:shadow-none">
                     <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">

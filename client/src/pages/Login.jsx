@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import Logo from '../components/common/Logo';
 
 const Login = () => {
@@ -39,7 +39,18 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-black text-gray-900 dark:text-white font-sans relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-neutral-950 text-gray-900 dark:text-white font-sans relative overflow-hidden">
+            {/* Back to Home Button */}
+            <div className="absolute top-8 left-8 z-20">
+                <Link
+                    to="/"
+                    className="flex items-center gap-2 text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white transition-colors group"
+                >
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    <span className="text-sm font-medium">Back to Home</span>
+                </Link>
+            </div>
+
             {/* Background Effects */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 {theme === 'dark' ? (

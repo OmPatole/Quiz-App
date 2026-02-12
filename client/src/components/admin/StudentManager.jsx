@@ -282,16 +282,16 @@ const StudentManager = () => {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">By Academic Year</label>
                                 <select
-                                    className="input-field w-full bg-gray-50 dark:bg-neutral-950/50 border-gray-200 dark:border-neutral-700 focus:border-blue-500 text-gray-900 dark:text-white"
+                                    className="input-field w-full bg-gray-50 dark:bg-neutral-950/50 border-gray-200 dark:border-neutral-700 focus:border-blue-500 text-gray-900 dark:text-white [color-scheme:dark]"
                                     value={bulkDeleteTarget.academicYear}
                                     onChange={(e) => setBulkDeleteTarget({ ...bulkDeleteTarget, academicYear: e.target.value, batchYear: '' })}
                                 >
-                                    <option value="">Select Year...</option>
-                                    <option value="First Year">First Year</option>
-                                    <option value="Second Year">Second Year</option>
-                                    <option value="Third Year">Third Year</option>
-                                    <option value="Last Year">Last Year</option>
-                                    <option value="Graduated">Graduated</option>
+                                    <option value="" className="bg-white dark:bg-neutral-900">Select Year...</option>
+                                    <option value="First Year" className="bg-white dark:bg-neutral-900">First Year</option>
+                                    <option value="Second Year" className="bg-white dark:bg-neutral-900">Second Year</option>
+                                    <option value="Third Year" className="bg-white dark:bg-neutral-900">Third Year</option>
+                                    <option value="Last Year" className="bg-white dark:bg-neutral-900">Last Year</option>
+                                    <option value="Graduated" className="bg-white dark:bg-neutral-900">Graduated</option>
                                 </select>
                             </div>
                             <div className="relative flex py-2 items-center">
@@ -302,15 +302,15 @@ const StudentManager = () => {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">By Batch Year</label>
                                 <select
-                                    className="input-field w-full bg-gray-50 dark:bg-neutral-950/50 border-gray-200 dark:border-neutral-700 focus:border-blue-500 text-gray-900 dark:text-white"
+                                    className="input-field w-full bg-gray-50 dark:bg-neutral-950/50 border-gray-200 dark:border-neutral-700 focus:border-blue-500 text-gray-900 dark:text-white [color-scheme:dark]"
                                     value={bulkDeleteTarget.batchYear}
                                     onChange={(e) => setBulkDeleteTarget({ ...bulkDeleteTarget, batchYear: e.target.value, academicYear: '' })}
                                 >
-                                    <option value="">Select Batch...</option>
-                                    <option value="2023-2024">2023-2024</option>
-                                    <option value="2024-2025">2024-2025</option>
-                                    <option value="2025-2026">2025-2026</option>
-                                    <option value="2026-2027">2026-2027</option>
+                                    <option value="" className="bg-white dark:bg-neutral-900">Select Batch...</option>
+                                    <option value="2023-2024" className="bg-white dark:bg-neutral-900">2023-2024</option>
+                                    <option value="2024-2025" className="bg-white dark:bg-neutral-900">2024-2025</option>
+                                    <option value="2025-2026" className="bg-white dark:bg-neutral-900">2025-2026</option>
+                                    <option value="2026-2027" className="bg-white dark:bg-neutral-900">2026-2027</option>
                                 </select>
                             </div>
                         </div>
@@ -369,28 +369,28 @@ const StudentManager = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <select name="academicYear" value={filters.academicYear} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-gray-50 dark:bg-neutral-950 border-gray-200 dark:border-neutral-800 text-gray-700 dark:text-neutral-300">
-                            <option value="">All Years</option>
-                            <option value="First Year">First Year</option>
-                            <option value="Second Year">Second Year</option>
-                            <option value="Third Year">Third Year</option>
-                            <option value="Last Year">Last Year</option>
+                        <select name="academicYear" value={filters.academicYear} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-gray-50 dark:bg-neutral-950 border-gray-200 dark:border-neutral-800 text-gray-700 dark:text-neutral-300 [color-scheme:dark]">
+                            <option value="" className="bg-white dark:bg-neutral-900">All Years</option>
+                            <option value="First Year" className="bg-white dark:bg-neutral-900">First Year</option>
+                            <option value="Second Year" className="bg-white dark:bg-neutral-900">Second Year</option>
+                            <option value="Third Year" className="bg-white dark:bg-neutral-900">Third Year</option>
+                            <option value="Last Year" className="bg-white dark:bg-neutral-900">Last Year</option>
                         </select>
-                        <select name="branch" value={filters.branch} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-gray-50 dark:bg-neutral-950 border-gray-200 dark:border-neutral-800 text-gray-700 dark:text-neutral-300">
-                            <option value="">All Branches</option>
-                            <option value="CST">CST</option>
-                            <option value="E&TC">E&TC</option>
-                            <option value="Mechanical">Mechanical</option>
-                            <option value="Food">Food</option>
-                            <option value="Chemical">Chemical</option>
+                        <select name="branch" value={filters.branch} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-gray-50 dark:bg-neutral-950 border-gray-200 dark:border-neutral-800 text-gray-700 dark:text-neutral-300 [color-scheme:dark]">
+                            <option value="" className="bg-white dark:bg-neutral-900">All Branches</option>
+                            <option value="CST" className="bg-white dark:bg-neutral-900">CST</option>
+                            <option value="E&TC" className="bg-white dark:bg-neutral-900">E&TC</option>
+                            <option value="Mechanical" className="bg-white dark:bg-neutral-900">Mechanical</option>
+                            <option value="Food" className="bg-white dark:bg-neutral-900">Food</option>
+                            <option value="Chemical" className="bg-white dark:bg-neutral-900">Chemical</option>
                         </select>
-                        <select name="batchYear" value={filters.batchYear} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-gray-50 dark:bg-neutral-950 border-gray-200 dark:border-neutral-800 text-gray-700 dark:text-neutral-300">
-                            <option value="">Batch Year</option>
-                            <option value="2023-2024">2023-2024</option>
-                            <option value="2024-2025">2024-2025</option>
-                            <option value="2025-2026">2025-2026</option>
-                            <option value="2026-2027">2026-2027</option>
-                            <option value="2027-2028">2027-2028</option>
+                        <select name="batchYear" value={filters.batchYear} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-gray-50 dark:bg-neutral-950 border-gray-200 dark:border-neutral-800 text-gray-700 dark:text-neutral-300 [color-scheme:dark]">
+                            <option value="" className="bg-white dark:bg-neutral-900">Batch Year</option>
+                            <option value="2023-2024" className="bg-white dark:bg-neutral-900">2023-2024</option>
+                            <option value="2024-2025" className="bg-white dark:bg-neutral-900">2024-2025</option>
+                            <option value="2025-2026" className="bg-white dark:bg-neutral-900">2025-2026</option>
+                            <option value="2026-2027" className="bg-white dark:bg-neutral-900">2026-2027</option>
+                            <option value="2027-2028" className="bg-white dark:bg-neutral-900">2027-2028</option>
                         </select>
                     </div>
                 </div>

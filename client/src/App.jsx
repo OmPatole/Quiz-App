@@ -18,12 +18,15 @@ import TermsOfService from './pages/TermsOfService';
 import DataSafety from './pages/DataSafety';
 import CookieUsage from './pages/CookieUsage';
 
+import ScrollToTop from './components/common/ScrollToTop';
+
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <ToastProvider>
           <Router>
+            <ScrollToTop />
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />

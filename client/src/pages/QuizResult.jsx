@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, Award, Home, TrendingUp, Flame, ChevronDown, RotateCcw, BookOpen, User, ArrowDown } from 'lucide-react';
+import Logo from '../components/common/Logo';
 
 const QuizResult = () => {
     const [showNavMenu, setShowNavMenu] = useState(false);
@@ -39,9 +40,22 @@ const QuizResult = () => {
     const passed = percentage >= 50;
 
     return (
-        <div className="min-h-screen bg-neutral-950 text-white p-4 py-8 font-sans">
-            <div className="max-w-4xl mx-auto">
-                {/* Score Card */}
+        <div className="min-h-screen bg-neutral-950 text-white font-sans overflow-x-hidden p-4">
+            {/* Minimal Header */}
+            <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-xl">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                    <Logo />
+                    <button
+                        onClick={() => navigate('/student')}
+                        className="text-sm font-medium text-neutral-400 hover:text-white transition-colors flex items-center gap-2"
+                    >
+                        <Home className="w-4 h-4" />
+                        Back to Dashboard
+                    </button>
+                </div>
+            </header>
+
+            <div className="max-w-4xl mx-auto pt-24 pb-8">
                 {/* Score Card */}
                 <div className="card mb-8 text-center bg-neutral-900 border-neutral-800">
                     <div

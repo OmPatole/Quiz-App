@@ -1,20 +1,23 @@
 import React from 'react';
-import { BrainCircuit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Logo = ({ className = "", iconSize = 8, textSize = "text-xl" }) => {
+const Logo = ({ className = "", iconSize = 9, textSize = "text-xl" }) => {
     const navigate = useNavigate();
 
     return (
         <div
-            className={`flex items-center gap-2 font-bold tracking-tight cursor-pointer ${className}`}
+            className={`flex items-center gap-3 font-bold tracking-tight cursor-pointer group ${className}`}
             onClick={() => navigate('/')}
         >
-            <div className={`w-${iconSize} h-${iconSize} bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-600/30 dark:shadow-blue-900/30`}>
-                <BrainCircuit className="w-1/2 h-1/2" strokeWidth={2} />
+            <div className={`relative w-${iconSize} h-${iconSize} flex items-center justify-center transition-all duration-300 group-hover:scale-110`}>
+                <img
+                    src="/favicon.svg"
+                    alt="Aptitude Portal Logo"
+                    className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]"
+                />
             </div>
-            <span className={`${textSize} text-gray-900 dark:text-white`}>
-                Aptitude<span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Portal</span>
+            <span className={`${textSize} text-white flex items-center`}>
+                Aptitude<span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent ml-0.5">Portal</span>
             </span>
         </div>
     );

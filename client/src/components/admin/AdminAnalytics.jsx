@@ -129,8 +129,8 @@ const AdminAnalytics = () => {
 
         // Parse month for title
         const [year, monthNum] = selectedMonth.split('-');
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
         const monthName = monthNames[parseInt(monthNum) - 1];
 
         // Main Title
@@ -229,7 +229,7 @@ const AdminAnalytics = () => {
                         3: { cellWidth: 30, halign: 'center' },
                         4: { cellWidth: 25, halign: 'center' }
                     },
-                    didParseCell: function(data) {
+                    didParseCell: function (data) {
                         // Color-code status column
                         if (data.column.index === 4 && data.section === 'body') {
                             const status = data.cell.raw;
@@ -305,9 +305,9 @@ const AdminAnalytics = () => {
                             name="academicYear"
                             value={filters.academicYear}
                             onChange={handleFilterChange}
-                            className="appearance-none bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                            className="appearance-none bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors [color-scheme:dark]"
                         >
-                            {academicYears.map(y => <option key={y} value={y}>{y}</option>)}
+                            {academicYears.map(y => <option key={y} value={y} className="bg-white dark:bg-neutral-900">{y}</option>)}
                         </select>
                         <Filter className="w-4 h-4 text-gray-400 dark:text-neutral-500 absolute right-3 top-3 pointer-events-none" />
                     </div>
@@ -317,9 +317,9 @@ const AdminAnalytics = () => {
                             name="branch"
                             value={filters.branch}
                             onChange={handleFilterChange}
-                            className="appearance-none bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                            className="appearance-none bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors [color-scheme:dark]"
                         >
-                            {branches.map(b => <option key={b} value={b}>{b}</option>)}
+                            {branches.map(b => <option key={b} value={b} className="bg-white dark:bg-neutral-900">{b}</option>)}
                         </select>
                         <Filter className="w-4 h-4 text-gray-400 dark:text-neutral-500 absolute right-3 top-3 pointer-events-none" />
                     </div>
@@ -329,9 +329,9 @@ const AdminAnalytics = () => {
                             name="batchYear"
                             value={filters.batchYear}
                             onChange={handleFilterChange}
-                            className="appearance-none bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                            className="appearance-none bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-neutral-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors [color-scheme:dark]"
                         >
-                            {batchYears.map(b => <option key={b} value={b}>{b}</option>)}
+                            {batchYears.map(b => <option key={b} value={b} className="bg-white dark:bg-neutral-900">{b}</option>)}
                         </select>
                         <Filter className="w-4 h-4 text-gray-400 dark:text-neutral-500 absolute right-3 top-3 pointer-events-none" />
                     </div>

@@ -17,6 +17,7 @@ const QuizTaking = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
 
     useEffect(() => {
         if (!quizId) return;
@@ -88,11 +89,19 @@ const QuizTaking = () => {
     }, [submitting, quizId, answers, navigate, toast]);
 
     const handleAttemptSubmit = () => {
+        if (answeredCount === 0) {
+            toast.error("Please answer at least one question before submitting.");
+            return;
+        }
         if (timeRemaining > 0) {
             setIsConfirmOpen(true);
         } else {
             processSubmission();
         }
+    };
+
+    const handleQuit = () => {
+        setIsQuitModalOpen(true);
     };
 
     // Timer Logic
@@ -177,100 +186,122 @@ const QuizTaking = () => {
     const progress = (answeredCount / quiz.questions.length) * 100;
 
     return (
-        <div className="min-h-screen bg-black font-sans text-white p-4">
+        <div className="min-h-screen bg-black font-sans text-white flex flex-col">
             {/* Main Layout */}
-            <div className="flex flex-col lg:flex-row gap-6 max-w-[1920px] px-4 lg:px-8 mx-auto">
-                {/* Left Column: Quiz Content */}
-                <div className="flex-1">
-                    {/* Header */}
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h1 className="text-2xl font-bold text-white mb-1">
-                                    {quiz.title}
-                                </h1>
-                                <p className="text-sm text-neutral-400">
-                                    Question {currentQuestion + 1} of {quiz.questions.length}
-                                </p>
-                            </div>
+            <div className="flex flex-col lg:flex-row gap-12 max-w-[1920px] px-4 lg:px-16 mx-auto w-full flex-grow items-center justify-center py-12">
 
-                            {/* Timer */}
-                            <div
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold border transition-colors ${timeRemaining < 60
-                                    ? 'bg-red-900/20 text-red-500 border-red-900/50'
-                                    : 'bg-blue-900/20 text-blue-500 border-blue-900/50'
-                                    }`}
-                            >
-                                <Clock className="w-5 h-5" />
-                                {formatTime(timeRemaining)}
-                            </div>
+                {/* Left Column: Timer (Desktop) */}
+                <div className="hidden lg:flex flex-col w-52 flex-shrink-0 sticky top-12 h-fit">
+                    <div className={`p-8 rounded-[2rem] border-2 flex flex-col items-center gap-4 transition-all shadow-[0_15px_40px_rgba(0,0,0,0.4)] ${timeRemaining < 60
+                        ? 'bg-red-950/20 border-red-500/50 text-red-500 shadow-red-900/10'
+                        : 'bg-blue-950/20 border-blue-500/50 text-blue-500 shadow-blue-900/10'
+                        }`}>
+                        <div className="w-16 h-16 rounded-full bg-current/10 flex items-center justify-center">
+                            <Clock className="w-8 h-8" />
                         </div>
+                        <div className="text-4xl font-mono font-black tracking-tight">
+                            {formatTime(timeRemaining)}
+                        </div>
+                        <div className="text-[10px] uppercase font-bold tracking-[0.2em] opacity-50">Time Remaining</div>
+                    </div>
+                </div>
 
-                        {/* Progress Bar */}
-                        <div className="w-full bg-neutral-800 rounded-full h-2">
-                            <div
-                                className="bg-blue-600 h-2 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(37,99,235,0.3)]"
-                                style={{ width: `${progress}%` }}
-                            ></div>
+                {/* Center Column: Quiz Content */}
+                <div className="flex-1 flex flex-col gap-8 max-w-5xl w-full">
+                    {/* Top Control Bar */}
+                    <div className="flex items-center justify-between gap-4 bg-neutral-900/40 backdrop-blur-md p-4 rounded-2xl border border-neutral-800 shadow-lg mb-2">
+                        <button
+                            onClick={handleQuit}
+                            className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white text-xs font-bold uppercase tracking-widest transition-all border border-neutral-700"
+                        >
+                            Quit Quiz
+                        </button>
+                        <div className="flex-1 text-center truncate">
+                            <h1 className="text-xl font-black text-white truncate px-4">{quiz.title}</h1>
+                        </div>
+                        <div className="w-[85px] text-right">
+                            <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-tighter">Progress</div>
+                            <div className="text-sm font-mono font-bold text-blue-500">{Math.round(progress)}%</div>
+                        </div>
+                    </div>
+
+                    {/* Progress Bar (Global) */}
+                    <div className="w-full bg-neutral-900/50 rounded-full h-1.5 mb-2 overflow-hidden border border-neutral-800">
+                        <div
+                            className="bg-blue-600 h-full rounded-full transition-all duration-700 shadow-[0_0_15px_rgba(37,99,235,0.4)]"
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+
+                    {/* Mobile Timer (Shown only on small screens) */}
+                    <div className="lg:hidden flex items-center justify-center p-4 rounded-xl bg-neutral-900/50 border border-neutral-800">
+                        <div className={`flex items-center gap-3 font-mono text-2xl font-black ${timeRemaining < 60 ? 'text-red-500' : 'text-blue-500'}`}>
+                            <Clock className="w-6 h-6" />
+                            {formatTime(timeRemaining)}
                         </div>
                     </div>
 
                     {/* Question Card */}
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 mb-6">
-                        <div className="flex items-start gap-4 mb-8">
-                            <span className="flex-shrink-0 w-10 h-10 bg-neutral-800 text-blue-500 border border-neutral-700 rounded-full flex items-center justify-center font-bold text-lg">
+                    <div className="flex-1 bg-neutral-900/50 backdrop-blur-xl border border-neutral-800 rounded-[2rem] p-8 lg:p-12 shadow-2xl flex flex-col min-h-[600px]">
+                        <div className="flex items-start gap-6 mb-10">
+                            <span className="flex-shrink-0 w-12 h-12 bg-neutral-800 text-blue-500 border border-neutral-700 rounded-full flex items-center justify-center font-black text-xl">
                                 {currentQuestion + 1}
                             </span>
                             <div className="flex-1 mt-1">
-                                <p className="text-lg md:text-xl text-white font-medium mb-3 leading-relaxed">
+                                <p className="text-xl md:text-2xl lg:text-3xl text-white font-bold mb-4 leading-tight">
                                     {question.text}
                                 </p>
-                                <div className="flex gap-4 text-sm text-neutral-500 font-medium">
-                                    <span className="px-2 py-0.5 bg-neutral-950 rounded border border-neutral-800">Marks: {question.marks}</span>
-                                    {question.isMultiSelect && <span className="text-blue-500">(Select all that apply)</span>}
+                                <div className="flex gap-6 text-base text-neutral-500 font-bold uppercase tracking-wider">
+                                    <span className="px-3 py-1 bg-neutral-950 rounded-lg border border-neutral-800">Marks: {question.marks}</span>
+                                    {question.isMultiSelect && <span className="text-blue-500 flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                        Select all that apply
+                                    </span>}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Options */}
-                        <div className="space-y-4 pl-0 md:pl-14">
-                            {question.options?.map((option, index) => {
-                                const isSelected = currentAnswer?.selectedIndices?.includes(index);
-                                return (
-                                    <div
-                                        key={index}
-                                        onClick={() => handleOptionSelect(index)}
-                                        className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${isSelected
-                                            ? 'border-blue-500 bg-blue-900/10'
-                                            : 'border-neutral-800 hover:border-blue-500/50 hover:bg-neutral-800'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div
-                                                className={`w-6 h-6 border-2 flex items-center justify-center flex-shrink-0 ${question.isMultiSelect ? 'rounded' : 'rounded-full'
-                                                    } ${isSelected
-                                                        ? 'border-blue-500 bg-blue-600'
-                                                        : 'border-neutral-600'
-                                                    }`}
-                                            >
-                                                {isSelected && (
-                                                    <div className={`w-2.5 h-2.5 bg-neutral-200 ${question.isMultiSelect ? 'rounded-sm' : 'rounded-full'}`}></div>
-                                                )}
+                        <div className="flex-1 flex flex-col justify-center">
+                            {/* Options */}
+                            <div className="space-y-5 pl-0 md:pl-16">
+                                {question.options?.map((option, index) => {
+                                    const isSelected = currentAnswer?.selectedIndices?.includes(index);
+                                    return (
+                                        <div
+                                            key={index}
+                                            onClick={() => handleOptionSelect(index)}
+                                            className={`p-6 border-2 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col gap-4 ${isSelected
+                                                ? 'border-blue-500 bg-blue-900/10 shadow-[0_0_20px_rgba(37,99,235,0.1)]'
+                                                : 'border-neutral-800 hover:border-blue-500/50 hover:bg-neutral-800/50'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-5">
+                                                <div
+                                                    className={`w-7 h-7 border-2 flex items-center justify-center flex-shrink-0 transition-colors ${question.isMultiSelect ? 'rounded-lg' : 'rounded-full'
+                                                        } ${isSelected
+                                                            ? 'border-blue-500 bg-blue-600'
+                                                            : 'border-neutral-600'
+                                                        }`}
+                                                >
+                                                    {isSelected && (
+                                                        <div className={`w-3 h-3 bg-white ${question.isMultiSelect ? 'rounded-sm' : 'rounded-full'}`}></div>
+                                                    )}
+                                                </div>
+                                                <span className={`text-xl font-medium transition-colors ${isSelected ? 'text-white' : 'text-neutral-300'}`}>
+                                                    {option.text}
+                                                </span>
                                             </div>
-                                            <span className="text-neutral-200 text-lg">
-                                                {option.text}
-                                            </span>
+                                            {option.image && (
+                                                <img
+                                                    src={option.image}
+                                                    alt={`Option ${index + 1}`}
+                                                    className="mt-4 ml-10 max-w-sm rounded-lg border border-neutral-700"
+                                                />
+                                            )}
                                         </div>
-                                        {option.image && (
-                                            <img
-                                                src={option.image}
-                                                alt={`Option ${index + 1}`}
-                                                className="mt-4 ml-10 max-w-sm rounded-lg border border-neutral-700"
-                                            />
-                                        )}
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
 
@@ -313,23 +344,23 @@ const QuizTaking = () => {
 
                     {/* Warning for time */}
                     {timeRemaining < 60 && (
-                        <div className="mt-6 p-4 rounded-xl bg-red-900/10 border border-red-900/50 flex items-center gap-3 animate-pulse">
+                        <div className="mt-2 p-4 rounded-xl bg-red-900/10 border border-red-900/50 flex items-center gap-3 animate-pulse">
                             <AlertCircle className="w-6 h-6 text-red-500" />
                             <p className="font-bold text-red-500">Less than 1 minute remaining!</p>
                         </div>
                     )}
                 </div>
 
-                {/* Right Sidebar: Question Palette */}
-                <div className="w-full lg:w-80 flex-shrink-0">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 sticky top-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-white">Question Palette</h3>
-                            <span className="text-sm text-neutral-400 font-medium">
+                {/* Right Sidebar: Question Palette (Desktop) */}
+                <div className="w-full lg:w-80 flex-shrink-0 sticky top-12 h-fit">
+                    <div className="bg-neutral-900/40 backdrop-blur-2xl border border-neutral-800 rounded-[2rem] p-6 shadow-[0_15px_40px_rgba(0,0,0,0.4)]">
+                        <div className="flex items-center justify-between mb-5">
+                            <h3 className="text-lg font-black text-white uppercase tracking-wider">Question Palette</h3>
+                            <span className="text-xs text-neutral-400 font-bold bg-neutral-800/50 px-2 py-1 rounded-full">
                                 {answeredCount}/{quiz.questions.length}
                             </span>
                         </div>
-                        <div className="grid grid-cols-5 gap-2">
+                        <div className="grid grid-cols-5 gap-2.5">
                             {quiz.questions.map((_, index) => {
                                 const isAnswered = answers[index]?.selectedIndices?.length > 0;
                                 const isCurrent = currentQuestion === index;
@@ -339,12 +370,12 @@ const QuizTaking = () => {
                                         key={index}
                                         onClick={() => setCurrentQuestion(index)}
                                         className={`
-                                            h-10 w-10 rounded-lg text-sm font-bold transition-all
+                                            h-11 w-11 rounded-xl text-base font-black transition-all duration-300
                                             ${isCurrent
-                                                ? 'border-2 border-yellow-500 bg-neutral-800 text-white scale-110'
+                                                ? 'border-2 border-yellow-500 bg-neutral-800 text-white scale-110 shadow-[0_0_15px_rgba(234,179,8,0.2)]'
                                                 : isAnswered
-                                                    ? 'bg-green-600 text-white border border-green-500'
-                                                    : 'bg-neutral-800 text-neutral-400 border border-neutral-700 hover:bg-neutral-700'
+                                                    ? 'bg-green-600 text-white border border-green-500 shadow-[0_0_10px_rgba(22,163,74,0.2)]'
+                                                    : 'bg-neutral-800 text-neutral-400 border border-neutral-700 hover:bg-neutral-700 hover:border-neutral-500'
                                             }
                                         `}
                                     >
@@ -377,9 +408,21 @@ const QuizTaking = () => {
                     processSubmission();
                 }}
                 title="Submit Quiz?"
-                description="Are you sure you want to finish and submit this quiz? You cannot change your answers after submission."
+                description={`You have answered ${answeredCount} out of ${quiz.questions.length} questions. Are you sure you want to finish and submit?`}
                 confirmText="Yes, Submit"
                 variant="warning"
+            />
+
+            <ConfirmationModal
+                isOpen={isQuitModalOpen}
+                onClose={() => setIsQuitModalOpen(false)}
+                onConfirm={() => {
+                    navigate('/student');
+                }}
+                title="Quit Quiz?"
+                description="Are you sure you want to quit? Your current progress will be saved, but the timer will continue if you don't return quickly."
+                confirmText="Yes, Quit"
+                variant="danger"
             />
         </div>
     );
