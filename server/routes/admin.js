@@ -4,6 +4,7 @@ const multer = require('multer');
 const csv = require('csv-parser');
 const fs = require('fs');
 const path = require('path');
+const sanitize = require('mongo-sanitize');
 const auth = require('../middleware/auth');
 const roleAuth = require('../middleware/roleAuth');
 const User = require('../models/User');
@@ -80,26 +81,24 @@ router.post('/upload-students', auth, roleAuth('Admin'), upload.single('file'), 
             })
             .on('end', async () => {
                 try {
-                    // Bulk create students
-                    const createdStudents = [];
-                    for (const studentData of students) {
-                        try {
-                            // Check if student already exists
-                            const existingStudent = await User.findOne({ prn: studentData.prn });
-                            if (existingStudent) {
-                                errors.push(`Student with PRN ${studentData.prn} already exists`);
-                                continue;
-                            }
+                    // Fetch all existing PRNs to avoid duplicates efficiently
+                    const existingStudents = await User.find({ prn: { $in: students.map(s => s.prn) } }).select('prn');
+                    const existingPrns = new Set(existingStudents.map(s => s.prn));
 
-                            const student = new User(studentData);
-                            await student.save();
-                            createdStudents.push({
-                                name: student.name,
-                                prn: student.prn
-                            });
-                        } catch (err) {
-                            errors.push(`Error creating student ${studentData.prn}: ${err.message}`);
+                    const studentsToCreate = [];
+                    students.forEach(s => {
+                        if (existingPrns.has(s.prn)) {
+                            errors.push(`Student with PRN ${s.prn} already exists`);
+                        } else {
+                            studentsToCreate.push(s);
                         }
+                    });
+
+                    // Bulk create students
+                    let createdCount = 0;
+                    if (studentsToCreate.length > 0) {
+                        const results = await User.insertMany(studentsToCreate, { ordered: false });
+                        createdCount = results.length;
                     }
 
                     // Delete uploaded file
@@ -107,10 +106,10 @@ router.post('/upload-students', auth, roleAuth('Admin'), upload.single('file'), 
 
                     res.json({
                         message: 'Student upload completed',
-                        created: createdStudents.length,
+                        created: createdCount,
                         errors: errors.length,
                         details: {
-                            createdStudents,
+                            createdStudents: studentsToCreate.map(s => ({ name: s.name, prn: s.prn })),
                             errors
                         }
                     });
@@ -130,12 +129,15 @@ router.post('/upload-students', auth, roleAuth('Admin'), upload.single('file'), 
 // @access  Admin only
 router.get('/students', auth, roleAuth('Admin'), async (req, res) => {
     try {
-        const { academicYear, branch, batchYear } = req.query;
+        const academicYear = sanitize(req.query.academicYear);
+        const branch = sanitize(req.query.branch);
+        const batchYear = sanitize(req.query.batchYear);
+
         let query = { role: 'Student' };
 
-        if (academicYear) query.academicYear = academicYear;
-        if (branch) query.branch = branch;
-        if (batchYear) query.batchYear = batchYear;
+        if (academicYear && typeof academicYear === 'string') query.academicYear = academicYear;
+        if (branch && typeof branch === 'string') query.branch = branch;
+        if (batchYear && typeof batchYear === 'string') query.batchYear = batchYear;
 
         const students = await User.find(query).select('-password');
         res.json(students);
@@ -198,16 +200,15 @@ router.post('/upload-quiz-json', auth, roleAuth('Admin'), upload.single('file'),
             return res.status(400).json({ message: 'JSON file must contain an array of quizzes' });
         }
 
-        // Create quizzes and link to chapter
-        const createdQuizzes = [];
-        for (const quiz of quizData) {
-            const newQuiz = new Quiz({
-                ...quiz,
-                chapter: chapterId
-            });
-            await newQuiz.save();
-            createdQuizzes.push(newQuiz._id);
-        }
+        // Prepare quizzes with chapter reference
+        const quizzesToCreate = quizData.map(quiz => ({
+            ...quiz,
+            chapter: chapterId
+        }));
+
+        // Bulk insert quizzes
+        const results = await Quiz.insertMany(quizzesToCreate);
+        const createdQuizzes = results.map(q => q._id);
 
         // Update chapter with quiz references atomically
         await Chapter.findByIdAndUpdate(chapterId, {
@@ -385,7 +386,7 @@ router.get('/student-stats/:studentId', auth, async (req, res) => {
         const Result = require('../models/Result');
         const User = require('../models/User');
 
-        const student = await User.findById(studentId);
+        const student = await User.findById(studentId).select('-password');
         if (!student) {
             return res.status(404).json({ message: 'Student not found' });
         }
@@ -598,14 +599,17 @@ router.get('/questions/bank', auth, roleAuth('Admin'), async (req, res) => {
 // @access  Admin only
 router.get('/analytics', auth, roleAuth('Admin'), async (req, res) => {
     try {
-        const { academicYear, branch, batchYear } = req.query;
+        const academicYear = sanitize(req.query.academicYear);
+        const branch = sanitize(req.query.branch);
+        const batchYear = sanitize(req.query.batchYear);
+
         const Result = require('../models/Result');
 
         // 1. Filter Students
         let userQuery = { role: 'Student' };
-        if (academicYear) userQuery.academicYear = academicYear;
-        if (branch) userQuery.branch = branch;
-        if (batchYear) userQuery.batchYear = batchYear;
+        if (academicYear && typeof academicYear === 'string') userQuery.academicYear = academicYear;
+        if (branch && typeof branch === 'string') userQuery.branch = branch;
+        if (batchYear && typeof batchYear === 'string') userQuery.batchYear = batchYear;
 
         const students = await User.find(userQuery).select('_id name');
         const studentIds = students.map(s => s._id);
@@ -763,7 +767,9 @@ router.get('/analytics', auth, roleAuth('Admin'), async (req, res) => {
 // @access  Admin only
 router.delete('/students/delete-bulk', auth, roleAuth('Admin'), async (req, res) => {
     try {
-        const { academicYear, batchYear } = req.body;
+        const academicYear = sanitize(req.body.academicYear);
+        const batchYear = sanitize(req.body.batchYear);
+
         const Result = require('../models/Result');
         const QuizSession = require('../models/QuizSession');
 
@@ -772,8 +778,8 @@ router.delete('/students/delete-bulk', auth, roleAuth('Admin'), async (req, res)
         }
 
         let query = { role: 'Student' };
-        if (academicYear) query.academicYear = academicYear;
-        if (batchYear) query.batchYear = batchYear;
+        if (academicYear && typeof academicYear === 'string') query.academicYear = academicYear;
+        if (batchYear && typeof batchYear === 'string') query.batchYear = batchYear;
 
         // 1. Find students to delete
         const studentsToDelete = await User.find(query).select('_id');

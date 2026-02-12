@@ -30,20 +30,7 @@ router.post('/signin', async (req, res) => {
         }
 
         // Calculate Streak on Login
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const lastDate = user.lastQuizDate ? new Date(user.lastQuizDate) : null;
-        if (lastDate) lastDate.setHours(0, 0, 0, 0);
-
-        if (lastDate) {
-            const diffTime = Math.abs(today - lastDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 1) {
-                user.currentStreak = 0;
-                await user.save();
-            }
-        }
+        await user.resetStreakIfBroken();
 
         // Create JWT payload
         const payload = {

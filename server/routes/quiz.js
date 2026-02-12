@@ -5,6 +5,9 @@ const auth = require('../middleware/auth');
 const roleAuth = require('../middleware/roleAuth');
 const Quiz = require('../models/Quiz');
 const Result = require('../models/Result');
+const User = require('../models/User');
+const QuizSession = require('../models/QuizSession');
+const sanitize = require('mongo-sanitize');
 
 // @route   GET /api/quiz/:id (Moved to bottom)
 
@@ -19,8 +22,10 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
             return res.status(400).json({ message: 'Quiz ID and answers are required' });
         }
 
+        const sanitizedQuizId = sanitize(quizId);
+
         // Get quiz with correct answers
-        const quiz = await Quiz.findById(quizId);
+        const quiz = await Quiz.findById(sanitizedQuizId);
 
         if (!quiz) {
             return res.status(404).json({ message: 'Quiz not found' });
@@ -62,13 +67,13 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
 
         // Save result - Always update if exists, create if new
         // Ensure quizId is properly converted to ObjectId
-        const quizObjectId = mongoose.Types.ObjectId.isValid(quizId) 
-            ? new mongoose.Types.ObjectId(quizId) 
+        const quizObjectId = mongoose.Types.ObjectId.isValid(quizId)
+            ? new mongoose.Types.ObjectId(quizId)
             : quizId;
 
-        let result = await Result.findOne({ 
-            studentId: req.user._id, 
-            quizId: quizObjectId 
+        let result = await Result.findOne({
+            studentId: req.user._id,
+            quizId: quizObjectId
         });
 
         if (result) {
@@ -93,46 +98,8 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
         }
 
         // --- Streak Logic ---
-        const User = require('../models/User');
         const student = await User.findById(req.user._id);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Normalize to midnight
-
-        let lastDate = student.lastQuizDate ? new Date(student.lastQuizDate) : null;
-        if (lastDate) lastDate.setHours(0, 0, 0, 0);
-
-        let streakUpdated = false;
-
-        if (!lastDate) {
-            // First ever quiz
-            student.currentStreak = 1;
-            student.longestStreak = 1;
-            student.lastQuizDate = new Date();
-            streakUpdated = true;
-        } else {
-            const diffTime = Math.abs(today - lastDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 1) {
-                // Consecutive day
-                student.currentStreak += 1;
-                if (student.currentStreak > student.longestStreak) {
-                    student.longestStreak = student.currentStreak;
-                }
-                student.lastQuizDate = new Date();
-                streakUpdated = true;
-            } else if (diffDays > 1) {
-                // Missed a day (or more)
-                student.currentStreak = 1;
-                student.lastQuizDate = new Date();
-                streakUpdated = true;
-            }
-            // diffDays === 0 means same day, do nothing
-        }
-
-        if (streakUpdated) {
-            await student.save();
-        }
+        const streakUpdated = await student.updateStreak();
 
         res.json({
             message: 'Quiz submitted successfully',
@@ -157,9 +124,10 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
 // @access  Student only
 router.get('/results/:quizId', auth, roleAuth('Student'), async (req, res) => {
     try {
+        const sanitizedQuizId = sanitize(req.params.quizId);
         const result = await Result.findOne({
             studentId: req.user._id,
-            quizId: req.params.quizId
+            quizId: sanitizedQuizId
         }).populate('quizId', 'title description');
 
         if (!result) {
@@ -192,8 +160,6 @@ router.get('/my-results', auth, roleAuth('Student'), async (req, res) => {
 // @route   POST /api/quiz/save-progress
 // @desc    Save current quiz progress (timeLeft, answers)
 // @access  Student only
-const QuizSession = require('../models/QuizSession');
-
 router.post('/save-progress', auth, roleAuth('Student'), async (req, res) => {
     try {
         const { quizId, timeLeft, answers } = req.body;
@@ -214,8 +180,10 @@ router.post('/save-progress', auth, roleAuth('Student'), async (req, res) => {
             });
         }
 
+        const sanitizedQuizId = sanitize(quizId);
+
         await QuizSession.findOneAndUpdate(
-            { studentId: req.user._id, quizId },
+            { studentId: req.user._id, quizId: sanitizedQuizId },
             {
                 timeLeft,
                 answers: answersMap,
@@ -236,9 +204,10 @@ router.post('/save-progress', auth, roleAuth('Student'), async (req, res) => {
 // @access  Student only
 router.get('/progress/:quizId', auth, roleAuth('Student'), async (req, res) => {
     try {
+        const sanitizedQuizId = sanitize(req.params.quizId);
         const session = await QuizSession.findOne({
             studentId: req.user._id,
-            quizId: req.params.quizId
+            quizId: sanitizedQuizId
         });
 
         if (!session) {
@@ -261,9 +230,10 @@ router.get('/progress/:quizId', auth, roleAuth('Student'), async (req, res) => {
 // @access  Student only
 router.delete('/progress/:quizId', auth, roleAuth('Student'), async (req, res) => {
     try {
+        const sanitizedQuizId = sanitize(req.params.quizId);
         await QuizSession.findOneAndDelete({
             studentId: req.user._id,
-            quizId: req.params.quizId
+            quizId: sanitizedQuizId
         });
         res.json({ message: 'Progress cleared' });
     } catch (error) {
@@ -276,7 +246,8 @@ router.delete('/progress/:quizId', auth, roleAuth('Student'), async (req, res) =
 // @access  Student only
 router.get('/:id', auth, roleAuth('Student'), async (req, res) => {
     try {
-        const quiz = await Quiz.findById(req.params.id).select('-questions.correctIndices -questions.explanation');
+        const sanitizedId = sanitize(req.params.id);
+        const quiz = await Quiz.findById(sanitizedId).select('-questions.correctIndices -questions.explanation');
 
         if (!quiz) {
             return res.status(404).json({ message: 'Quiz not found' });

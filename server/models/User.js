@@ -77,4 +77,67 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
 
+// Method to update streak when a quiz is submitted
+userSchema.methods.updateStreak = async function () {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let lastDate = this.lastQuizDate ? new Date(this.lastQuizDate) : null;
+    if (lastDate) lastDate.setHours(0, 0, 0, 0);
+
+    let streakUpdated = false;
+
+    if (!lastDate) {
+        // First ever quiz
+        this.currentStreak = 1;
+        this.longestStreak = 1;
+        this.lastQuizDate = new Date();
+        streakUpdated = true;
+    } else {
+        const diffTime = Math.abs(today - lastDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+            // Consecutive day
+            this.currentStreak += 1;
+            if (this.currentStreak > this.longestStreak) {
+                this.longestStreak = this.currentStreak;
+            }
+            this.lastQuizDate = new Date();
+            streakUpdated = true;
+        } else if (diffDays > 1) {
+            // Missed a day (or more)
+            this.currentStreak = 1;
+            this.lastQuizDate = new Date();
+            streakUpdated = true;
+        }
+        // diffDays === 0 means same day, do nothing to streak count
+    }
+
+    if (streakUpdated) {
+        await this.save();
+    }
+    return streakUpdated;
+};
+
+// Method to check and reset streak if a day was missed (usually called on login)
+userSchema.methods.resetStreakIfBroken = async function () {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const lastDate = this.lastQuizDate ? new Date(this.lastQuizDate) : null;
+    if (lastDate) lastDate.setHours(0, 0, 0, 0);
+
+    if (lastDate) {
+        const diffTime = Math.abs(today - lastDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 1) {
+            this.currentStreak = 0;
+            await this.save();
+            return true;
+        }
+    }
+    return false;
+};
+
 module.exports = mongoose.model('User', userSchema);
