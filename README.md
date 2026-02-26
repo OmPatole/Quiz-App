@@ -27,7 +27,7 @@ The project is built using the modern **MERN Stack** and other industry-standard
 *   **Data Visualization:** Recharts
 *   **File Handling:** Multer & CSV Parser
 
-## � Quick Start
+## 🤩 Quick Start
 
 1.  **Backend:** Navigate to `/server`, run `npm install`, and start with `npm run dev`.
 2.  **Frontend:** Navigate to `/client`, run `npm install`, and start with `npm run dev`.
