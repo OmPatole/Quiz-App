@@ -63,7 +63,7 @@ api.interceptors.response.use(
         // Prevent infinite retry loops
         if (originalRequest._retry) {
             // If already retried, handle auth errors
-            if (error.response?.status === 401) {
+            if (error.response?.status === 401 && !originalRequest.url.includes('/signin')) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 window.location.href = '/login';
@@ -100,7 +100,7 @@ api.interceptors.response.use(
         }
 
         // Handle 401 Unauthorized
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 && !originalRequest.url.includes('/signin')) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';

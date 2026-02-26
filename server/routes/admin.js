@@ -10,6 +10,7 @@ const roleAuth = require('../middleware/roleAuth');
 const User = require('../models/User');
 const Chapter = require('../models/Chapter');
 const Quiz = require('../models/Quiz');
+const bcrypt = require('bcryptjs');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -97,8 +98,17 @@ router.post('/upload-students', auth, roleAuth('Admin'), upload.single('file'), 
                     // Bulk create students
                     let createdCount = 0;
                     if (studentsToCreate.length > 0) {
-                        const results = await User.insertMany(studentsToCreate, { ordered: false });
-                        createdCount = results.length;
+                        try {
+                            const salt = await bcrypt.genSalt(10);
+                            for (let s of studentsToCreate) {
+                                s.password = await bcrypt.hash(s.password, salt);
+                            }
+                            const results = await User.insertMany(studentsToCreate, { ordered: false });
+                            createdCount = results.length;
+                        } catch (err) {
+                            console.error('Insert Error:', err);
+                            errors.push('Database insertion error.');
+                        }
                     }
 
                     // Delete uploaded file

@@ -44,7 +44,7 @@ const Footer = () => {
                         <ul className="space-y-3 text-sm">
                             <li className="flex items-start gap-3">
                                 <Mail className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                                <span className="text-gray-500 dark:text-gray-500">tnp@unishivaji.ac.in</span>
+                                <span className="text-gray-500 dark:text-gray-500">tpo.tech@unishivaji.ac.in</span>
                             </li>
                             
                             <li className="flex items-start gap-3">

@@ -7,7 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import ConfirmationModal from '../common/ConfirmationModal';
 
 const StudentManager = () => {
-    const { toast } = useToast();
+    const toast = useToast();
     const [uploading, setUploading] = useState(false);
     const [result, setResult] = useState(null);
 

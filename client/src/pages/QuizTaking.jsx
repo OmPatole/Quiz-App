@@ -8,7 +8,7 @@ import ConfirmationModal from '../components/common/ConfirmationModal';
 const QuizTaking = () => {
     const { quizId } = useParams();
     const navigate = useNavigate();
-    const { toast } = useToast();
+    const toast = useToast();
 
     const [quiz, setQuiz] = useState(null);
     const [currentQuestion, setCurrentQuestion] = useState(0);

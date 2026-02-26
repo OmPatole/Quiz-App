@@ -16,7 +16,7 @@ const QuizManager = () => {
     const [showBuilder, setShowBuilder] = useState(false);
 
     // Toast
-    const { toast } = useToast();
+    const toast = useToast();
 
     // Modal State
     const [modalConfig, setModalConfig] = useState({
