@@ -8,5 +8,5 @@ export default defineConfig({
     host: true,  // Listen on all IPs (0.0.0.0)
     port: 80,    // Standard HTTP port (no :5173 needed)
     strictPort: true,
-  }
+  },
 })
