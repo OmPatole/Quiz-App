@@ -17,7 +17,7 @@ const Logo = ({ className = "", iconSize = 9, textSize = "text-xl" }) => {
                 />
             </div>
             <span className={`${textSize} text-white flex items-center`}>
-                Aptitude<span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent ml-0.5">Portal</span>
+                Aptitude<span className="text-blue-400 ml-0.5">Portal</span>
             </span>
         </div>
     );

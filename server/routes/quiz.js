@@ -16,7 +16,7 @@ const sanitize = require('mongo-sanitize');
 // @access  Student only
 router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
     try {
-        const { quizId, answers } = req.body;
+        const { quizId, answers, timeTaken } = req.body;
 
         if (!quizId || !answers) {
             return res.status(400).json({ message: 'Quiz ID and answers are required' });
@@ -81,6 +81,7 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
             result.score = score;
             result.totalMarks = totalMarks;
             result.answers = answers;
+            if (timeTaken != null) result.timeTaken = timeTaken;
             result.submittedAt = new Date();
             await result.save();
             console.log(`Updated existing result for student ${req.user._id}, quiz ${quizObjectId}`);
@@ -91,7 +92,8 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
                 quizId: quizObjectId,
                 score,
                 totalMarks,
-                answers
+                answers,
+                timeTaken: timeTaken ?? null
             });
             await result.save();
             console.log(`Created new result for student ${req.user._id}, quiz ${quizObjectId}`);
@@ -103,6 +105,8 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
 
         res.json({
             message: 'Quiz submitted successfully',
+            quizId: quiz._id,
+            quizType: quiz.quizType,
             score,
             totalMarks,
             percentage: ((score / totalMarks) * 100).toFixed(2),
@@ -241,6 +245,99 @@ router.delete('/progress/:quizId', auth, roleAuth('Student'), async (req, res) =
         res.status(500).json({ message: 'Server error' });
     }
 });
+// @route   GET /api/quiz/leaderboard/:quizId
+// @desc    Get leaderboard for a specific weekly quiz
+// @access  Student and Admin
+router.get('/leaderboard/:quizId', auth, async (req, res) => {
+    try {
+        // Allow both Student and Admin roles
+        if (req.user.role !== 'Student' && req.user.role !== 'Admin') {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        const sanitizedQuizId = sanitize(req.params.quizId);
+
+        // Verify the quiz exists and is of type 'weekly'
+        const quiz = await Quiz.findById(sanitizedQuizId).select('title quizType totalMarks');
+        if (!quiz) {
+            return res.status(404).json({ message: 'Quiz not found' });
+        }
+        if (quiz.quizType !== 'weekly') {
+            return res.status(400).json({ message: 'Leaderboard is only available for weekly quizzes' });
+        }
+
+        // Aggregate leaderboard: one entry per student, ranked by score desc, then submission time asc
+        const leaderboard = await Result.aggregate([
+            { $match: { quizId: new mongoose.Types.ObjectId(sanitizedQuizId) } },
+            {
+                $group: {
+                    _id: '$studentId',
+                    score: { $max: '$score' },       // Best score if multiple attempts
+                    totalMarks: { $first: '$totalMarks' },
+                    submittedAt: { $min: '$submittedAt' }, // Earliest submission for tiebreak
+                    timeTaken: { $min: '$timeTaken' }      // Best (fastest) time taken
+                }
+            },
+            { $sort: { score: -1, submittedAt: 1 } },  // High score first, earliest time wins ties
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'student'
+                }
+            },
+            { $unwind: '$student' },
+            {
+                $project: {
+                    _id: 0,
+                    studentId: '$_id',
+                    name: '$student.name',
+                    prn: '$student.prn',
+                    score: 1,
+                    totalMarks: 1,
+                    percentage: {
+                        $round: [
+                            {
+                                $multiply: [
+                                    { $divide: ['$score', '$totalMarks'] },
+                                    100
+                                ]
+                            },
+                            1
+                        ]
+                    },
+                    submittedAt: 1,
+                    timeTaken: 1
+                }
+            }
+        ]);
+
+        // Add rank numbers
+        const rankedLeaderboard = leaderboard.map((entry, index) => ({
+            rank: index + 1,
+            ...entry
+        }));
+
+        // Find the logged-in student's position (if Student role)
+        let myRank = null;
+        if (req.user.role === 'Student') {
+            const myEntry = rankedLeaderboard.find(e => e.studentId.toString() === req.user._id.toString());
+            myRank = myEntry ? myEntry.rank : null;
+        }
+
+        res.json({
+            quizTitle: quiz.title,
+            totalParticipants: rankedLeaderboard.length,
+            leaderboard: rankedLeaderboard,
+            myRank
+        });
+    } catch (error) {
+        console.error('Leaderboard error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // @route   GET /api/quiz/:id
 // @desc    Get quiz for taking (without correct answers)
 // @access  Student only

@@ -242,11 +242,11 @@ const StudentManager = () => {
     return (
         <div className="space-y-6">
             {/* Batch Actions */}
-            <div className="card border-l-4 border-l-blue-600 bg-gray-50 dark:bg-neutral-900/50">
+            <div className="card border-l-4 border-l-blue-600 bg-neutral-900">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Batch Lifecycle Actions</h2>
-                        <p className="text-sm text-gray-500 dark:text-neutral-400">Manage academic year rollovers and bulk deletions.</p>
+                        <h2 className="text-lg font-bold text-white">Batch Lifecycle Actions</h2>
+                        <p className="text-sm text-neutral-400">Manage academic year rollovers and bulk deletions.</p>
                     </div>
                     <div className="flex gap-3">
                         <button
@@ -260,7 +260,7 @@ const StudentManager = () => {
                         <button
                             onClick={() => setShowBulkDeleteModal(true)}
                             disabled={processingAction}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-500 border border-red-200 dark:border-red-900/50 rounded-lg font-medium transition-colors disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-500 border border-red-900/50 rounded-lg font-medium transition-colors disabled:opacity-50"
                         >
                             <Trash2 className="w-4 h-4" />
                             Bulk Delete
@@ -272,45 +272,45 @@ const StudentManager = () => {
             {/* Bulk Delete Selection Modal (Not the confirmation modal, but the filter selection) */}
             {showBulkDeleteModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+                        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                             <Trash2 className="w-6 h-6 text-red-500" /> Bulk Delete Students
                         </h3>
-                        <p className="text-gray-500 dark:text-neutral-400 mb-6">Select a criteria to delete students. <strong className="text-red-600 dark:text-red-400 font-semibold">This action is irreversible.</strong></p>
+                        <p className="text-neutral-400 mb-6">Select a criteria to delete students. <strong className="text-red-400 font-semibold">This action is irreversible.</strong></p>
 
                         <div className="space-y-4 mb-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">By Academic Year</label>
+                                <label className="block text-sm font-medium text-neutral-300 mb-2">By Academic Year</label>
                                 <select
-                                    className="input-field w-full bg-gray-50 dark:bg-neutral-950/50 border-gray-200 dark:border-neutral-700 focus:border-blue-500 text-gray-900 dark:text-white [color-scheme:dark]"
+                                    className="input-field w-full bg-neutral-800 border-neutral-700 focus:border-blue-500 text-white [color-scheme:dark]"
                                     value={bulkDeleteTarget.academicYear}
                                     onChange={(e) => setBulkDeleteTarget({ ...bulkDeleteTarget, academicYear: e.target.value, batchYear: '' })}
                                 >
-                                    <option value="" className="bg-white dark:bg-neutral-900">Select Year...</option>
-                                    <option value="First Year" className="bg-white dark:bg-neutral-900">First Year</option>
-                                    <option value="Second Year" className="bg-white dark:bg-neutral-900">Second Year</option>
-                                    <option value="Third Year" className="bg-white dark:bg-neutral-900">Third Year</option>
-                                    <option value="Last Year" className="bg-white dark:bg-neutral-900">Last Year</option>
-                                    <option value="Graduated" className="bg-white dark:bg-neutral-900">Graduated</option>
+                                    <option value="" className="bg-neutral-900">Select Year...</option>
+                                    <option value="First Year" className="bg-neutral-900">First Year</option>
+                                    <option value="Second Year" className="bg-neutral-900">Second Year</option>
+                                    <option value="Third Year" className="bg-neutral-900">Third Year</option>
+                                    <option value="Last Year" className="bg-neutral-900">Last Year</option>
+                                    <option value="Graduated" className="bg-neutral-900">Graduated</option>
                                 </select>
                             </div>
                             <div className="relative flex py-2 items-center">
-                                <div className="flex-grow border-t border-gray-200 dark:border-neutral-800"></div>
-                                <span className="flex-shrink-0 mx-4 text-gray-400 dark:text-neutral-600 text-xs uppercase">Or By Batch</span>
-                                <div className="flex-grow border-t border-gray-200 dark:border-neutral-800"></div>
+                                <div className="flex-grow border-t border-neutral-800"></div>
+                                <span className="flex-shrink-0 mx-4 text-neutral-600 text-xs uppercase">Or By Batch</span>
+                                <div className="flex-grow border-t border-neutral-800"></div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300 mb-2">By Batch Year</label>
+                                <label className="block text-sm font-medium text-neutral-300 mb-2">By Batch Year</label>
                                 <select
-                                    className="input-field w-full bg-gray-50 dark:bg-neutral-950/50 border-gray-200 dark:border-neutral-700 focus:border-blue-500 text-gray-900 dark:text-white [color-scheme:dark]"
+                                    className="input-field w-full bg-neutral-800 border-neutral-700 focus:border-blue-500 text-white [color-scheme:dark]"
                                     value={bulkDeleteTarget.batchYear}
                                     onChange={(e) => setBulkDeleteTarget({ ...bulkDeleteTarget, batchYear: e.target.value, academicYear: '' })}
                                 >
-                                    <option value="" className="bg-white dark:bg-neutral-900">Select Batch...</option>
-                                    <option value="2023-2024" className="bg-white dark:bg-neutral-900">2023-2024</option>
-                                    <option value="2024-2025" className="bg-white dark:bg-neutral-900">2024-2025</option>
-                                    <option value="2025-2026" className="bg-white dark:bg-neutral-900">2025-2026</option>
-                                    <option value="2026-2027" className="bg-white dark:bg-neutral-900">2026-2027</option>
+                                    <option value="" className="bg-neutral-900">Select Batch...</option>
+                                    <option value="2023-2024" className="bg-neutral-900">2023-2024</option>
+                                    <option value="2024-2025" className="bg-neutral-900">2024-2025</option>
+                                    <option value="2025-2026" className="bg-neutral-900">2025-2026</option>
+                                    <option value="2026-2027" className="bg-neutral-900">2026-2027</option>
                                 </select>
                             </div>
                         </div>
@@ -318,7 +318,7 @@ const StudentManager = () => {
                         <div className="flex justify-end gap-3">
                             <button
                                 onClick={() => setShowBulkDeleteModal(false)}
-                                className="px-4 py-2 text-gray-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                className="px-4 py-2 text-neutral-400 hover:text-white transition-colors"
                             >
                                 Cancel
                             </button>
@@ -335,17 +335,17 @@ const StudentManager = () => {
             )}
 
             {/* Filters Toolbar */}
-            <div className="card sticky top-0 z-10 bg-gray-50/95 dark:bg-neutral-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-neutral-800 rounded-none md:rounded-2xl">
+            <div className="card sticky top-0 z-10 bg-neutral-900 border-b border-neutral-800 rounded-none md:rounded-2xl">
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div className="relative flex-1 w-full md:max-w-md">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-neutral-500" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
                             <input
                                 type="text"
                                 placeholder="Search by Name or PRN..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="input-field pl-10 w-full bg-gray-50 dark:bg-neutral-950 border-gray-200 dark:border-neutral-800 focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-neutral-600"
+                                className="input-field pl-10 w-full bg-neutral-950 border-neutral-800 focus:border-blue-500 text-white placeholder-neutral-500"
                             />
                         </div>
 
@@ -360,7 +360,7 @@ const StudentManager = () => {
                             {(searchTerm || filters.academicYear || filters.branch || filters.batchYear) && (
                                 <button
                                     onClick={clearFilters}
-                                    className="px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors border border-gray-200 dark:border-neutral-800 rounded-lg hover:border-gray-300 dark:hover:border-neutral-600"
+                                    className="px-3 py-2 text-sm text-neutral-300 hover:text-white transition-colors border border-neutral-800 rounded-lg hover:border-neutral-600"
                                 >
                                     Clear Filters
                                 </button>
@@ -369,28 +369,28 @@ const StudentManager = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        <select name="academicYear" value={filters.academicYear} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-gray-50 dark:bg-neutral-950 border-gray-200 dark:border-neutral-800 text-gray-700 dark:text-neutral-300 [color-scheme:dark]">
-                            <option value="" className="bg-white dark:bg-neutral-900">All Years</option>
-                            <option value="First Year" className="bg-white dark:bg-neutral-900">First Year</option>
-                            <option value="Second Year" className="bg-white dark:bg-neutral-900">Second Year</option>
-                            <option value="Third Year" className="bg-white dark:bg-neutral-900">Third Year</option>
-                            <option value="Last Year" className="bg-white dark:bg-neutral-900">Last Year</option>
+                        <select name="academicYear" value={filters.academicYear} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-neutral-950 border-neutral-800 text-neutral-300 [color-scheme:dark]">
+                            <option value="" className="bg-neutral-900">All Years</option>
+                            <option value="First Year" className="bg-neutral-900">First Year</option>
+                            <option value="Second Year" className="bg-neutral-900">Second Year</option>
+                            <option value="Third Year" className="bg-neutral-900">Third Year</option>
+                            <option value="Last Year" className="bg-neutral-900">Last Year</option>
                         </select>
-                        <select name="branch" value={filters.branch} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-gray-50 dark:bg-neutral-950 border-gray-200 dark:border-neutral-800 text-gray-700 dark:text-neutral-300 [color-scheme:dark]">
-                            <option value="" className="bg-white dark:bg-neutral-900">All Branches</option>
-                            <option value="CST" className="bg-white dark:bg-neutral-900">CST</option>
-                            <option value="E&TC" className="bg-white dark:bg-neutral-900">E&TC</option>
-                            <option value="Mechanical" className="bg-white dark:bg-neutral-900">Mechanical</option>
-                            <option value="Food" className="bg-white dark:bg-neutral-900">Food</option>
-                            <option value="Chemical" className="bg-white dark:bg-neutral-900">Chemical</option>
+                        <select name="branch" value={filters.branch} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-neutral-950 border-neutral-800 text-neutral-300 [color-scheme:dark]">
+                            <option value="" className="bg-neutral-900">All Branches</option>
+                            <option value="CST" className="bg-neutral-900">CST</option>
+                            <option value="E&TC" className="bg-neutral-900">E&TC</option>
+                            <option value="Mechanical" className="bg-neutral-900">Mechanical</option>
+                            <option value="Food" className="bg-neutral-900">Food</option>
+                            <option value="Chemical" className="bg-neutral-900">Chemical</option>
                         </select>
-                        <select name="batchYear" value={filters.batchYear} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-gray-50 dark:bg-neutral-950 border-gray-200 dark:border-neutral-800 text-gray-700 dark:text-neutral-300 [color-scheme:dark]">
-                            <option value="" className="bg-white dark:bg-neutral-900">Batch Year</option>
-                            <option value="2023-2024" className="bg-white dark:bg-neutral-900">2023-2024</option>
-                            <option value="2024-2025" className="bg-white dark:bg-neutral-900">2024-2025</option>
-                            <option value="2025-2026" className="bg-white dark:bg-neutral-900">2025-2026</option>
-                            <option value="2026-2027" className="bg-white dark:bg-neutral-900">2026-2027</option>
-                            <option value="2027-2028" className="bg-white dark:bg-neutral-900">2027-2028</option>
+                        <select name="batchYear" value={filters.batchYear} onChange={handleFilterChange} className="input-field text-sm w-full md:w-auto bg-neutral-950 border-neutral-800 text-neutral-300 [color-scheme:dark]">
+                            <option value="" className="bg-neutral-900">Batch Year</option>
+                            <option value="2023-2024" className="bg-neutral-900">2023-2024</option>
+                            <option value="2024-2025" className="bg-neutral-900">2024-2025</option>
+                            <option value="2025-2026" className="bg-neutral-900">2025-2026</option>
+                            <option value="2026-2027" className="bg-neutral-900">2026-2027</option>
+                            <option value="2027-2028" className="bg-neutral-900">2027-2028</option>
                         </select>
                     </div>
                 </div>
@@ -399,37 +399,43 @@ const StudentManager = () => {
             {/* Upload Modal */}
             {showUploadModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-2xl p-6 max-w-2xl w-full shadow-2xl">
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-2xl w-full shadow-2xl">
                         <div className="flex justify-between items-start mb-6">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <FileText className="w-6 h-6 text-blue-600 dark:text-blue-500" />
+                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <FileText className="w-6 h-6 text-blue-500" />
                                     Bulk Import Students
                                 </h3>
-                                <p className="text-gray-500 dark:text-neutral-400 text-sm mt-1">Upload a CSV file to add multiple students at once.</p>
+                                <p className="text-neutral-400 text-sm mt-1">Upload a CSV file to add multiple students at once.</p>
                             </div>
-                            <button onClick={() => setShowUploadModal(false)} className="text-gray-400 dark:text-neutral-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            <button onClick={() => setShowUploadModal(false)} className="text-neutral-500 hover:text-white transition-colors">
                                 <XCircle className="w-6 h-6" />
                             </button>
                         </div>
 
                         <div className="space-y-4 mb-6">
-                            <div className="bg-gray-50 dark:bg-neutral-950 border border-gray-200 dark:border-neutral-800 rounded-lg p-4 text-sm text-gray-600 dark:text-neutral-400">
-                                <p className="mb-2 font-medium text-gray-900 dark:text-white">Required CSV Columns:</p>
-                                <code className="block bg-gray-50 dark:bg-neutral-900 p-2 rounded text-blue-600 dark:text-blue-400 border border-gray-200 dark:border-neutral-800 mb-2 font-mono">
+                            <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 text-sm text-neutral-400">
+                                <p className="mb-2 font-medium text-white">Required CSV Columns:</p>
+                                <code className="block bg-neutral-900 p-2 rounded text-blue-400 border border-neutral-800 mb-3 font-mono text-xs">
                                     Name, PRN, DOB, Academic Year, Branch, Batch Year
                                 </code>
-                                <ul className="list-disc list-inside space-y-1 text-xs">
-                                    <li>DOB Format: DD-MM-YYYY (e.g. 15-08-2004)</li>
-                                    <li>Passwords are auto-generated: Initials@DOB (e.g. OP@15082004)</li>
+                                <ul className="list-disc list-inside space-y-1.5 text-xs">
+                                    <li>DOB Format: <code className="bg-neutral-800 px-1 rounded text-yellow-400">DD-MM-YYYY</code> or <code className="bg-neutral-800 px-1 rounded text-yellow-400">YYYY-MM-DD</code></li>
+                                    <li>Password auto-generated: <code className="bg-neutral-800 px-1 rounded text-yellow-400">Initials@DOBdigits</code> (e.g. <code className="bg-neutral-800 px-1 rounded text-yellow-400">OP@01012002</code>)</li>
+                                    <li className="text-orange-400 font-semibold">Academic Year must be one of:
+                                        <span className="font-normal text-neutral-300"> First Year, Second Year, Third Year, Last Year, Graduated</span>
+                                    </li>
+                                    <li className="text-orange-400 font-semibold">Branch must be one of:
+                                        <span className="font-normal text-neutral-300"> CST, E&amp;TC, Mechanical, Food, Chemical</span>
+                                    </li>
                                 </ul>
                             </div>
 
                             <div
                                 {...getRootProps()}
                                 className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${isDragActive
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
-                                    : 'border-gray-200 dark:border-neutral-700 hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-neutral-800'
+                                    ? 'border-blue-500 bg-blue-900/10'
+                                    : 'border-neutral-700 hover:border-blue-500 hover:bg-neutral-800'
                                     }`}
                             >
                                 <input {...getInputProps()} />
@@ -437,18 +443,18 @@ const StudentManager = () => {
                                     {uploading ? (
                                         <>
                                             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                            <p className="text-gray-900 dark:text-white font-medium">Processing CSV...</p>
+                                            <p className="text-white font-medium">Processing CSV...</p>
                                         </>
                                     ) : (
                                         <>
-                                            <div className="w-12 h-12 bg-gray-100 dark:bg-neutral-800 rounded-full flex items-center justify-center group-hover:bg-blue-50 dark:group-hover:bg-blue-900/50 transition-colors">
-                                                <Upload className="w-6 h-6 text-gray-400 dark:text-neutral-400 group-hover:text-blue-600 dark:group-hover:text-blue-500" />
+                                            <div className="w-12 h-12 bg-neutral-800 rounded-full flex items-center justify-center group-hover:bg-blue-900/50 transition-colors">
+                                                <Upload className="w-6 h-6 text-neutral-400 group-hover:text-blue-500" />
                                             </div>
                                             <div>
-                                                <p className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+                                                <p className="text-lg font-medium text-white mb-1">
                                                     {isDragActive ? 'Drop file now' : 'Click or Drag CSV file'}
                                                 </p>
-                                                <p className="text-sm text-gray-500 dark:text-neutral-500">Only .csv files supported</p>
+                                                <p className="text-sm text-neutral-500">Only .csv files supported</p>
                                             </div>
                                         </>
                                     )}
@@ -456,7 +462,7 @@ const StudentManager = () => {
                             </div>
 
                             {result && (
-                                <div className={`p-4 rounded-lg flex items-start gap-3 ${result.created > 0 ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'}`}>
+                                <div className={`p-4 rounded-lg flex items-start gap-3 ${result.created > 0 ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-400' : 'bg-red-900/20 text-red-400'}`}>
                                     {result.created > 0 ? <CheckCircle2 className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
                                     <div className="text-sm">
                                         <p className="font-bold">{result.message}</p>
@@ -483,43 +489,43 @@ const StudentManager = () => {
                     <div className="min-w-[640px]">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-gray-200 dark:border-neutral-700">
-                                    <th className="p-3 text-sm font-semibold text-gray-500 dark:text-neutral-400 whitespace-nowrap">Name</th>
-                                    <th className="p-3 text-sm font-semibold text-gray-500 dark:text-neutral-400 whitespace-nowrap">PRN</th>
-                                    <th className="p-3 text-sm font-semibold text-gray-500 dark:text-neutral-400 whitespace-nowrap">Year</th>
-                                    <th className="p-3 text-sm font-semibold text-gray-500 dark:text-neutral-400 whitespace-nowrap">Branch</th>
-                                    <th className="p-3 text-sm font-semibold text-gray-500 dark:text-neutral-400 whitespace-nowrap">Batch</th>
-                                    <th className="p-3 text-sm font-semibold text-gray-500 dark:text-neutral-400 whitespace-nowrap">Actions</th>
+                                <tr className="border-b border-neutral-700">
+                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">Name</th>
+                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">PRN</th>
+                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">Year</th>
+                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">Branch</th>
+                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">Batch</th>
+                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="6" className="p-8 text-center text-gray-500 dark:text-neutral-500">Loading...</td>
+                                        <td colSpan="6" className="p-8 text-center text-neutral-500">Loading...</td>
                                     </tr>
                                 ) : filteredStudents.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" className="p-8 text-center text-gray-500 dark:text-neutral-500">No students found matching criteria</td>
+                                        <td colSpan="6" className="p-8 text-center text-neutral-500">No students found matching criteria</td>
                                     </tr>
                                 ) : (
                                     filteredStudents.map(student => (
-                                        <tr key={student._id} className="border-b border-gray-100 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors">
-                                            <td className="p-3 text-gray-900 dark:text-neutral-200 whitespace-nowrap font-medium">{student.name}</td>
-                                            <td className="p-3 text-gray-500 dark:text-neutral-400 font-mono text-sm whitespace-nowrap">{student.prn}</td>
-                                            <td className="p-3 text-gray-600 dark:text-neutral-400 whitespace-nowrap">{student.academicYear || '-'}</td>
-                                            <td className="p-3 text-gray-600 dark:text-neutral-400 whitespace-nowrap">{student.branch || '-'}</td>
-                                            <td className="p-3 text-gray-600 dark:text-neutral-400 whitespace-nowrap">{student.batchYear || '-'}</td>
+                                        <tr key={student._id} className="border-b border-neutral-800 hover:bg-neutral-800/50 transition-colors">
+                                            <td className="p-3 text-neutral-200 whitespace-nowrap font-medium">{student.name}</td>
+                                            <td className="p-3 text-neutral-400 font-mono text-sm whitespace-nowrap">{student.prn}</td>
+                                            <td className="p-3 text-neutral-400 whitespace-nowrap">{student.academicYear || '-'}</td>
+                                            <td className="p-3 text-neutral-400 whitespace-nowrap">{student.branch || '-'}</td>
+                                            <td className="p-3 text-neutral-400 whitespace-nowrap">{student.batchYear || '-'}</td>
                                             <td className="p-3 flex items-center gap-2">
                                                 <button
                                                     onClick={() => handleViewProfile(student)}
-                                                    className="text-gray-400 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-blue-500 transition-colors p-1"
+                                                    className="text-neutral-500 hover:text-blue-500 transition-colors p-1"
                                                     title="View Profile"
                                                 >
                                                     <Eye className="w-5 h-5" />
                                                 </button>
                                                 <button
                                                     onClick={() => triggerDeleteStudent(student._id)}
-                                                    className="text-gray-400 dark:text-neutral-500 hover:text-red-600 dark:hover:text-red-500 transition-colors p-1"
+                                                    className="text-neutral-500 hover:text-red-500 transition-colors p-1"
                                                     title="Delete Student"
                                                 >
                                                     <Trash2 className="w-5 h-5" />

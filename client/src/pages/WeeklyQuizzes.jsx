@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, ArrowRight, Play, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, Play, CheckCircle2, Trophy } from 'lucide-react';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
+import WeeklyQuizLeaderboard from '../components/common/WeeklyQuizLeaderboard';
 
-const WeeklyQuizzes = ({ completedQuizIds }) => {
+const WeeklyQuizzes = () => {
     const [quizzes, setQuizzes] = useState([]);
+    const [completedIds, setCompletedIds] = useState(new Set());
     const [loading, setLoading] = useState(true);
+    const [leaderboardQuizId, setLeaderboardQuizId] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -15,10 +18,14 @@ const WeeklyQuizzes = ({ completedQuizIds }) => {
     const fetchWeeklyQuizzes = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/chapters');
-            const allWeeklyQuizzes = [];
+            // Fetch chapters and the student's own results in parallel
+            const [chaptersRes, resultsRes] = await Promise.all([
+                api.get('/chapters'),
+                api.get('/quiz/my-results').catch(() => ({ data: [] }))
+            ]);
 
-            response.data.forEach(chapter => {
+            const allWeeklyQuizzes = [];
+            chaptersRes.data.forEach(chapter => {
                 if (chapter.quizzes && chapter.quizzes.length > 0) {
                     chapter.quizzes.forEach(quiz => {
                         if (quiz.quizType === 'weekly') {
@@ -39,6 +46,14 @@ const WeeklyQuizzes = ({ completedQuizIds }) => {
             });
 
             setQuizzes(allWeeklyQuizzes);
+
+            // Build a fresh set of completed quiz IDs from the student's results
+            const completed = new Set(
+                resultsRes.data
+                    .map(r => r.quizId?._id?.toString())
+                    .filter(Boolean)
+            );
+            setCompletedIds(completed);
         } catch (error) {
             console.error('Error fetching weekly quizzes:', error);
         } finally {
@@ -75,7 +90,7 @@ const WeeklyQuizzes = ({ completedQuizIds }) => {
             {quizzes.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {quizzes.map((quiz) => {
-                        const isCompleted = completedQuizIds?.includes(quiz._id);
+                        const isCompleted = completedIds.has(quiz._id?.toString());
                         const scheduledDate = quiz.scheduledAt ? new Date(quiz.scheduledAt) : null;
                         const isUpcoming = scheduledDate && scheduledDate > new Date();
 
@@ -91,7 +106,7 @@ const WeeklyQuizzes = ({ completedQuizIds }) => {
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-start mb-4">
                                         <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isCompleted ? 'bg-green-500/10 text-green-500' :
-                                                isUpcoming ? 'bg-yellow-500/10 text-yellow-500' : 'bg-blue-500/10 text-blue-500'
+                                            isUpcoming ? 'bg-yellow-500/10 text-yellow-500' : 'bg-blue-500/10 text-blue-500'
                                             }`}>
                                             {isCompleted ? 'Completed' : isUpcoming ? 'Upcoming' : 'Open'}
                                         </div>
@@ -123,20 +138,29 @@ const WeeklyQuizzes = ({ completedQuizIds }) => {
                                     </div>
 
                                     {scheduledDate && (
-                                        <div className="flex items-center gap-2 text-xs text-neutral-400 mb-6">
+                                        <div className="flex items-center gap-2 text-xs text-neutral-400 mb-4">
                                             <Calendar className="w-3.5 h-3.5" />
                                             <span>Scheduled: {scheduledDate.toLocaleDateString()} at {scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                     )}
 
+                                    {/* Leaderboard button — visible for all weekly quizzes */}
+                                    <button
+                                        onClick={() => setLeaderboardQuizId(quiz._id)}
+                                        className="w-full mb-3 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border border-yellow-500/20 hover:border-yellow-500/40 text-sm"
+                                    >
+                                        <Trophy className="w-4 h-4" />
+                                        View Leaderboard
+                                    </button>
+
                                     <button
                                         onClick={() => handleStartQuiz(quiz._id)}
                                         disabled={isUpcoming && !isCompleted}
                                         className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${isCompleted
-                                                ? 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
-                                                : isUpcoming
-                                                    ? 'bg-neutral-800 text-neutral-600 cursor-not-allowed'
-                                                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20'
+                                            ? 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+                                            : isUpcoming
+                                                ? 'bg-neutral-800 text-neutral-600 cursor-not-allowed'
+                                                : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20'
                                             }`}
                                     >
                                         {isCompleted ? (
@@ -167,6 +191,15 @@ const WeeklyQuizzes = ({ completedQuizIds }) => {
                     <p className="text-neutral-500 font-medium">No weekly assessments found.</p>
                     <p className="text-neutral-600 text-sm mt-1">Keep an eye out for scheduled tests from your instructor.</p>
                 </div>
+            )}
+
+            {/* Leaderboard Modal */}
+            {leaderboardQuizId && (
+                <WeeklyQuizLeaderboard
+                    quizId={leaderboardQuizId}
+                    isModal={true}
+                    onClose={() => setLeaderboardQuizId(null)}
+                />
             )}
         </div>
     );

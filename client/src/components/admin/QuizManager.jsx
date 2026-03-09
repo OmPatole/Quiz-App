@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Plus, Trash2, BookOpen, CheckCircle2, AlertCircle, FilePlus } from 'lucide-react';
+import { Upload, Plus, Trash2, BookOpen, CheckCircle2, AlertCircle, FilePlus, ChevronDown, ChevronRight, Filter } from 'lucide-react';
 import api from '../../api/axios';
-import headers from '../../api/axios'; // Wait, standard import is just api
 import QuizBuilder from './QuizBuilder';
 import { useToast } from '../../context/ToastContext';
 import ConfirmationModal from '../common/ConfirmationModal';
@@ -14,6 +13,8 @@ const QuizManager = () => {
     const [uploading, setUploading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showBuilder, setShowBuilder] = useState(false);
+    const [expandedChapters, setExpandedChapters] = useState({});
+    const [quizFilter, setQuizFilter] = useState('all'); // 'all', 'practice', 'weekly'
 
     // Toast
     const toast = useToast();
@@ -34,10 +35,24 @@ const QuizManager = () => {
         try {
             const response = await api.get('/admin/chapters');
             setChapters(response.data);
+
+            // By default, expand all chapters (or you can set them to true)
+            const initialExpanded = {};
+            response.data.forEach(ch => {
+                initialExpanded[ch._id] = true;
+            });
+            setExpandedChapters(initialExpanded);
         } catch (error) {
             console.error('Error fetching chapters:', error);
             toast.error('Failed to load chapters');
         }
+    };
+
+    const toggleChapter = (chapterId) => {
+        setExpandedChapters(prev => ({
+            ...prev,
+            [chapterId]: !prev[chapterId]
+        }));
     };
 
     const handleCreateChapter = async (e) => {
@@ -251,62 +266,122 @@ const QuizManager = () => {
 
             {/* Existing Chapters and Quizzes */}
             <div className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm dark:shadow-none">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                    Existing Chapters & Quizzes
-                </h2>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                        Existing Chapters & Quizzes
+                    </h2>
+
+                    {/* Quiz Type Toggle */}
+                    <div className="flex items-center gap-2 bg-gray-200 dark:bg-neutral-800 p-1 rounded-lg">
+                        <button
+                            onClick={() => setQuizFilter('all')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${quizFilter === 'all' ? 'bg-white dark:bg-neutral-600 text-gray-900 dark:text-white shadow' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200'}`}
+                        >
+                            All
+                        </button>
+                        <button
+                            onClick={() => setQuizFilter('practice')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${quizFilter === 'practice' ? 'bg-white dark:bg-neutral-600 text-gray-900 dark:text-white shadow' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200'}`}
+                        >
+                            Practice
+                        </button>
+                        <button
+                            onClick={() => setQuizFilter('weekly')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${quizFilter === 'weekly' ? 'bg-white dark:bg-neutral-600 text-gray-900 dark:text-white shadow' : 'text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200'}`}
+                        >
+                            Weekly
+                        </button>
+                    </div>
+                </div>
                 {chapters.length === 0 ? (
                     <p className="text-gray-500 dark:text-neutral-500 text-center py-8">
                         No chapters created yet
                     </p>
                 ) : (
                     <div className="space-y-4">
-                        {chapters.map((chapter) => (
-                            <div key={chapter._id} className="border border-gray-200 dark:border-neutral-800 rounded-xl p-4 bg-gray-50 dark:bg-neutral-950/30">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-3">
-                                        <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-500" />
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                            {chapter.title}
-                                        </h3>
-                                        <span className="text-sm text-gray-500 dark:text-neutral-500 px-2 py-0.5 bg-gray-50 dark:bg-neutral-900 rounded-full border border-gray-200 dark:border-neutral-800">
-                                            {chapter.quizzes?.length || 0} quizzes
-                                        </span>
-                                    </div>
-                                    <button
-                                        onClick={() => confirmDelete('chapter', chapter._id, chapter.title)}
-                                        className="p-2 text-gray-400 dark:text-neutral-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-neutral-900 rounded-lg transition-colors"
-                                        title="Delete Chapter"
+                        {chapters.map((chapter) => {
+                            const filteredQuizzes = (chapter.quizzes || []).filter(q => q && (quizFilter === 'all' || q.quizType === quizFilter));
+                            const isExpanded = expandedChapters[chapter._id];
+
+                            // Hide chapters with no matching quizzes when a specific filter is active
+                            if (quizFilter !== 'all' && filteredQuizzes.length === 0) return null;
+
+                            return (
+                                <div key={chapter._id} className="border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-gray-50 dark:bg-neutral-950/30">
+                                    <div
+                                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-900/50 transition-colors"
+                                        onClick={() => toggleChapter(chapter._id)}
                                     >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                </div>
-                                {chapter.quizzes?.length > 0 && (
-                                    <div className="space-y-2 ml-8 border-l-2 border-gray-200 dark:border-neutral-800 pl-4">
-                                        {chapter.quizzes.map((quiz) => (
-                                            <div
-                                                key={quiz._id}
-                                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-neutral-900 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors border border-gray-200 dark:border-transparent hover:border-gray-300 dark:hover:border-neutral-700"
-                                            >
-                                                <div>
-                                                    <p className="font-medium text-gray-900 dark:text-neutral-200">
-                                                        {quiz.title}
-                                                    </p>
-                                                    <p className="text-sm text-gray-500 dark:text-neutral-500">
-                                                        {quiz.quizType} • {quiz.duration} min • {quiz.questions?.length || 0} questions
-                                                    </p>
-                                                </div>
-                                                <button
-                                                    onClick={() => confirmDelete('quiz', quiz._id, quiz.title)}
-                                                    className="p-2 text-gray-400 dark:text-neutral-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-neutral-950 rounded-lg transition-colors"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        ))}
+                                        <div className="flex items-center gap-3">
+                                            {isExpanded ? (
+                                                <ChevronDown className="w-5 h-5 text-gray-400 dark:text-neutral-500" />
+                                            ) : (
+                                                <ChevronRight className="w-5 h-5 text-gray-400 dark:text-neutral-500" />
+                                            )}
+                                            <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-500" />
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white select-none">
+                                                {chapter.title}
+                                            </h3>
+                                            <span className="text-sm text-gray-500 dark:text-neutral-500 px-2 py-0.5 bg-gray-200 dark:bg-neutral-900 rounded-full border border-gray-300 dark:border-neutral-800 select-none">
+                                                {filteredQuizzes.length} {quizFilter !== 'all' ? quizFilter : ''} quizzes
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                confirmDelete('chapter', chapter._id, chapter.title);
+                                            }}
+                                            className="p-2 text-gray-400 dark:text-neutral-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-neutral-900 rounded-lg transition-colors"
+                                            title="Delete Chapter"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
                                     </div>
-                                )}
-                            </div>
-                        ))}
+
+                                    {isExpanded && (
+                                        <div className="p-4 pt-0 border-t border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-950/10">
+                                            {filteredQuizzes.length > 0 ? (
+                                                <div className="space-y-2 mt-4 ml-8 border-l-2 border-gray-200 dark:border-neutral-800 pl-4">
+                                                    {filteredQuizzes.map((quiz) => (
+                                                        <div
+                                                            key={quiz._id}
+                                                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-neutral-900 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors border border-gray-200 dark:border-transparent hover:border-gray-300 dark:hover:border-neutral-700"
+                                                        >
+                                                            <div>
+                                                                <p className="font-medium text-gray-900 dark:text-neutral-200 flex items-center gap-2">
+                                                                    {quiz.title}
+                                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide ${quiz.quizType === 'weekly' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-500' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-500'}`}>
+                                                                        {quiz.quizType}
+                                                                    </span>
+                                                                </p>
+                                                                <p className="text-sm text-gray-500 dark:text-neutral-500 mt-1">
+                                                                    {quiz.duration} min • {quiz.questions?.length || 0} questions
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => confirmDelete('quiz', quiz._id, quiz.title)}
+                                                                className="p-2 text-gray-400 dark:text-neutral-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-neutral-950 rounded-lg transition-colors"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-gray-500 dark:text-neutral-500 mt-4 ml-8">
+                                                    No {quizFilter !== 'all' ? quizFilter : ''} quizzes found in this chapter.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                        {quizFilter !== 'all' && chapters.every(ch => (ch.quizzes || []).filter(q => q && q.quizType === quizFilter).length === 0) && (
+                            <p className="text-gray-500 dark:text-neutral-500 text-center py-8">
+                                No {quizFilter} quizzes found. Create one using the &ldquo;Create Manual Quiz&rdquo; button above.
+                            </p>
+                        )}
                     </div>
                 )}
             </div>

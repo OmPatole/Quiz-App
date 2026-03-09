@@ -70,9 +70,11 @@ const QuizTaking = () => {
         if (submitting) return;
         setSubmitting(true);
         try {
+            const timeTaken = quiz ? (quiz.duration * 60) - timeRemaining : null;
             const response = await api.post('/quiz/submit', {
                 quizId,
                 answers,
+                timeTaken: timeTaken != null ? Math.max(0, timeTaken) : null,
             });
 
             // Clear saved progress on successful submission
@@ -86,7 +88,7 @@ const QuizTaking = () => {
             toast.error('Failed to submit quiz. Please try again.');
             setSubmitting(false);
         }
-    }, [submitting, quizId, answers, navigate, toast]);
+    }, [submitting, quizId, answers, quiz, timeRemaining, navigate, toast]);
 
     const handleAttemptSubmit = () => {
         if (answeredCount === 0) {
@@ -209,7 +211,7 @@ const QuizTaking = () => {
                 {/* Center Column: Quiz Content */}
                 <div className="flex-1 flex flex-col gap-8 max-w-5xl w-full">
                     {/* Top Control Bar */}
-                    <div className="flex items-center justify-between gap-4 bg-neutral-900/40 backdrop-blur-md p-4 rounded-2xl border border-neutral-800 shadow-lg mb-2">
+                    <div className="flex items-center justify-between gap-4 bg-neutral-900 p-4 rounded-2xl border border-neutral-800 shadow-lg mb-2">
                         <button
                             onClick={handleQuit}
                             className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white text-xs font-bold uppercase tracking-widest transition-all border border-neutral-700"
@@ -242,7 +244,7 @@ const QuizTaking = () => {
                     </div>
 
                     {/* Question Card */}
-                    <div className="flex-1 bg-neutral-900/50 backdrop-blur-xl border border-neutral-800 rounded-[2rem] p-8 lg:p-12 shadow-2xl flex flex-col min-h-[600px]">
+                    <div className="flex-1 bg-neutral-900 border border-neutral-800 rounded-[2rem] p-8 lg:p-12 shadow-2xl flex flex-col min-h-[600px]">
                         <div className="flex items-start gap-6 mb-10">
                             <span className="flex-shrink-0 w-12 h-12 bg-neutral-800 text-blue-500 border border-neutral-700 rounded-full flex items-center justify-center font-black text-xl">
                                 {currentQuestion + 1}
@@ -306,7 +308,7 @@ const QuizTaking = () => {
                     </div>
 
                     {/* Navigation - Sticky on Mobile */}
-                    <div className="sticky bottom-4 md:static bg-black/90 backdrop-blur-md md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none border border-neutral-800 md:border-0 shadow-2xl md:shadow-none z-10">
+                    <div className="sticky bottom-4 md:static bg-neutral-950 md:bg-transparent p-4 md:p-0 rounded-xl md:rounded-none border border-neutral-800 md:border-0 shadow-2xl md:shadow-none z-10">
                         <div className="flex items-center justify-between gap-4">
                             <button
                                 onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
@@ -353,7 +355,7 @@ const QuizTaking = () => {
 
                 {/* Right Sidebar: Question Palette (Desktop) */}
                 <div className="w-full lg:w-80 flex-shrink-0 sticky top-12 h-fit">
-                    <div className="bg-neutral-900/40 backdrop-blur-2xl border border-neutral-800 rounded-[2rem] p-6 shadow-[0_15px_40px_rgba(0,0,0,0.4)]">
+                    <div className="bg-neutral-900 border border-neutral-800 rounded-[2rem] p-6 shadow-lg">
                         <div className="flex items-center justify-between mb-5">
                             <h3 className="text-lg font-black text-white uppercase tracking-wider">Question Palette</h3>
                             <span className="text-xs text-neutral-400 font-bold bg-neutral-800/50 px-2 py-1 rounded-full">

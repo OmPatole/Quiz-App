@@ -31,6 +31,10 @@ const resultSchema = new mongoose.Schema({
         required: true
     },
     answers: [answerSchema],
+    timeTaken: {
+        type: Number, // in seconds
+        default: null
+    },
     submittedAt: {
         type: Date,
         default: Date.now

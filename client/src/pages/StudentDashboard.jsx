@@ -75,7 +75,7 @@ const StudentDashboard = () => {
     return (
         <div className="min-h-screen bg-neutral-950 font-sans text-white">
             {/* Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-xl">
+            <header className="fixed top-0 left-0 right-0 z-50 border-b border-neutral-800 bg-neutral-950">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Logo />
@@ -123,7 +123,7 @@ const StudentDashboard = () => {
 
                 {/* Mobile Menu Overlay */}
                 <div
-                    className={`md:hidden absolute top-full left-0 w-full bg-neutral-900/95 backdrop-blur-xl border-b border-neutral-800 transition-all duration-300 ease-in-out shadow-2xl ${isMenuOpen
+                    className={`md:hidden absolute top-full left-0 w-full bg-neutral-900 border-b border-neutral-800 transition-all duration-300 ease-in-out shadow-2xl ${isMenuOpen
                         ? 'opacity-100 translate-y-0 pointer-events-auto'
                         : 'opacity-0 -translate-y-4 pointer-events-none'
                         }`}
@@ -155,7 +155,7 @@ const StudentDashboard = () => {
                     <>
                         {/* 1. Welcome Hero Section */}
                         <div className="relative overflow-hidden bg-neutral-900 border border-neutral-800 rounded-3xl p-8 mb-8 group">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-900/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none group-hover:bg-blue-900/20 transition-all duration-700"></div>
+
 
                             <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                 <div>
@@ -347,7 +347,7 @@ const StudentDashboard = () => {
                     </>
                 )}
 
-                {activeTab === 'weekly' && <WeeklyQuizzes completedQuizIds={profileStats?.completedQuizIds} />}
+                {activeTab === 'weekly' && <WeeklyQuizzes />}
 
                 {activeTab === 'library' && <StudentLibrary />}
 

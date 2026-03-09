@@ -12,28 +12,28 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-200 active:scale-95 border-none shadow-lg shadow-blue-900/30 hover:shadow-blue-900/50;
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200 active:scale-95 border-none;
   }
 
   .btn-secondary {
-    @apply bg-white/5 hover:bg-white/10 text-white font-medium py-2 px-6 rounded-xl transition-all duration-200 active:scale-95 border border-white/10 hover:border-white/20 backdrop-blur-sm;
+    @apply bg-neutral-800 hover:bg-neutral-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 active:scale-95 border border-neutral-700 hover:border-neutral-600;
   }
 
   .card {
-    @apply bg-gradient-to-br from-white/5 to-transparent text-white rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-sm shadow-none;
+    @apply bg-neutral-900 text-white rounded-xl p-6 border border-neutral-800 transition-colors duration-200;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200;
+    @apply w-full px-4 py-3 bg-neutral-900 border border-neutral-700 text-white placeholder-neutral-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
   }
 
   /* Chapter Card Styles */
   .chapter-card {
-    @apply bg-gradient-to-br from-white/5 to-transparent border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300 relative overflow-hidden backdrop-blur-sm shadow-none;
+    @apply bg-neutral-900 border border-neutral-800 rounded-xl p-6 hover:border-neutral-700 transition-colors duration-200 relative overflow-hidden;
   }
 
   .chapter-card-icon {
-    @apply w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white shadow-md;
+    @apply w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white;
   }
 
   .chapter-watermark {
@@ -41,15 +41,15 @@
   }
 
   .progress-bar-track {
-    @apply w-full bg-white/10 rounded-full h-1.5 overflow-hidden;
+    @apply w-full bg-neutral-800 rounded-full h-1.5 overflow-hidden;
   }
 
   .progress-bar-fill {
-    @apply bg-gradient-to-r from-blue-500 to-cyan-500 h-full rounded-full transition-all duration-500;
+    @apply bg-blue-600 h-full rounded-full transition-all duration-500;
   }
 
   /* Quiz Set Row */
   .quiz-set-row {
-    @apply bg-white/5 rounded-lg border border-white/10 p-4 flex items-center justify-between hover:border-white/20 transition-all cursor-pointer group backdrop-blur-sm shadow-none;
+    @apply bg-neutral-900 rounded-lg border border-neutral-800 p-4 flex items-center justify-between hover:border-neutral-700 transition-colors cursor-pointer group;
   }
 }

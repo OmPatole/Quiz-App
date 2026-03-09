@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle2, XCircle, Award, Home, TrendingUp, Flame, ChevronDown, RotateCcw, BookOpen, User, ArrowDown } from 'lucide-react';
+import { CheckCircle2, XCircle, Award, Home, TrendingUp, Flame, ChevronDown, RotateCcw, BookOpen, User, ArrowDown, Trophy } from 'lucide-react';
 import Logo from '../components/common/Logo';
+import WeeklyQuizLeaderboard from '../components/common/WeeklyQuizLeaderboard';
 
 const QuizResult = () => {
     const [showNavMenu, setShowNavMenu] = useState(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const result = location.state?.result;
@@ -42,7 +44,7 @@ const QuizResult = () => {
     return (
         <div className="min-h-screen bg-neutral-950 text-white font-sans overflow-x-hidden p-4">
             {/* Minimal Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-xl">
+            <header className="fixed top-0 left-0 right-0 z-50 border-b border-neutral-800 bg-neutral-950">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <Logo />
                     <button
@@ -195,7 +197,18 @@ const QuizResult = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-center mb-12">
+                <div className="flex flex-col items-center gap-4 mb-12">
+                    {/* Leaderboard CTA for weekly quizzes */}
+                    {result.quizType === 'weekly' && (
+                        <button
+                            onClick={() => setShowLeaderboard(true)}
+                            className="flex items-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl transition-all shadow-lg shadow-yellow-900/20 hover:scale-105"
+                        >
+                            <Trophy className="w-5 h-5" />
+                            View Leaderboard
+                        </button>
+                    )}
+
                     <div className="relative inline-flex rounded-md shadow-sm">
                         <button
                             onClick={() => navigate('/student')}
@@ -243,6 +256,15 @@ const QuizResult = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Leaderboard Modal */}
+                {showLeaderboard && result.quizType === 'weekly' && (
+                    <WeeklyQuizLeaderboard
+                        quizId={result.quizId}
+                        isModal={true}
+                        onClose={() => setShowLeaderboard(false)}
+                    />
+                )}
             </div>
 
             {/* Scroll to Bottom Button */}

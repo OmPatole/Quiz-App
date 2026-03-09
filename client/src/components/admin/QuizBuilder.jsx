@@ -5,6 +5,7 @@ import api from '../../api/axios';
 const QuizBuilder = ({ onCancel, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [chapters, setChapters] = useState([]);
 
     const [quizData, setQuizData] = useState({
         title: '',
@@ -22,6 +23,10 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
             correctIndices: []
         }]
     });
+
+    useEffect(() => {
+        api.get('/admin/chapters').then(res => setChapters(res.data)).catch(() => {});
+    }, []);
 
     // Question Bank State
     const [showQuestionBank, setShowQuestionBank] = useState(false);
@@ -260,6 +265,10 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
 
         // Validation & Formatting
         try {
+            if (!quizData.chapter) {
+                throw new Error('Please select a chapter for this quiz.');
+            }
+
             const formattedQuestions = quizData.questions.map(q => {
                 const correctIndices = q.options
                     .map((opt, i) => opt.isCorrect ? i : -1)
@@ -319,6 +328,21 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                         <textarea name="description" value={quizData.description} onChange={handleBasicChange} className="input-field" rows="2" />
                     </div>
                     <div>
+                        <label className="block text-sm font-medium mb-1">Chapter <span className="text-red-500">*</span></label>
+                        <select
+                            name="chapter"
+                            value={quizData.chapter}
+                            onChange={handleBasicChange}
+                            className="input-field bg-white dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 text-gray-900 dark:text-white [color-scheme:dark]"
+                            required
+                        >
+                            <option value="" className="bg-white dark:bg-neutral-900 text-gray-900 dark:text-white">-- Select a chapter --</option>
+                            {chapters.map(ch => (
+                                <option key={ch._id} value={ch._id} className="bg-white dark:bg-neutral-900 text-gray-900 dark:text-white">{ch.title}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
                         <label className="block text-sm font-medium mb-1">Type</label>
                         <select
                             name="quizType"
@@ -350,6 +374,22 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
 
                 {/* Questions */}
                 <div className="space-y-4">
+                    {/* Action buttons — always visible at the top */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <button onClick={addQuestion} className="py-3 border-2 border-dashed border-neutral-600 rounded-lg text-neutral-400 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-500/5 transition-colors flex items-center justify-center gap-2 font-medium text-sm">
+                            <Plus className="w-4 h-4" />
+                            Add New Question
+                        </button>
+                        <button onClick={openQuestionBank} className="py-3 border-2 border-dashed border-neutral-600 rounded-lg text-neutral-400 hover:border-purple-500 hover:text-purple-500 hover:bg-purple-500/5 transition-colors flex items-center justify-center gap-2 font-medium text-sm">
+                            <Database className="w-4 h-4" />
+                            Import from Bank
+                        </button>
+                        <button onClick={openQuizSelector} className="py-3 border-2 border-dashed border-neutral-600 rounded-lg text-neutral-400 hover:border-green-500 hover:text-green-500 hover:bg-green-500/5 transition-colors flex items-center justify-center gap-2 font-medium text-sm">
+                            <List className="w-4 h-4" />
+                            Select from Quizzes
+                        </button>
+                    </div>
+
                     {quizData.questions.map((q, qIdx) => (
                         <div key={qIdx} className="card relative transition-all border border-gray-200 dark:border-neutral-700">
                             <div className="absolute top-4 right-4">
@@ -386,7 +426,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                                     <div key={oIdx} className="flex items-center gap-2">
                                         <button
                                             onClick={() => toggleCorrectOption(qIdx, oIdx)}
-                                            className={`w-6 h-6 flex items-center justify-center rounded-full border ${opt.isCorrect ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-neutral-600 text-transparent hover:border-gray-400 dark:hover:border-neutral-500'}`}
+                                            className={`w-6 h-6 flex items-center justify-center rounded-full border ${opt.isCorrect ? 'bg-green-500 border-green-500 text-white' : 'border-neutral-600 text-transparent hover:border-neutral-500'}`}
                                             title={opt.isCorrect ? "Correct Answer" : "Mark as Correct"}
                                         >
                                             <CheckCircle2 className="w-4 h-4" />
@@ -414,21 +454,6 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                             </div>
                         </div>
                     ))}
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <button onClick={addQuestion} className="py-4 border-2 border-dashed border-gray-300 dark:border-neutral-600 rounded-xl text-gray-500 dark:text-neutral-400 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-500 transition-colors flex flex-col items-center gap-2">
-                            <Plus className="w-6 h-6" />
-                            <span className="font-medium">Add New Question</span>
-                        </button>
-                        <button onClick={openQuestionBank} className="py-4 border-2 border-dashed border-gray-300 dark:border-neutral-600 rounded-xl text-gray-500 dark:text-neutral-400 hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-500 transition-colors flex flex-col items-center gap-2">
-                            <Database className="w-6 h-6" />
-                            <span className="font-medium">Import from Bank</span>
-                        </button>
-                        <button onClick={openQuizSelector} className="py-4 border-2 border-dashed border-gray-300 dark:border-neutral-600 rounded-xl text-gray-500 dark:text-neutral-400 hover:border-green-500 hover:text-green-600 dark:hover:text-green-500 transition-colors flex flex-col items-center gap-2">
-                            <List className="w-6 h-6" />
-                            <span className="font-medium">Select from Quizzes</span>
-                        </button>
-                    </div>
                 </div>
 
                 {/* Question Bank Modal */}

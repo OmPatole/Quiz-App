@@ -6,24 +6,18 @@ const PrivacyPolicy = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-black font-sans text-white relative overflow-hidden">
-            {/* Blue-themed Background Effects */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-400/5 rounded-full blur-3xl"></div>
-            </div>
+        <div className="min-h-screen bg-neutral-950 font-sans text-white">
 
-            <nav className="border-b border-blue-500/20 bg-black/80 backdrop-blur-md sticky top-0 z-50">
+            <nav className="border-b border-neutral-800 bg-neutral-950 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                     <Logo />
                 </div>
             </nav>
 
-            <main className="max-w-3xl mx-auto px-4 py-20 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
-                <div className="mb-12 border-b border-blue-500/20 pb-8">
+            <main className="max-w-3xl mx-auto px-4 py-20 relative z-10">
+                <div className="mb-12 border-b border-neutral-800 pb-8">
                     <div className="flex items-center gap-4 mb-6">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/30">
+                        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center">
                             <Shield className="w-8 h-8 text-white" />
                         </div>
                         <div>
@@ -37,7 +31,7 @@ const PrivacyPolicy = () => {
                 </div>
 
                 <div className="space-y-12 text-gray-400 leading-relaxed text-lg">
-                    <section className="bg-gradient-to-br from-blue-500/5 to-transparent border border-blue-500/20 rounded-2xl p-8 hover:border-blue-500/30 transition-all">
+                    <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8 hover:border-neutral-700 transition-colors">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
                                 <Database className="w-5 h-5 text-blue-400" />
@@ -54,7 +48,7 @@ const PrivacyPolicy = () => {
                         </ul>
                     </section>
 
-                    <section className="bg-gradient-to-br from-blue-500/5 to-transparent border border-blue-500/20 rounded-2xl p-8 hover:border-blue-500/30 transition-all">
+                    <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8 hover:border-neutral-700 transition-colors">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
                                 <Eye className="w-5 h-5 text-blue-400" />
@@ -72,7 +66,7 @@ const PrivacyPolicy = () => {
                         </ul>
                     </section>
 
-                    <section className="bg-gradient-to-br from-blue-500/5 to-transparent border border-blue-500/20 rounded-2xl p-8 hover:border-blue-500/30 transition-all">
+                    <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8 hover:border-neutral-700 transition-colors">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
                                 <Shield className="w-5 h-5 text-blue-400" />
@@ -88,7 +82,7 @@ const PrivacyPolicy = () => {
                         </ul>
                     </section>
 
-                    <section className="bg-gradient-to-br from-blue-500/5 to-transparent border border-blue-500/20 rounded-2xl p-8 hover:border-blue-500/30 transition-all">
+                    <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8 hover:border-neutral-700 transition-colors">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
                                 <Lock className="w-5 h-5 text-blue-400" />
@@ -100,7 +94,7 @@ const PrivacyPolicy = () => {
                         </p>
                     </section>
 
-                    <section className="bg-gradient-to-br from-blue-500/5 to-transparent border border-blue-500/20 rounded-2xl p-8 hover:border-blue-500/30 transition-all">
+                    <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8 hover:border-neutral-700 transition-colors">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
                                 <Mail className="w-5 h-5 text-blue-400" />
@@ -114,7 +108,7 @@ const PrivacyPolicy = () => {
                 </div>
             </main>
 
-            <footer className="border-t border-blue-500/20 bg-black py-12 mt-12 relative z-10">
+            <footer className="border-t border-neutral-800 bg-neutral-950 py-12 mt-12">
                 <div className="max-w-7xl mx-auto px-4 text-center">
                     <p className="text-gray-500 text-sm">
                         &copy; {new Date().getFullYear()} Aptitude Portal. All rights reserved.

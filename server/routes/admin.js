@@ -36,66 +36,87 @@ router.post('/upload-students', auth, roleAuth('Admin'), upload.single('file'), 
         const students = [];
         const errors = [];
 
+        // Valid enum values that EXACTLY match the User model
+        const VALID_ACADEMIC_YEARS = ['First Year', 'Second Year', 'Third Year', 'Last Year', 'Graduated'];
+        const VALID_BRANCHES = ['CST', 'E&TC', 'Mechanical', 'Food', 'Chemical'];
+
         // Parse CSV file
         fs.createReadStream(req.file.path)
             .pipe(csv())
             .on('data', (row) => {
                 // Expecting columns: Name, PRN, DOB, Academic Year, Branch, Batch Year
-                const name = row.Name || row.name;
-                const prn = row.PRN || row.prn;
-                const dob = row.DOB || row.dob; // Expecting DD-MM-YYYY
+                const name = (row.Name || row.name || '').trim();
+                const prn = (row.PRN || row.prn || '').trim();
+                const dob = (row.DOB || row.dob || '').trim();
 
-                if (name && prn && dob) {
-                    const trimmedName = name.trim();
-                    const trimmedPrn = prn.trim();
-                    const trimmedDob = dob.trim();
-
-                    // Generate Password: Initials + @ + DOB (DDMMYYYY)
-                    // 1. Initials
-                    const nameParts = trimmedName.split(' ').filter(part => part.length > 0);
-                    let initials = '';
-                    if (nameParts.length >= 2) {
-                        initials = (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
-                    } else if (nameParts.length === 1) {
-                        initials = nameParts[0][0].toUpperCase();
-                    } else {
-                        initials = 'XX'; // Fallback
-                    }
-
-                    // 2. Format DOB (Remove separators)
-                    const cleanDob = trimmedDob.replace(/[-/]/g, '');
-
-                    const generatedPassword = `${initials}@${cleanDob}`;
-
-                    students.push({
-                        name: trimmedName,
-                        prn: trimmedPrn,
-                        password: generatedPassword,
-                        academicYear: (row['Academic Year'] || row.academicYear || '').trim(),
-                        branch: (row.Branch || row.branch || '').trim(),
-                        batchYear: (row['Batch Year'] || row.batchYear || '').trim(),
-                        role: 'Student'
-                    });
-                } else {
-                    errors.push(`Invalid row (Missing Name, PRN, or DOB): ${JSON.stringify(row)}`);
+                if (!name || !prn || !dob) {
+                    errors.push(`Row skipped (Missing Name, PRN, or DOB): ${JSON.stringify(row)}`);
+                    return;
                 }
+
+                // --- Password Generation: Initials + @ + DOB digits ---
+                const nameParts = name.split(' ').filter(p => p.length > 0);
+                let initials = 'XX';
+                if (nameParts.length >= 2) {
+                    initials = (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+                } else if (nameParts.length === 1) {
+                    initials = nameParts[0][0].toUpperCase();
+                }
+                // Strip all non-digits so both DD-MM-YYYY and YYYY-MM-DD are handled
+                const cleanDob = dob.replace(/\D/g, '');
+                const generatedPassword = `${initials}@${cleanDob}`;
+
+                // --- Validate & normalise enum fields ---
+                const rawAcademicYear = (row['Academic Year'] || row.academicYear || '').trim();
+                const rawBranch = (row.Branch || row.branch || '').trim();
+                const rawBatchYear = (row['Batch Year'] || row.batchYear || '').trim();
+
+                const academicYear = VALID_ACADEMIC_YEARS.includes(rawAcademicYear) ? rawAcademicYear : undefined;
+                const branch = VALID_BRANCHES.includes(rawBranch) ? rawBranch : undefined;
+
+                if (rawAcademicYear && !academicYear) {
+                    errors.push(`Warning – PRN ${prn}: Academic Year "${rawAcademicYear}" is not a valid value. Allowed: ${VALID_ACADEMIC_YEARS.join(', ')}. Field left blank.`);
+                }
+                if (rawBranch && !branch) {
+                    errors.push(`Warning – PRN ${prn}: Branch "${rawBranch}" is not a valid value. Allowed: ${VALID_BRANCHES.join(', ')}. Field left blank.`);
+                }
+
+                students.push({
+                    name,
+                    prn,
+                    password: generatedPassword,
+                    academicYear,   // undefined when invalid → Mongoose skips the field
+                    branch,         // undefined when invalid → Mongoose skips the field
+                    batchYear: rawBatchYear || undefined,
+                    role: 'Student'
+                });
             })
             .on('end', async () => {
                 try {
-                    // Fetch all existing PRNs to avoid duplicates efficiently
+                    if (students.length === 0) {
+                        try { fs.unlinkSync(req.file.path); } catch (_) { }
+                        return res.status(400).json({
+                            message: 'No valid rows found in CSV',
+                            created: 0,
+                            errors: errors.length,
+                            details: { createdStudents: [], errors }
+                        });
+                    }
+
+                    // Fetch existing PRNs to detect duplicates
                     const existingStudents = await User.find({ prn: { $in: students.map(s => s.prn) } }).select('prn');
                     const existingPrns = new Set(existingStudents.map(s => s.prn));
 
                     const studentsToCreate = [];
                     students.forEach(s => {
                         if (existingPrns.has(s.prn)) {
-                            errors.push(`Student with PRN ${s.prn} already exists`);
+                            errors.push(`Skipped – PRN ${s.prn} (${s.name}) already exists in the database`);
                         } else {
                             studentsToCreate.push(s);
                         }
                     });
 
-                    // Bulk create students
+                    // Bulk create
                     let createdCount = 0;
                     if (studentsToCreate.length > 0) {
                         try {
@@ -106,33 +127,49 @@ router.post('/upload-students', auth, roleAuth('Admin'), upload.single('file'), 
                             const results = await User.insertMany(studentsToCreate, { ordered: false });
                             createdCount = results.length;
                         } catch (err) {
-                            console.error('Insert Error:', err);
-                            errors.push('Database insertion error.');
+                            // BulkWriteError: some docs may have been inserted, others failed
+                            if (err.name === 'MongoBulkWriteError' || err.writeErrors) {
+                                createdCount = err.result?.nInserted || 0;
+                                (err.writeErrors || []).forEach(we => {
+                                    const doc = studentsToCreate[we.index];
+                                    errors.push(`DB Error – PRN ${doc?.prn || 'unknown'}: ${we.errmsg || we.err?.errmsg || 'Write error'}`);
+                                });
+                            } else {
+                                console.error('Insert Error:', err);
+                                errors.push(`Database error: ${err.message}`);
+                            }
                         }
                     }
 
-                    // Delete uploaded file
-                    fs.unlinkSync(req.file.path);
+                    // Clean up temp file
+                    try { fs.unlinkSync(req.file.path); } catch (_) { }
 
                     res.json({
                         message: 'Student upload completed',
                         created: createdCount,
                         errors: errors.length,
                         details: {
-                            createdStudents: studentsToCreate.map(s => ({ name: s.name, prn: s.prn })),
+                            createdStudents: studentsToCreate.slice(0, createdCount).map(s => ({ name: s.name, prn: s.prn })),
                             errors
                         }
                     });
                 } catch (error) {
                     console.error(error);
+                    try { fs.unlinkSync(req.file.path); } catch (_) { }
                     res.status(500).json({ message: 'Error processing students' });
                 }
+            })
+            .on('error', (err) => {
+                console.error('CSV parse error:', err);
+                try { fs.unlinkSync(req.file.path); } catch (_) { }
+                res.status(400).json({ message: 'Failed to parse CSV file: ' + err.message });
             });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 // @route   GET /api/admin/students
 // @desc    Get all students with filters
