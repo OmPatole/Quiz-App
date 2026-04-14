@@ -12,6 +12,29 @@ const materialRoutes = require('./routes/material');
 
 const app = express();
 
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow non-browser clients (e.g., curl, mobile apps without Origin header)
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 // Connect to MongoDB
 connectDB();
 
@@ -27,10 +50,7 @@ setTimeout(() => {
 }, 1000);
 
 // Middleware
-app.use(cors({
-    origin: '*', // Allow mobile devices to connect
-    credentials: true
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
