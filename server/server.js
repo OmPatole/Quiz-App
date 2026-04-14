@@ -24,11 +24,20 @@ const corsOptions = {
             return callback(null, true);
         }
 
+        // Always allow local development origins.
+        if (
+            origin.startsWith('http://localhost') ||
+            origin.startsWith('http://127.0.0.1')
+        ) {
+            return callback(null, true);
+        }
+
         if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
 
-        return callback(new Error(`CORS blocked for origin: ${origin}`));
+        console.warn(`CORS blocked for origin: ${origin}`);
+        return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

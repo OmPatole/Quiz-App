@@ -13,19 +13,9 @@ const getApiUrl = () => {
         return envUrl;
     }
 
-    // Auto-detect based on current hostname
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    const port = 5000; // Backend port
-
-    // If accessing via localhost, use localhost for API
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return `http://localhost:${port}/api`;
-    }
-
-    // If accessing via network IP, use the same IP for API
-    // This works for any IP address (192.168.x.x, 172.16.x.x, 10.x.x.x, etc.)
-    return `${protocol}//${hostname}:${port}/api`;
+    // Default to same-origin API path to avoid CORS issues.
+    // In Vite dev, this works with server.proxy. In production, use reverse proxy (/api -> backend).
+    return '/api';
 };
 
 const API_URL = getApiUrl();
@@ -54,11 +44,12 @@ api.interceptors.request.use(
     }
 );
 
-// Handle response errors with intelligent fallback
+// Handle response errors with controlled fallback
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
+        const isDev = import.meta.env.DEV;
 
         // Prevent infinite retry loops
         if (originalRequest._retry) {
@@ -71,8 +62,8 @@ api.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        // If network error or timeout, try fallback URL
-        if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || !error.response) {
+        // If network error or timeout, try fallback URL only in development.
+        if ((error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || !error.response) && isDev) {
             originalRequest._retry = true;
 
             const currentUrl = api.defaults.baseURL;
@@ -97,6 +88,10 @@ api.interceptors.response.use(
 
             // Retry the request with new URL
             return api.request(originalRequest);
+        }
+
+        if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || !error.response) {
+            console.log(`⚠️ Connection failed to ${api.defaults.baseURL}`);
         }
 
         // Handle 401 Unauthorized
