@@ -10,6 +10,7 @@ ExecStart=/usr/bin/node /home/om/Documents/Projects/Quiz-App/server/server.js
 Restart=on-failure
 RestartSec=10
 Environment="NODE_ENV=production"
+EnvironmentFile=/home/om/Documents/Projects/Quiz-App/server/.env
 StandardOutput=journal
 StandardError=journal
 
