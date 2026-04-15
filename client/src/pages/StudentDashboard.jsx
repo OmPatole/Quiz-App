@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, BookOpen, Clock, Award, Library, Menu, X, User, ArrowRight, Play, FileText, CheckCircle2, Flame, Calendar, Search, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
+import api, { buildServerUrl } from '../api/axios';
 import StudentLibrary from './StudentLibrary';
 import WeeklyQuizzes from './WeeklyQuizzes';
 import StudentProfile from '../components/StudentProfile';
@@ -330,7 +330,7 @@ const StudentDashboard = () => {
                                             <h4 className="font-bold text-white mb-1 truncate">{mat.title}</h4>
                                             <p className="text-xs text-neutral-500 mb-3">{mat.category}</p>
                                             <a
-                                                href={`http://localhost:5000/${mat.filePath}`}
+                                                href={buildServerUrl(mat.filePath)}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="text-xs font-bold text-blue-400 group-hover:underline"

@@ -71,10 +71,17 @@ export const AuthProvider = ({ children }) => {
 
             return { success: true, user: userData };
         } catch (error) {
-            console.error("Login error:", error);
+            console.error('Login error:', error?.response?.status || error?.message || 'Unknown error');
+
+            const status = error?.response?.status;
+            const fallbackMessage =
+                status === 502 || status === 503 || status === 504
+                    ? 'Server is temporarily unavailable. Please try again in a moment.'
+                    : error.response?.data?.message || 'Login failed';
+
             return {
                 success: false,
-                message: error.response?.data?.message || 'Login failed'
+                message: fallbackMessage
             };
         }
     };

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
+import api from '../api/axios';
 import Logo from '../components/common/Logo';
 
 const ForgotPassword = () => {
@@ -16,23 +17,10 @@ const ForgotPassword = () => {
         setError('');
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/session/forgot-password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setSuccess(true);
-            } else {
-                setError(data.message || 'Something went wrong');
-            }
+            await api.post('/session/forgot-password', { email });
+            setSuccess(true);
         } catch (err) {
-            setError('Failed to connect to server');
+            setError(err.response?.data?.message || 'Failed to connect to server');
         } finally {
             setLoading(false);
         }

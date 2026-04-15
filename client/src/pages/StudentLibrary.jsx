@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Folder, FileText, Download, ArrowLeft, ExternalLink, Link as LinkIcon } from 'lucide-react';
-import api from '../api/axios';
+import api, { buildServerUrl } from '../api/axios';
 
 const StudentLibrary = () => {
     const [folders, setFolders] = useState([]);
@@ -64,7 +64,7 @@ const StudentLibrary = () => {
                                     </div>
                                 </div>
                                 <a
-                                    href={m.type === 'link' ? m.linkUrl : `http://localhost:5000${m.fileUrl}`}
+                                    href={m.type === 'link' ? m.linkUrl : buildServerUrl(m.fileUrl)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="p-2 bg-neutral-800 hover:bg-blue-600 hover:text-white text-white rounded-lg transition-all"

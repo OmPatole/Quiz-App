@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Folder, FileText, Upload, Plus, ArrowLeft, Download, Trash2, ExternalLink, Link as LinkIcon, AlertTriangle } from 'lucide-react';
-import api from '../../api/axios';
+import api, { buildServerUrl } from '../../api/axios';
 import { useToast } from '../../context/ToastContext';
 import ConfirmationModal from '../common/ConfirmationModal';
 import InputModal from '../common/InputModal';
@@ -262,7 +262,7 @@ const MaterialsManager = () => {
                                             </a>
                                         ) : (
                                             <a
-                                                href={`http://localhost:5000${m.fileUrl}`}
+                                                href={buildServerUrl(m.fileUrl)}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="px-4 py-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-neutral-700 text-gray-900 dark:text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"

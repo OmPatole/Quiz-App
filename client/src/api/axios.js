@@ -1,20 +1,52 @@
 import axios from 'axios';
 
+const normalizeApiUrl = (value) => {
+    const trimmed = value.trim().replace(/\/+$/, '');
+
+    if (!trimmed || trimmed === '/api') {
+        return '/api';
+    }
+
+    if (trimmed.startsWith('/')) {
+        return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+    }
+
+    try {
+        const parsed = new URL(trimmed);
+        const pathname = parsed.pathname.replace(/\/+$/, '');
+
+        if (!pathname || pathname === '/') {
+            return `${parsed.origin}/api`;
+        }
+
+        return pathname.endsWith('/api')
+            ? `${parsed.origin}${pathname}`
+            : `${parsed.origin}${pathname}/api`;
+    } catch {
+        return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+    }
+};
+
 // Automatically detect the API URL based on the frontend's hostname
 const getApiUrl = () => {
     const envUrl = import.meta.env.VITE_API_URL;
 
-    // If env URL is explicitly set and not empty, use it
+    // If env URL is explicitly set and not empty, use it.
+    // Accept either an API origin or an /api base path and normalize it.
     if (envUrl && envUrl.trim()) {
-        // Support multiple URLs (comma-separated)
         if (envUrl.includes(',')) {
-            return envUrl.split(',')[0].trim();
+            return normalizeApiUrl(envUrl.split(',')[0]);
         }
-        return envUrl;
+
+        return normalizeApiUrl(envUrl);
     }
 
     // Default to same-origin API path to avoid CORS issues.
     // In Vite dev, this works with server.proxy. In production, use reverse proxy (/api -> backend).
+    if (typeof window !== 'undefined' && window.location?.origin) {
+        return `${window.location.origin}/api`;
+    }
+
     return '/api';
 };
 
@@ -132,6 +164,16 @@ export const switchApiUrl = (url) => {
 // Export function to get current API URL
 export const getCurrentApiUrl = () => {
     return api.defaults.baseURL;
+};
+
+export const getServerOrigin = () => {
+    const apiUrl = getCurrentApiUrl().replace(/\/+$/, '');
+    return apiUrl.replace(/\/api$/, '');
+};
+
+export const buildServerUrl = (path) => {
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${getServerOrigin()}${normalizedPath}`;
 };
 
 // Export function to refresh/re-detect API URL
