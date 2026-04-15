@@ -1,0 +1,17 @@
+[Unit]
+Description=Quiz App Backend Service
+After=network.target mongodb.service
+
+[Service]
+Type=simple
+User=om
+WorkingDirectory=/home/om/Documents/Projects/Quiz-App/server
+ExecStart=/usr/bin/node /home/om/Documents/Projects/Quiz-App/server/server.js
+Restart=on-failure
+RestartSec=10
+Environment="NODE_ENV=production"
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
