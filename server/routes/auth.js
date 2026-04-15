@@ -41,6 +41,11 @@ router.post('/signin', async (req, res) => {
         // Set expiration based on role (Admin: 2h, Student: 30d)
         const expiresIn = user.role === 'Admin' ? '2h' : '30d';
 
+        if (!process.env.JWT_SECRET) {
+            console.error('JWT_SECRET is not configured. Refusing signin request.');
+            return res.status(500).json({ message: 'Server authentication is not configured' });
+        }
+
         // Sign token
         const token = jwt.sign(payload, process.env.JWT_SECRET, {
             expiresIn

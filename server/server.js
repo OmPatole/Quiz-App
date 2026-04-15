@@ -1,5 +1,18 @@
+const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+const dotenv = require('dotenv');
+
+const envCandidates = [
+    path.join(__dirname, '.env'),
+    path.join(__dirname, '..', '.env')
+];
+
+for (const envPath of envCandidates) {
+    if (fs.existsSync(envPath)) {
+        dotenv.config({ path: envPath });
+        break;
+    }
+}
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
@@ -12,6 +25,15 @@ const quizRoutes = require('./routes/quiz');
 const materialRoutes = require('./routes/material');
 
 const app = express();
+
+const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI'];
+const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+    console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+    console.error('Set them in server/.env (or project root .env) and restart the service.');
+    process.exit(1);
+}
 
 const allowedOrigins = (process.env.CORS_ORIGINS || '')
     .split(',')
