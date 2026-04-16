@@ -22,12 +22,16 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage });
+const uploadCsv = multer({ storage });
+const uploadJson = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }
+});
 
 // @route   POST /api/admin/upload-students
 // @desc    Upload CSV file and create student accounts
 // @access  Admin only
-router.post('/upload-students', auth, roleAuth('Admin'), upload.single('file'), async (req, res) => {
+router.post('/upload-students', auth, roleAuth('Admin'), uploadCsv.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'Please upload a CSV file' });
@@ -221,7 +225,7 @@ router.post('/create-chapter', auth, roleAuth('Admin'), async (req, res) => {
 // @route   POST /api/admin/upload-quiz-json
 // @desc    Upload JSON file containing quizzes for a chapter
 // @access  Admin only
-router.post('/upload-quiz-json', auth, roleAuth('Admin'), upload.single('file'), async (req, res) => {
+router.post('/upload-quiz-json', auth, roleAuth('Admin'), uploadJson.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'Please upload a JSON file' });
@@ -239,8 +243,8 @@ router.post('/upload-quiz-json', auth, roleAuth('Admin'), upload.single('file'),
             return res.status(404).json({ message: 'Chapter not found' });
         }
 
-        // Read and parse JSON file
-        const fileContent = fs.readFileSync(req.file.path, 'utf8');
+        // Read and parse JSON from in-memory upload
+        const fileContent = req.file.buffer.toString('utf8');
         const quizData = JSON.parse(fileContent);
 
         if (!Array.isArray(quizData)) {
@@ -261,9 +265,6 @@ router.post('/upload-quiz-json', auth, roleAuth('Admin'), upload.single('file'),
         await Chapter.findByIdAndUpdate(chapterId, {
             $push: { quizzes: { $each: createdQuizzes } }
         });
-
-        // Delete uploaded file
-        fs.unlinkSync(req.file.path);
 
         res.status(201).json({
             message: 'Quizzes uploaded successfully',

@@ -353,8 +353,8 @@ const AdminAnalytics = () => {
                                 30-Day Activity Trend
                             </h3>
                         </div>
-                        <div className="h-[300px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="h-[300px] w-full min-w-0">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
                                 <LineChart data={data.activityTrends}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#525252" vertical={false} />
                                     <XAxis
@@ -397,8 +397,8 @@ const AdminAnalytics = () => {
                                 Category Performance (Avg %)
                             </h3>
                         </div>
-                        <div className="h-[300px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="h-[300px] w-full min-w-0">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
                                 <BarChart data={data.categoryPerformance} layout="vertical">
                                     <CartesianGrid strokeDasharray="3 3" stroke="#525252" horizontal={true} vertical={false} />
                                     <XAxis type="number" stroke="#737373" hide />
@@ -432,8 +432,8 @@ const AdminAnalytics = () => {
                                 Pass / Fail Ratio
                             </h3>
                         </div>
-                        <div className="h-[300px] w-full flex items-center justify-center">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="h-[300px] w-full min-w-0 flex items-center justify-center">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
                                 <PieChart>
                                     <Pie
                                         data={data.passFailRatio}
