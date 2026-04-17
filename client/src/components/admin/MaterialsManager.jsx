@@ -148,7 +148,7 @@ const MaterialsManager = () => {
                         <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Add Material to "{currentFolder}"</h3>
                         <form onSubmit={handleUpload} className="space-y-4">
                             {/* Type Toggle */}
-                            <div className="flex bg-gray-100 dark:bg-neutral-800 p-1 rounded-lg w-max inline-flex mb-2">
+                            <div className="inline-flex bg-gray-100 dark:bg-neutral-800 p-1 rounded-lg w-max mb-2">
                                 <button
                                     type="button"
                                     onClick={() => setMaterialType('pdf')}
@@ -237,7 +237,7 @@ const MaterialsManager = () => {
                             <p className="text-center text-gray-500 dark:text-neutral-500 py-8">No materials in this folder.</p>
                         ) : (
                             filteredMaterials.map(m => (
-                                <div key={m._id} className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-4 flex items-center justify-between hover:border-blue-500 dark:hover:border-blue-900/50 transition-colors">
+                                <div key={m._id} className="bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:border-blue-500 dark:hover:border-blue-900/50 transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className={`p-3 rounded-lg ${m.type === 'link' ? 'bg-blue-500/10 text-blue-400' : 'bg-red-500/10 text-red-500'}`}>
                                             {m.type === 'link' ? <LinkIcon className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
@@ -250,7 +250,7 @@ const MaterialsManager = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-2">
+                                    <div className="w-full sm:w-auto flex gap-2 justify-end">
                                         {m.type === 'link' ? (
                                             <a
                                                 href={m.linkUrl}

@@ -51,7 +51,7 @@ const StudentLibrary = () => {
                         <p className="col-span-full text-center text-neutral-500 py-12">No materials in this folder.</p>
                     ) : (
                         filteredMaterials.map(m => (
-                            <div key={m._id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex items-center justify-between hover:border-blue-900/50 transition-colors group">
+                            <div key={m._id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:border-blue-900/50 transition-colors group">
                                 <div className="flex items-center gap-4">
                                     <div className={`p-3 rounded-lg ${m.type === 'link' ? 'bg-blue-500/10 text-blue-400' : 'bg-red-500/10 text-red-500'}`}>
                                         {m.type === 'link' ? <LinkIcon className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
@@ -67,7 +67,7 @@ const StudentLibrary = () => {
                                     href={m.type === 'link' ? m.linkUrl : buildServerUrl(m.fileUrl)}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-2 bg-neutral-800 hover:bg-blue-600 hover:text-white text-white rounded-lg transition-all"
+                                    className="self-end sm:self-auto p-2 bg-neutral-800 hover:bg-blue-600 hover:text-white text-white rounded-lg transition-all"
                                     title={m.type === 'link' ? "Open Link" : "Download PDF"}
                                 >
                                     {m.type === 'link' ? <ExternalLink className="w-5 h-5" /> : <Download className="w-5 h-5" />}

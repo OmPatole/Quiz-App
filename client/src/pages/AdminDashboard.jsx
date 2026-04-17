@@ -93,14 +93,14 @@ const AdminDashboard = () => {
 
             {/* Desktop Tabs */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24">
-                <div className="hidden md:flex gap-2 border-b border-neutral-800">
+                <div className="hidden md:flex gap-2 border-b border-neutral-800 overflow-x-auto">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         return (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-6 py-3 font-medium transition-all ${activeTab === tab.id
+                                className={`flex items-center gap-2 px-6 py-3 font-medium whitespace-nowrap transition-all ${activeTab === tab.id
                                     ? 'text-white border-b-2 border-white'
                                     : 'text-neutral-500 hover:text-white'
                                     }`}

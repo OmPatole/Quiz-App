@@ -56,15 +56,17 @@ console.log(`🔗 API URL auto-detected: ${API_URL}`);
 
 const api = axios.create({
     baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
     timeout: 10000, // 10 second timeout
 });
 
 // Add token to requests if available
 api.interceptors.request.use(
     (config) => {
+        // Let the browser set multipart boundaries for FormData automatically.
+        if (!(config.data instanceof FormData) && !config.headers['Content-Type']) {
+            config.headers['Content-Type'] = 'application/json';
+        }
+
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -94,8 +96,9 @@ api.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        // If network error or timeout, try fallback URL only in development.
-        if ((error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || !error.response) && isDev) {
+        // If true network error occurs, try fallback URL only in development.
+        // Do not fallback on timeout (ECONNABORTED) because long-running requests may still succeed server-side.
+        if ((error.code === 'ERR_NETWORK' || !error.response) && error.code !== 'ECONNABORTED' && isDev) {
             originalRequest._retry = true;
 
             const currentUrl = api.defaults.baseURL;
@@ -122,7 +125,7 @@ api.interceptors.response.use(
             return api.request(originalRequest);
         }
 
-        if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || !error.response) {
+        if (error.code === 'ERR_NETWORK' || !error.response) {
             console.log(`⚠️ Connection failed to ${api.defaults.baseURL}`);
         }
 

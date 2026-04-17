@@ -13,16 +13,37 @@ const Quiz = require('../models/Quiz');
 const bcrypt = require('bcryptjs');
 
 // Configure multer for file uploads
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, uploadsDir);
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + '-' + file.originalname);
     }
 });
 
-const uploadCsv = multer({ storage });
+const csvFileFilter = (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const mime = (file.mimetype || '').toLowerCase();
+    const allowedMimes = ['text/csv', 'application/csv', 'application/vnd.ms-excel', 'text/plain'];
+
+    if (ext === '.csv' || allowedMimes.includes(mime)) {
+        return cb(null, true);
+    }
+
+    cb(new Error('Only CSV files are allowed'));
+};
+
+const uploadCsv = multer({
+    storage,
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: csvFileFilter
+});
 const uploadJson = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 }
@@ -31,10 +52,26 @@ const uploadJson = multer({
 // @route   POST /api/admin/upload-students
 // @desc    Upload CSV file and create student accounts
 // @access  Admin only
-router.post('/upload-students', auth, roleAuth('Admin'), uploadCsv.single('file'), async (req, res) => {
+router.post('/upload-students', auth, roleAuth('Admin'), (req, res, next) => {
+    uploadCsv.single('file')(req, res, (err) => {
+        if (!err) return next();
+
+        if (err instanceof multer.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({ message: 'CSV file is too large. Max size is 10 MB.' });
+            }
+
+            return res.status(400).json({ message: `Upload failed: ${err.message}` });
+        }
+
+        return res.status(400).json({ message: err.message || 'Invalid CSV upload request' });
+    });
+}, async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ message: 'Please upload a CSV file' });
+            return res.status(400).json({
+                message: 'Please upload a CSV file using multipart/form-data with field name "file"'
+            });
         }
 
         const students = [];
@@ -46,12 +83,14 @@ router.post('/upload-students', auth, roleAuth('Admin'), uploadCsv.single('file'
 
         // Parse CSV file
         fs.createReadStream(req.file.path)
-            .pipe(csv())
+            .pipe(csv({
+                mapHeaders: ({ header }) => (header || '').replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, '')
+            }))
             .on('data', (row) => {
                 // Expecting columns: Name, PRN, DOB, Academic Year, Branch, Batch Year
-                const name = (row.Name || row.name || '').trim();
-                const prn = (row.PRN || row.prn || '').trim();
-                const dob = (row.DOB || row.dob || '').trim();
+                const name = (row.name || '').trim();
+                const prn = (row.prn || '').trim();
+                const dob = (row.dob || '').trim();
 
                 if (!name || !prn || !dob) {
                     errors.push(`Row skipped (Missing Name, PRN, or DOB): ${JSON.stringify(row)}`);
@@ -71,9 +110,9 @@ router.post('/upload-students', auth, roleAuth('Admin'), uploadCsv.single('file'
                 const generatedPassword = `${initials}@${cleanDob}`;
 
                 // --- Validate & normalise enum fields ---
-                const rawAcademicYear = (row['Academic Year'] || row.academicYear || '').trim();
-                const rawBranch = (row.Branch || row.branch || '').trim();
-                const rawBatchYear = (row['Batch Year'] || row.batchYear || '').trim();
+                const rawAcademicYear = (row.academicyear || '').trim();
+                const rawBranch = (row.branch || '').trim();
+                const rawBatchYear = (row.batchyear || '').trim();
 
                 const academicYear = VALID_ACADEMIC_YEARS.includes(rawAcademicYear) ? rawAcademicYear : undefined;
                 const branch = VALID_BRANCHES.includes(rawBranch) ? rawBranch : undefined;

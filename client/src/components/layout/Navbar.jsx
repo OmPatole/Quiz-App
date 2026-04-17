@@ -125,7 +125,7 @@ const Navbar = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-white text-sm">{user.name}</p>
-                                <p className="text-xs text-neutral-500">{user.prn} â€¢ {user.role}</p>
+                                <p className="text-xs text-neutral-500">{user.prn} - {user.role}</p>
                             </div>
                         </div>
                     )}

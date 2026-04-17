@@ -170,7 +170,7 @@ const QuizManager = () => {
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                     Create New Chapter
                 </h2>
-                <form onSubmit={handleCreateChapter} className="flex gap-3">
+                <form onSubmit={handleCreateChapter} className="flex flex-col sm:flex-row gap-3">
                     <input
                         type="text"
                         value={newChapterName}
@@ -182,7 +182,7 @@ const QuizManager = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-blue-500/10"
+                        className="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-blue-500/10"
                     >
                         <Plus className="w-4 h-4" />
                         Create

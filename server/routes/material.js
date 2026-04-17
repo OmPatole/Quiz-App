@@ -6,10 +6,17 @@ const Material = require('../models/Material');
 const auth = require('../middleware/auth');
 const roleAuth = require('../middleware/roleAuth');
 
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+const fs = require('fs');
+
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // Storage config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, uploadsDir);
     },
     filename: (req, file, cb) => {
         cb(null, 'material-' + Date.now() + path.extname(file.originalname));
@@ -125,7 +132,8 @@ router.delete('/:id', auth, roleAuth('Admin'), async (req, res) => {
         if (material.type === 'pdf' && material.fileUrl) {
             const fs = require('fs');
             const path = require('path');
-            const filePath = path.join(__dirname, '..', material.fileUrl);
+            const normalizedFileUrl = material.fileUrl.replace(/^\//, '');
+            const filePath = path.join(__dirname, '..', normalizedFileUrl);
 
             if (fs.existsSync(filePath)) {
                 try {

@@ -25,6 +25,33 @@ const quizRoutes = require('./routes/quiz');
 const materialRoutes = require('./routes/material');
 
 const app = express();
+const uploadsDir = path.join(__dirname, 'uploads');
+
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const cleanStaleTempUploads = () => {
+    try {
+        const files = fs.readdirSync(uploadsDir);
+        const tempFilePattern = /^\d+-.*\.(csv|json)$/i;
+
+        for (const fileName of files) {
+            if (!tempFilePattern.test(fileName)) continue;
+
+            const filePath = path.join(uploadsDir, fileName);
+            try {
+                fs.unlinkSync(filePath);
+            } catch (err) {
+                console.warn(`Could not delete temp upload file ${fileName}: ${err.message}`);
+            }
+        }
+    } catch (err) {
+        console.warn(`Temp upload cleanup skipped: ${err.message}`);
+    }
+};
+
+cleanStaleTempUploads();
 
 const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI'];
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
@@ -97,7 +124,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/uploads', express.static('uploads')); // Serve uploaded files
+app.use('/uploads', express.static(uploadsDir)); // Serve uploaded files
 app.use('/api/session', sessionRoutes); // Changed from /auth to /session for Brave compatibility
 app.use('/api/admin', adminRoutes);
 app.use('/api/chapters', chapterRoutes);

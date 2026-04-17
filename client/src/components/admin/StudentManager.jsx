@@ -80,9 +80,7 @@ const StudentManager = () => {
             formData.append('file', file);
 
             const response = await api.post('/admin/upload-students', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+                timeout: 180000, // Large CSV + password hashing can take longer than default timeout
             });
 
             setResult(response.data);
@@ -93,11 +91,14 @@ const StudentManager = () => {
             }
             fetchStudents(); // Refresh list after upload
         } catch (error) {
+            const serverMessage = error.code === 'ECONNABORTED'
+                ? 'Upload is taking too long. Please wait and refresh student list after a minute.'
+                : (error.response?.data?.message || 'An error occurred');
             setResult({
                 message: 'Upload failed',
-                errors: [error.response?.data?.message || 'An error occurred'],
+                errors: [serverMessage],
             });
-            toast.error('Upload failed');
+            toast.error(serverMessage);
         } finally {
             setUploading(false);
         }
@@ -248,11 +249,11 @@ const StudentManager = () => {
                         <h2 className="text-lg font-bold text-white">Batch Lifecycle Actions</h2>
                         <p className="text-sm text-neutral-400">Manage academic year rollovers and bulk deletions.</p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap w-full md:w-auto gap-3">
                         <button
                             onClick={triggerPromoteAll}
                             disabled={processingAction}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 shadow-lg shadow-blue-500/20"
+                            className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 shadow-lg shadow-blue-500/20"
                         >
                             <Trophy className="w-4 h-4" />
                             Promote All Students
@@ -260,7 +261,7 @@ const StudentManager = () => {
                         <button
                             onClick={() => setShowBulkDeleteModal(true)}
                             disabled={processingAction}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-500 border border-red-900/50 rounded-lg font-medium transition-colors disabled:opacity-50"
+                            className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-500 border border-red-900/50 rounded-lg font-medium transition-colors disabled:opacity-50"
                         >
                             <Trash2 className="w-4 h-4" />
                             Bulk Delete
