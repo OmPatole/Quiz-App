@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Play, Clock, BookOpen, AlertCircle, FileText, CheckCircle2 } from 'lucide-react';
 import api from '../api/axios';
 import Logo from '../components/common/Logo';
+import { useToast } from '../context/ToastContext';
 
 const ChapterDetails = () => {
     const { chapterId } = useParams();
     const navigate = useNavigate();
+    const toast = useToast();
     const [chapter, setChapter] = useState(null);
     const [completedQuizIds, setCompletedQuizIds] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -58,6 +60,37 @@ const ChapterDetails = () => {
             </div>
         );
     }
+
+    const openQuiz = async (quiz, isCompleted) => {
+        const scheduledAt = quiz.scheduledAt ? new Date(quiz.scheduledAt) : null;
+        const quizEndTime = scheduledAt ? new Date(scheduledAt.getTime() + (quiz.duration || 0) * 60000) : null;
+        const isExpired = quiz.quizType === 'weekly' && quizEndTime && Date.now() > quizEndTime.getTime();
+
+        if (quiz.quizType === 'weekly' && (isCompleted || isExpired)) {
+            try {
+                const resultRes = await api.get(`/quiz/results/${quiz._id}`);
+                navigate('/student/result', {
+                    state: {
+                        result: {
+                            ...resultRes.data,
+                            quizId: quiz._id,
+                            quizType: quiz.quizType,
+                        },
+                    },
+                });
+            } catch (error) {
+                toast.error(error.response?.data?.message || 'Unable to load results.');
+            }
+            return;
+        }
+
+        if (isExpired) {
+            toast.error('This weekly quiz is closed now.');
+            return;
+        }
+
+        navigate(`/student/quiz/${quiz._id}`);
+    };
 
     return (
         <div className="min-h-screen bg-neutral-950 font-sans text-white">
@@ -120,14 +153,19 @@ const ChapterDetails = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {chapter.quizzes.map((quiz, index) => {
                             const isCompleted = completedQuizIds.includes(quiz._id);
+                            const scheduledAt = quiz.scheduledAt ? new Date(quiz.scheduledAt) : null;
+                            const quizEndTime = scheduledAt ? new Date(scheduledAt.getTime() + (quiz.duration || 0) * 60000) : null;
+                            const isExpired = quiz.quizType === 'weekly' && quizEndTime && Date.now() > quizEndTime.getTime();
                             return (
                                 <div
                                     key={quiz._id}
-                                    onClick={() => navigate(`/student/quiz/${quiz._id}`)}
+                                    onClick={() => openQuiz(quiz, isCompleted)}
                                     className={`group border rounded-2xl p-6 transition-all cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md dark:shadow-none
                                         ${isCompleted
                                             ? 'bg-green-900/10 border-green-900/50 hover:border-green-500/50'
-                                            : 'bg-neutral-900 border-neutral-800 hover:border-blue-500/50 hover:bg-gray-100 dark:hover:bg-neutral-900/80'
+                                            : isExpired
+                                                ? 'bg-neutral-900 border-neutral-800 opacity-70 hover:border-neutral-700'
+                                                : 'bg-neutral-900 border-neutral-800 hover:border-blue-500/50 hover:bg-gray-100 dark:hover:bg-neutral-900/80'
                                         }`}
                                 >
                                     <div className="flex justify-between items-start mb-4">
@@ -163,6 +201,10 @@ const ChapterDetails = () => {
                                         {isCompleted ? (
                                             <span className="flex items-center gap-1 text-green-400 font-bold">
                                                 Completed
+                                            </span>
+                                        ) : isExpired ? (
+                                            <span className="flex items-center gap-1 text-neutral-500 font-bold">
+                                                Closed
                                             </span>
                                         ) : (
                                             <span className="flex items-center gap-1 text-blue-400 font-bold group-hover:translate-x-1 transition-transform">

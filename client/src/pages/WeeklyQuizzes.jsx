@@ -3,6 +3,7 @@ import { Calendar, Clock, Play, CheckCircle2, Trophy } from 'lucide-react';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 import WeeklyQuizLeaderboard from '../components/common/WeeklyQuizLeaderboard';
+import { useToast } from '../context/ToastContext';
 
 const WeeklyQuizzes = () => {
     const [quizzes, setQuizzes] = useState([]);
@@ -10,6 +11,7 @@ const WeeklyQuizzes = () => {
     const [loading, setLoading] = useState(true);
     const [leaderboardQuizId, setLeaderboardQuizId] = useState(null);
     const navigate = useNavigate();
+    const toast = useToast();
 
     useEffect(() => {
         fetchWeeklyQuizzes();
@@ -65,6 +67,23 @@ const WeeklyQuizzes = () => {
         navigate(`/student/quiz/${quizId}`);
     };
 
+    const handleReviewResults = async (quiz) => {
+        try {
+            const res = await api.get(`/quiz/results/${quiz._id}`);
+            navigate('/student/result', {
+                state: {
+                    result: {
+                        ...res.data,
+                        quizId: quiz._id,
+                        quizType: quiz.quizType,
+                    },
+                },
+            });
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Results are not available for this quiz yet.');
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center py-20">
@@ -92,7 +111,9 @@ const WeeklyQuizzes = () => {
                     {quizzes.map((quiz) => {
                         const isCompleted = completedIds.has(quiz._id?.toString());
                         const scheduledDate = quiz.scheduledAt ? new Date(quiz.scheduledAt) : null;
+                        const quizEndTime = scheduledDate ? new Date(scheduledDate.getTime() + (quiz.duration || 0) * 60000) : null;
                         const isUpcoming = scheduledDate && scheduledDate > new Date();
+                        const isClosed = quizEndTime ? quizEndTime <= new Date() : false;
 
                         return (
                             <div
@@ -154,12 +175,14 @@ const WeeklyQuizzes = () => {
                                     </button>
 
                                     <button
-                                        onClick={() => handleStartQuiz(quiz._id)}
-                                        disabled={isUpcoming && !isCompleted}
+                                        onClick={() => (isCompleted ? handleReviewResults(quiz) : handleStartQuiz(quiz._id))}
+                                        disabled={isUpcoming || (isClosed && !isCompleted)}
                                         className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${isCompleted
                                             ? 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
                                             : isUpcoming
                                                 ? 'bg-neutral-800 text-neutral-600 cursor-not-allowed'
+                                                : isClosed
+                                                    ? 'bg-neutral-800 text-neutral-600 cursor-not-allowed'
                                                 : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20'
                                             }`}
                                     >
@@ -172,6 +195,11 @@ const WeeklyQuizzes = () => {
                                             <>
                                                 <Clock className="w-4 h-4" />
                                                 Not Yet Open
+                                            </>
+                                        ) : isClosed ? (
+                                            <>
+                                                <Clock className="w-4 h-4" />
+                                                Closed
                                             </>
                                         ) : (
                                             <>

@@ -1,96 +1,159 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, TrendingUp, BookOpen, Flame, Smartphone, Calendar } from 'lucide-react';
+import {
+    ChevronDown,
+    MessageSquareText,
+    Sparkles,
+    Trophy,
+    WandSparkles,
+    BarChart2,
+    Calendar,
+    ArrowRight,
+} from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 
 const Features = () => {
     const navigate = useNavigate();
+    const [openFaq, setOpenFaq] = useState(0);
 
     const features = [
         {
+            icon: Sparkles,
+            title: 'Interactive Presentations',
+            description: 'Turn sessions into conversations and keep your audience actively engaged from start to end.',
+        },
+        {
+            icon: WandSparkles,
+            title: 'AI Menti Creator',
+            description: 'Build polished quizzes in seconds from topics and difficulty levels using AI-powered prompts.',
+        },
+        {
+            icon: MessageSquareText,
+            title: 'Live Polls',
+            description: 'Capture live responses instantly and turn passive learners into active participants.',
+        },
+        {
             icon: Calendar,
-            title: "Mock & Weekly Tests",
-            description: "Simulate real exam environments with timed quizzes. Weekly challenges keep you consistent and exam-ready.",
-            colSpan: "md:col-span-2"
+            title: 'Quizzes',
+            description: 'Run chapter-wise and weekly quiz sessions with timers, scoring, and auto feedback.',
         },
         {
-            icon: TrendingUp,
-            title: "Instant Analytics",
-            description: "Deep dive into your performance with detailed heatmaps, accuracy graphs, and question-wise breakdowns.",
-            colSpan: "md:col-span-1"
+            icon: BarChart2,
+            title: 'Surveys',
+            description: 'Collect structured feedback and monitor trends to improve classroom outcomes.',
         },
         {
-            icon: BookOpen,
-            title: "Study Library",
-            description: "Access a curated collection of learning materials, PDFs, and previous year questions to strengthen your concepts.",
-            colSpan: "md:col-span-1"
+            icon: Trophy,
+            title: 'Word Cloud & Rankings',
+            description: 'Visualize student thinking patterns and drive motivation through healthy competition.',
+        },
+    ];
+
+    const faqItems = [
+        {
+            question: 'What is an interactive quiz?',
+            answer: 'An interactive quiz provides immediate responses and explanations so students learn while attempting questions.',
         },
         {
-            icon: Flame,
-            title: "Gamified Streak",
-            description: "Build a habit of daily learning. maintain your streak to unlock achievements and stay on top of the leaderboard.",
-            colSpan: "md:col-span-2"
+            question: 'How do quizzes help learning?',
+            answer: 'Regular low-stakes testing improves memory retention, highlights weak areas, and increases confidence over time.',
         },
         {
-            icon: Smartphone,
-            title: "Mobile Optimized",
-            description: "Learn on the go. Our responsive design ensures a seamless experience on phones, tablets, and desktops.",
-            colSpan: "md:col-span-3"
-        }
+            question: 'Can I create custom quizzes?',
+            answer: 'Yes. You can build quizzes manually or import questions from the bank and previous tests.',
+        },
+        {
+            question: 'Is scoring optional?',
+            answer: 'Yes. You can run quizzes with marks for assessments or without marks for practice-only sessions.',
+        },
+        {
+            question: 'Can quizzes be used for corporate training?',
+            answer: 'Yes. The same format works for team training, onboarding checks, and workshop engagement.',
+        },
     ];
 
     return (
-        <div className="min-h-screen bg-black font-sans text-white relative overflow-hidden flex flex-col">
+        <div className="min-h-screen bg-[#ece8e3] text-[#171a22] relative overflow-hidden flex flex-col">
             <Navbar />
 
-            {/* Features Content */}
-
-            <main className="flex-grow max-w-7xl mx-auto px-4 py-32 sm:px-6 lg:px-8">
-                {/* Hero Section */}
-                <div className="text-center mb-16 animate-fade-in">
-                    <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
-                        Tools to <span className="text-blue-400">Build Your Future.</span>
+            <main className="flex-grow max-w-7xl mx-auto px-4 py-28 sm:py-32 sm:px-6 lg:px-8">
+                <div className="text-center mb-14 animate-fade-in">
+                    <h1 className="text-5xl md:text-7xl font-extrabold mb-5 tracking-tight uppercase leading-[0.95]">
+                        More Than Just Quizzes
                     </h1>
-                    <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-                        A comprehensive suite of features designed to transform how you prepare for placements and competitive exams.
+                    <p className="text-[#51596a] text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
+                        With everything from live polls and Q&As to AI-powered quiz creation, Aptitude Portal fits into every class and workshop.
                     </p>
                 </div>
 
-                {/* Features Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
                     {features.map((feature, index) => (
-                        <div
-                            key={index}
-                            className={`${feature.colSpan} bg-neutral-900 border border-neutral-800 rounded-2xl p-8 hover:border-neutral-700 transition-colors cursor-default`}
+                        <article
+                            key={feature.title}
+                            className="rounded-3xl border border-[#d7cec3] bg-[#f8f6f2] p-8 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#c3bccb]"
+                            style={{ animation: `fadeIn 0.25s ease-out ${index * 0.05}s both` }}
                         >
-                            <div className="relative z-10 h-full flex flex-col items-start">
-                                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white mb-6">
-                                    <feature.icon className="w-6 h-6" />
-                                </div>
-
-                                <h3 className="text-2xl font-bold text-white mb-3">
-                                    {feature.title}
-                                </h3>
-
-                                <p className="text-gray-400 leading-relaxed">
-                                    {feature.description}
-                                </p>
+                            <div className="w-12 h-12 rounded-xl bg-[#ebe7ff] text-[#5f6eea] flex items-center justify-center mb-6">
+                                <feature.icon className="w-6 h-6" />
                             </div>
-                        </div>
+                            <h3 className="text-3xl font-semibold mb-3">
+                                {feature.title}
+                            </h3>
+                            <p className="text-[#51596a] leading-relaxed mb-8">
+                                {feature.description}
+                            </p>
+                            <button className="px-5 py-2 rounded-full border border-[#d7cec3] bg-[#f1ece4] text-sm font-semibold text-[#252938] hover:bg-[#e8e1d8] transition-colors">
+                                Learn more
+                            </button>
+                        </article>
                     ))}
                 </div>
 
-                {/* Footer Call to Action */}
-                <div className="text-center bg-neutral-900 border border-neutral-800 rounded-2xl p-12">
-                    <h2 className="text-3xl font-bold text-white mb-4">Ready to start your journey?</h2>
-                    <p className="text-gray-400 mb-8 max-w-xl mx-auto">
-                        Join thousands of students mastering their aptitude skills today.
+                <section className="mb-16">
+                    <div className="text-center mb-10">
+                        <h2 className="text-5xl font-extrabold uppercase tracking-tight leading-none">
+                            Questions,
+                            <span className="text-[#5f6eea]"> Meet Answers.</span>
+                        </h2>
+                        <p className="text-[#51596a] text-lg mt-4">
+                            Curiosity happens. We have answered the most frequent questions in one place.
+                        </p>
+                    </div>
+
+                    <div className="rounded-3xl overflow-hidden border border-[#d7cec3] bg-[#f7f4ef]">
+                        {faqItems.map((item, idx) => {
+                            const isOpen = openFaq === idx;
+                            return (
+                                <div key={item.question} className="border-b last:border-b-0 border-[#ddd4c9]">
+                                    <button
+                                        onClick={() => setOpenFaq(isOpen ? -1 : idx)}
+                                        className="w-full px-6 sm:px-8 py-6 flex items-center justify-between text-left hover:bg-[#f1ece4] transition-colors"
+                                    >
+                                        <span className={`text-2xl font-semibold ${isOpen ? 'text-[#5f6eea]' : 'text-[#171a22]'}`}>{item.question}</span>
+                                        <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#5f6eea]' : ''}`} />
+                                    </button>
+                                    <div className={`grid transition-all duration-200 ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                                        <div className="overflow-hidden">
+                                            <p className="px-6 sm:px-8 pb-6 text-[#5c6374] leading-relaxed">{item.answer}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+
+                <div className="text-center rounded-3xl border border-[#d7cec3] bg-[#f7f4ef] p-12">
+                    <h2 className="text-4xl font-extrabold uppercase tracking-tight mb-4">Ready to run better sessions?</h2>
+                    <p className="text-[#51596a] mb-8 max-w-2xl mx-auto text-lg">
+                        Start creating quizzes and interactive learning experiences that students actually enjoy.
                     </p>
                     <button
                         onClick={() => navigate('/login')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors inline-flex items-center gap-2"
+                        className="btn-primary px-8 py-3 rounded-full font-semibold inline-flex items-center gap-2"
                     >
-                        Get Started Now <Play className="w-4 h-4 fill-current" />
+                        Get Started Now <ArrowRight className="w-4 h-4" />
                     </button>
                 </div>
             </main>

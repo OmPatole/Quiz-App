@@ -38,7 +38,10 @@ const QuizResult = () => {
         return null;
     }
 
-    const { score, totalMarks, percentage, detailedResults } = result;
+    const quizId = result.quizId?._id || result.quizId;
+    const isWeeklyQuiz = result.quizType === 'weekly';
+    const { score, totalMarks, percentage } = result;
+    const detailedResults = Array.isArray(result.detailedResults) ? result.detailedResults : [];
     const passed = percentage >= 50;
 
     return (
@@ -131,7 +134,7 @@ const QuizResult = () => {
                         Detailed Analysis
                     </h2>
 
-                    {detailedResults.map((item, index) => (
+                    {detailedResults.length > 0 ? detailedResults.map((item, index) => (
                         <div
                             key={index}
                             className={`card bg-neutral-900 border-neutral-800 transition-all ${item.isCorrect
@@ -193,7 +196,11 @@ const QuizResult = () => {
                                 </p>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <div className="card bg-neutral-900 border-neutral-800 text-center py-10">
+                            <p className="text-neutral-400">Detailed analysis is not available for this result.</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Actions */}
@@ -229,13 +236,15 @@ const QuizResult = () => {
                             {showNavMenu && (
                                 <div className="absolute right-0 bottom-full mb-2 w-56 rounded-xl border border-neutral-800 bg-neutral-900 shadow-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
                                     <div className="p-1">
-                                        <button
-                                            onClick={() => navigate(`/student/quiz/${result.quizId}`)}
-                                            className="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white rounded-lg flex items-center gap-3 transition-colors"
-                                        >
-                                            <RotateCcw className="w-4 h-4 text-blue-500" />
-                                            Retake Quiz
-                                        </button>
+                                        {!isWeeklyQuiz && (
+                                            <button
+                                                onClick={() => navigate(`/student/quiz/${quizId}`)}
+                                                className="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white rounded-lg flex items-center gap-3 transition-colors"
+                                            >
+                                                <RotateCcw className="w-4 h-4 text-blue-500" />
+                                                Retake Quiz
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => navigate('/student/library')}
                                             className="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white rounded-lg flex items-center gap-3 transition-colors"
@@ -243,6 +252,15 @@ const QuizResult = () => {
                                             <BookOpen className="w-4 h-4 text-purple-500" />
                                             Browse Library
                                         </button>
+                                        {isWeeklyQuiz && (
+                                            <button
+                                                onClick={() => navigate('/student')}
+                                                className="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white rounded-lg flex items-center gap-3 transition-colors"
+                                            >
+                                                <Home className="w-4 h-4 text-yellow-500" />
+                                                Weekly Quizzes
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => navigate('/student?tab=profile')}
                                             className="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white rounded-lg flex items-center gap-3 transition-colors"
@@ -260,7 +278,7 @@ const QuizResult = () => {
                 {/* Leaderboard Modal */}
                 {showLeaderboard && result.quizType === 'weekly' && (
                     <WeeklyQuizLeaderboard
-                        quizId={result.quizId}
+                        quizId={quizId}
                         isModal={true}
                         onClose={() => setShowLeaderboard(false)}
                     />

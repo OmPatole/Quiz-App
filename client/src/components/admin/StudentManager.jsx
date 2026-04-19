@@ -486,17 +486,17 @@ const StudentManager = () => {
             )}
             {/* Student List */}
             <div className="card overflow-hidden">
-                <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+                <div className="overflow-auto max-h-[62vh] themed-scrollbar -mx-6 px-6 md:mx-0 md:px-0">
                     <div className="min-w-[640px]">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b border-neutral-700">
-                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">Name</th>
-                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">PRN</th>
-                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">Year</th>
-                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">Branch</th>
-                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">Batch</th>
-                                    <th className="p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap">Actions</th>
+                                    <th className="sticky top-0 z-10 p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap bg-neutral-900">Name</th>
+                                    <th className="sticky top-0 z-10 p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap bg-neutral-900">PRN</th>
+                                    <th className="sticky top-0 z-10 p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap bg-neutral-900">Year</th>
+                                    <th className="sticky top-0 z-10 p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap bg-neutral-900">Branch</th>
+                                    <th className="sticky top-0 z-10 p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap bg-neutral-900">Batch</th>
+                                    <th className="sticky top-0 z-10 p-3 text-sm font-semibold text-neutral-400 whitespace-nowrap bg-neutral-900">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>

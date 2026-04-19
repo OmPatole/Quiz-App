@@ -31,6 +31,30 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
             return res.status(404).json({ message: 'Quiz not found' });
         }
 
+        const quizObjectId = mongoose.Types.ObjectId.isValid(quizId)
+            ? new mongoose.Types.ObjectId(quizId)
+            : quizId;
+
+        const deadline = quiz.quizType === 'weekly' && quiz.scheduledAt
+            ? new Date(new Date(quiz.scheduledAt).getTime() + (quiz.duration || 0) * 60000)
+            : null;
+        const isWeeklyClosed = deadline ? Date.now() > deadline.getTime() : false;
+
+        if (quiz.quizType === 'weekly') {
+            if (isWeeklyClosed) {
+                return res.status(403).json({ message: 'This weekly quiz is closed' });
+            }
+
+            const existingWeeklyResult = await Result.findOne({
+                studentId: req.user._id,
+                quizId: quizObjectId
+            });
+
+            if (existingWeeklyResult) {
+                return res.status(409).json({ message: 'You have already submitted this weekly quiz' });
+            }
+        }
+
         // Calculate score
         let score = 0;
         let totalMarks = 0;
@@ -66,11 +90,6 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
         });
 
         // Save result - Always update if exists, create if new
-        // Ensure quizId is properly converted to ObjectId
-        const quizObjectId = mongoose.Types.ObjectId.isValid(quizId)
-            ? new mongoose.Types.ObjectId(quizId)
-            : quizId;
-
         let result = await Result.findOne({
             studentId: req.user._id,
             quizId: quizObjectId
@@ -348,6 +367,21 @@ router.get('/:id', auth, roleAuth('Student'), async (req, res) => {
 
         if (!quiz) {
             return res.status(404).json({ message: 'Quiz not found' });
+        }
+
+        if (quiz.quizType === 'weekly') {
+            const deadline = quiz.scheduledAt
+                ? new Date(new Date(quiz.scheduledAt).getTime() + (quiz.duration || 0) * 60000)
+                : null;
+            const isClosed = deadline ? Date.now() > deadline.getTime() : false;
+            const existingResult = await Result.findOne({
+                studentId: req.user._id,
+                quizId: quiz._id
+            }).select('_id');
+
+            if (existingResult || isClosed) {
+                return res.status(403).json({ message: 'This weekly quiz is no longer available' });
+            }
         }
 
         res.json(quiz);

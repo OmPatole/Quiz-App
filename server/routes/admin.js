@@ -516,6 +516,71 @@ router.get('/student-stats/:studentId', auth, async (req, res) => {
         // 6. Completed Quizzes List
         const completedQuizIds = results.map(r => r.quizId?._id);
 
+        // Batch rank is based on average score within the same batchYear cohort.
+        let batchRank = null;
+        let batchSize = 0;
+
+        if (student.batchYear) {
+            const batchStudents = await User.find({
+                role: 'Student',
+                batchYear: student.batchYear
+            }).select('_id createdAt');
+
+            batchSize = batchStudents.length;
+
+            if (batchStudents.length > 0) {
+                const batchStudentIds = batchStudents.map(entry => entry._id);
+                const batchResults = await Result.aggregate([
+                    { $match: { studentId: { $in: batchStudentIds } } },
+                    {
+                        $group: {
+                            _id: '$studentId',
+                            totalScore: { $sum: '$score' },
+                            totalMarks: { $sum: '$totalMarks' },
+                            totalTests: { $sum: 1 }
+                        }
+                    },
+                    {
+                        $project: {
+                            totalScore: 1,
+                            totalMarks: 1,
+                            totalTests: 1,
+                            avgScore: {
+                                $cond: [
+                                    { $gt: ['$totalMarks', 0] },
+                                    { $round: [{ $multiply: [{ $divide: ['$totalScore', '$totalMarks'] }, 100] }, 2] },
+                                    0
+                                ]
+                            }
+                        }
+                    }
+                ]);
+
+                const batchResultMap = new Map(batchResults.map(entry => [entry._id.toString(), entry]));
+                const rankedBatch = batchStudents
+                    .map(studentEntry => {
+                        const stats = batchResultMap.get(studentEntry._id.toString()) || {};
+
+                        return {
+                            studentId: studentEntry._id.toString(),
+                            createdAt: studentEntry.createdAt ? new Date(studentEntry.createdAt).getTime() : 0,
+                            avgScore: stats.avgScore || 0,
+                            totalTests: stats.totalTests || 0,
+                            totalScore: stats.totalScore || 0
+                        };
+                    })
+                    .sort((a, b) => {
+                        if (b.avgScore !== a.avgScore) return b.avgScore - a.avgScore;
+                        if (b.totalTests !== a.totalTests) return b.totalTests - a.totalTests;
+                        if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+                        return a.createdAt - b.createdAt;
+                    });
+
+                const myBatchEntry = rankedBatch.find(entry => entry.studentId === student._id.toString());
+                batchRank = myBatchEntry ? rankedBatch.findIndex(entry => entry.studentId === student._id.toString()) + 1 : null;
+            }
+        }
+
         // Activity Map (Last 365 days)
         const activityMap = {};
         results.forEach(r => {
@@ -540,7 +605,9 @@ router.get('/student-stats/:studentId', auth, async (req, res) => {
             stats: {
                 totalTests,
                 avgScore,
-                accuracy
+                accuracy,
+                batchRank,
+                batchSize
             },
             activityMap,
             recentActivity,
@@ -759,40 +826,13 @@ router.get('/analytics', auth, roleAuth('Admin'), async (req, res) => {
             { $match: { _id: { $ne: '' } } } // Exclude empty categories
         ]);
 
-        // 4. Pass/Fail Ratio
-        const passFailStats = await Result.aggregate([
-            { $match: { studentId: { $in: studentIds } } },
-            {
-                $project: {
-                    isPassed: { $gte: ['$score', { $multiply: ['$totalMarks', 0.4] }] } // Assuming 40% passing for now, user requested 50% split logic in prompt
-                }
-            },
-            {
-                $group: {
-                    _id: {
-                        $cond: [
-                            { $gte: ['$score', { $multiply: ['$totalMarks', 0.5] }] }, // wait, project above matches prompt
-                            'Pass',
-                            'Fail'
-                        ]
-                    }, // Let's simplify logic: User asked for >50%.
-                    // Actually let's just group by the boolean logic requested
-                    status: {
-                        $push: {
-                            $cond: [{ $gte: ['$score', { $multiply: ['$totalMarks', 0.5] }] }, 'Pass', 'Fail']
-                        }
-                    }
-                }
-            }
-        ]);
-
-        // Re-doing Pass/Fail to be cleaner
+        // 4. Pass/Fail Ratio (35% pass threshold)
         const passFailRatio = await Result.aggregate([
             { $match: { studentId: { $in: studentIds } } },
             {
                 $group: {
                     _id: {
-                        $cond: [{ $gte: ['$score', { $multiply: ['$totalMarks', 0.5] }] }, 'Pass', 'Fail']
+                        $cond: [{ $gte: ['$score', { $multiply: ['$totalMarks', 0.35] }] }, 'Pass', 'Fail']
                     },
                     count: { $sum: 1 }
                 }

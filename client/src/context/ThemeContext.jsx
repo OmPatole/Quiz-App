@@ -12,19 +12,19 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
     useEffect(() => {
-        // Force dark mode always
-        document.documentElement.classList.add('dark');
-        document.documentElement.classList.remove('light');
-        localStorage.setItem('aptitude-theme', 'dark');
+        // Force light mode to match the global website theme.
+        document.documentElement.classList.add('light');
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('aptitude-theme', 'light');
     }, []);
 
     // Provide a no-op toggleTheme for backward compatibility
     const toggleTheme = () => {
-        // Dark mode only - no toggle
+        // Light mode only - no toggle
     };
 
     return (
-        <ThemeContext.Provider value={{ theme: 'dark', toggleTheme }}>
+        <ThemeContext.Provider value={{ theme: 'light', toggleTheme }}>
             {children}
         </ThemeContext.Provider>
     );

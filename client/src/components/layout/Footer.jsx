@@ -1,63 +1,59 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 import Logo from '../common/Logo';
 
 const Footer = () => {
     return (
-        <footer className="bg-neutral-950 text-neutral-400 py-16 border-t border-white/10 font-sans">
+        <footer className="bg-[#f7f4ef] text-[#586073] py-16 border-t border-[#d8d0c6] font-sans">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-                    {/* Brand Column */}
                     <div className="space-y-4">
                         <Logo />
-                        <p className="text-sm leading-relaxed text-neutral-500">
+                        <p className="text-sm leading-relaxed text-[#61697b]">
                             Official Aptitude Enhancement Portal of the School of Engineering and Technology.
                         </p>
-                        <p className="text-xs text-neutral-600 pt-4">
-                            &copy; {new Date().getFullYear()} T&P Cell. All rights reserved.
+                        <p className="text-xs text-[#7b8395] pt-4">
+                            &copy; {new Date().getFullYear()} T&P Cell School of Engineering & Technology, Shivaji University. All rights reserved.
                         </p>
                     </div>
 
-                    {/* Quick Links */}
                     <div>
-                        <h3 className="text-white font-semibold mb-4 text-sm">Quick Links</h3>
+                        <h3 className="text-[#202534] font-semibold mb-4 text-sm uppercase tracking-wide">Quick Links</h3>
                         <ul className="space-y-3 text-sm">
-                            <li><Link to="/" className="hover:text-blue-400 transition-colors">Home</Link></li>
-                            <li><Link to="/features" className="hover:text-blue-400 transition-colors">Features</Link></li>
-                            <li><Link to="/about" className="hover:text-blue-400 transition-colors">About Us</Link></li>
+                            <li><Link to="/" className="hover:text-[#5f6eea] transition-colors">Home</Link></li>
+                            <li><Link to="/features" className="hover:text-[#5f6eea] transition-colors">Features</Link></li>
+                            <li><Link to="/about" className="hover:text-[#5f6eea] transition-colors">About Us</Link></li>
                         </ul>
                     </div>
 
-                    {/* Legal */}
                     <div>
-                        <h3 className="text-white font-semibold mb-4 text-sm">Legal</h3>
+                        <h3 className="text-[#202534] font-semibold mb-4 text-sm uppercase tracking-wide">Legal</h3>
                         <ul className="space-y-3 text-sm">
-                            <li><Link to="/terms" className="hover:text-blue-400 transition-colors">Terms of Service</Link></li>
-                            <li><Link to="/data-safety" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
-                            <li><Link to="/cookie-usage" className="hover:text-blue-400 transition-colors">Cookie Policy</Link></li>
+                            <li><Link to="/terms" className="hover:text-[#5f6eea] transition-colors">Terms of Service</Link></li>
+                            <li><Link to="/data-safety" className="hover:text-[#5f6eea] transition-colors">Privacy Policy</Link></li>
+                            <li><Link to="/cookie-usage" className="hover:text-[#5f6eea] transition-colors">Cookie Policy</Link></li>
                         </ul>
                     </div>
 
-                    {/* Contact Info */}
                     <div>
-                        <h3 className="text-white font-semibold mb-4 text-sm">Contact Us</h3>
+                        <h3 className="text-[#202534] font-semibold mb-4 text-sm uppercase tracking-wide">Contact Us</h3>
                         <ul className="space-y-3 text-sm">
                             <li className="flex items-start gap-3">
-                                <Mail className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                                <span className="text-neutral-500">tpo.tech@unishivaji.ac.in</span>
+                                <Mail className="w-4 h-4 text-[#5f6eea] flex-shrink-0 mt-0.5" />
+                                <span className="text-[#61697b]">tpo.tech@unishivaji.ac.in</span>
                             </li>
-                            
+
                             <li className="flex items-start gap-3">
-                                <MapPin className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                                <span className="text-neutral-500">School of Engineering and Technology, Shivaji University, Kolhapur</span>
+                                <MapPin className="w-4 h-4 text-[#5f6eea] flex-shrink-0 mt-0.5" />
+                                <span className="text-[#61697b]">School of Engineering and Technology, Shivaji University, Kolhapur</span>
                             </li>
                         </ul>
                     </div>
                 </div>
 
-                <div className="border-t border-white/10 mt-12 pt-8 text-center">
-                    <p className="text-sm text-neutral-600">Tool made by students for students</p>
-                    <p className="mt-2 text-neutral-700 text-xs hover:text-blue-400 transition-colors">
+                <div className="border-t border-[#ddd4c9] mt-12 pt-8 text-center">
+                    <p className="text-sm text-[#70788b]">Tool made by student for students</p>
+                    <p className="mt-2 text-xs text-[#848da0] hover:text-[#5f6eea] transition-colors">
                         <a href="https://github.com/ompatole" target="_blank" rel="noopener noreferrer">Developer</a>
                     </p>
                 </div>

@@ -29,6 +29,36 @@ const QuizTaking = () => {
                 const quizData = response.data;
                 setQuiz(quizData);
 
+                const scheduledAt = quizData.scheduledAt ? new Date(quizData.scheduledAt) : null;
+                const quizEndTime = scheduledAt ? new Date(scheduledAt.getTime() + (quizData.duration || 0) * 60000) : null;
+                const isExpired = quizData.quizType === 'weekly' && quizEndTime && Date.now() > quizEndTime.getTime();
+
+                if (quizData.quizType === 'weekly') {
+                    try {
+                        const existingResult = await api.get(`/quiz/results/${quizId}`);
+                        navigate('/student/result', {
+                            state: {
+                                result: {
+                                    ...existingResult.data,
+                                    quizId: quizData._id,
+                                    quizType: quizData.quizType,
+                                },
+                            },
+                        });
+                        return;
+                    } catch (resultError) {
+                        if (resultError.response?.status !== 404) {
+                            throw resultError;
+                        }
+                    }
+
+                    if (isExpired) {
+                        toast.error('This weekly quiz is closed now.');
+                        navigate('/student');
+                        return;
+                    }
+                }
+
                 // Fetch Progress
                 const progressRes = await api.get(`/quiz/progress/${quizId}`);
 

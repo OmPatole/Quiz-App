@@ -217,7 +217,9 @@ const StudentDashboard = () => {
                                 </div>
                                 <div>
                                     <p className="text-neutral-500 text-xs font-bold uppercase">Batch Rank</p>
-                                    <h3 className="text-2xl font-bold text-white">#--</h3>
+                                    <h3 className="text-2xl font-bold text-white">
+                                        {profileStats?.stats?.batchRank ? `#${profileStats.stats.batchRank}` : '#--'}
+                                    </h3>
                                 </div>
                             </div>
                         </div>
@@ -240,7 +242,7 @@ const StudentDashboard = () => {
                                         placeholder="Search modules (e.g. Quantitative, Logical...)"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                        className="w-full pl-11 pr-4 py-3 bg-[#fbf9f6] border border-[#d8d0c6] rounded-2xl text-[#171a22] placeholder-[#81889a] focus:outline-none focus:border-[#5f6eea] focus:ring-4 focus:ring-[#5f6eea]/10 transition-all"
                                     />
                                 </div>
                             </div>
@@ -321,7 +323,7 @@ const StudentDashboard = () => {
                             </div>
 
                             {recentMaterials.length > 0 ? (
-                                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
+                                <div className="flex gap-4 overflow-x-auto pb-4">
                                     {recentMaterials.map((mat) => (
                                         <div key={mat._id} className="min-w-[240px] bg-neutral-900 border border-neutral-800 p-4 rounded-xl hover:border-blue-500/30 transition-all group cursor-pointer">
                                             <div className="w-10 h-10 bg-neutral-800 rounded-lg flex items-center justify-center text-neutral-400 mb-3 group-hover:bg-blue-900/20 group-hover:text-blue-400 transition-colors">

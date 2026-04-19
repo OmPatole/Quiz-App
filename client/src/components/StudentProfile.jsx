@@ -129,7 +129,7 @@ const ActivityHeatmap = ({ activityMap }) => {
                     </div>
 
                     {/* Heatmap Scroll Container */}
-                    <div className="overflow-x-auto flex-1 pb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-neutral-800">
+                    <div className="overflow-x-auto flex-1 pb-2">
                         {/* Month Labels */}
                         <div className="flex text-[10px] text-neutral-500 font-bold mb-2 relative h-3">
                             {monthLabels.map((m, i) => (
@@ -205,8 +205,8 @@ const StudentProfile = ({ student, stats, onBack }) => {
                 <div>
                     <h2 className="text-2xl font-bold text-white">{student.name}</h2>
                     <div className="flex gap-3 text-sm text-neutral-400 mt-1">
-                        <span className="flex items-center gap-1"><Code size={12} /> {student.prn}</span>
-                        <span>â€¢</span>
+                        <span>{student.prn}</span>
+                        <span className="opacity-60">|</span>
                         <span className="flex items-center gap-1"><GraduationCap size={12} /> {student.branch}</span>
                     </div>
                 </div>

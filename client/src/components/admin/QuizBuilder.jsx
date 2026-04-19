@@ -208,6 +208,15 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
         }
     };
 
+    const toggleSelectAllQuizQuestions = () => {
+        if (!selectedQuiz || quizQuestions.length === 0) return;
+
+        const allIndices = [...Array(quizQuestions.length).keys()];
+        const isAllSelected = selectedQuizQuestions.length === quizQuestions.length;
+
+        setSelectedQuizQuestions(isAllSelected ? [] : allIndices);
+    };
+
     const selectRandomQuestions = () => {
         if (!selectedQuiz || quizQuestions.length === 0) return;
 
@@ -586,13 +595,22 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                                                     {selectedQuiz ? `${selectedQuiz.title} - Questions` : 'Select a Quiz'}
                                                 </h4>
                                                 {selectedQuiz && quizQuestions.length > 0 && (
-                                                    <button
-                                                        onClick={selectRandomQuestions}
-                                                        className="text-xs flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50"
-                                                    >
-                                                        <Shuffle className="w-3 h-3" />
-                                                        Random
-                                                    </button>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={toggleSelectAllQuizQuestions}
+                                                            className="text-xs flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                                                        >
+                                                            <CheckCircle2 className="w-3 h-3" />
+                                                            {selectedQuizQuestions.length === quizQuestions.length ? 'Clear All' : 'Select All'}
+                                                        </button>
+                                                        <button
+                                                            onClick={selectRandomQuestions}
+                                                            className="text-xs flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50"
+                                                        >
+                                                            <Shuffle className="w-3 h-3" />
+                                                            Random
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
                                             <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
