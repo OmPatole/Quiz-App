@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import { Filter, User, TrendingUp, Award, Grid, FileText, Download, Calendar } from 'lucide-react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const AdminAnalytics = () => {
     // --- State ---
@@ -205,7 +205,7 @@ const AdminAnalytics = () => {
                     ];
                 });
 
-                doc.autoTable({
+                autoTable(doc, {
                     head: [['PRN', 'Student Name', 'Quizzes Attended', 'Avg Score (%)', 'Status']],
                     body: tableData,
                     startY: yPosition,

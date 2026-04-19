@@ -20,33 +20,33 @@ const Features = () => {
     const features = [
         {
             icon: Sparkles,
-            title: 'Interactive Presentations',
-            description: 'Turn sessions into conversations and keep your audience actively engaged from start to end.',
-        },
-        {
-            icon: WandSparkles,
-            title: 'AI Menti Creator',
-            description: 'Build polished quizzes in seconds from topics and difficulty levels using AI-powered prompts.',
-        },
-        {
-            icon: MessageSquareText,
-            title: 'Live Polls',
-            description: 'Capture live responses instantly and turn passive learners into active participants.',
+            title: 'Custom Quiz Builder',
+            description: 'Admins can easily build and manage practice sessions, adding questions naturally without AI fluff.',
         },
         {
             icon: Calendar,
-            title: 'Quizzes',
+            title: 'Weekly Assessments',
             description: 'Run chapter-wise and weekly quiz sessions with timers, scoring, and auto feedback.',
         },
         {
             icon: BarChart2,
-            title: 'Surveys',
-            description: 'Collect structured feedback and monitor trends to improve classroom outcomes.',
+            title: 'Performance Analytics',
+            description: 'Provide students with real-time feedback and visual breakdowns of their aptitude scores.',
+        },
+        {
+            icon: WandSparkles,
+            title: 'Targeted Practice',
+            description: 'Allow learners to hone their skills directly on specific topics and difficulty levels.',
+        },
+        {
+            icon: MessageSquareText,
+            title: 'Study Materials',
+            description: 'Upload and manage PDFs and necessary reference materials for every related chapter.',
         },
         {
             icon: Trophy,
-            title: 'Word Cloud & Rankings',
-            description: 'Visualize student thinking patterns and drive motivation through healthy competition.',
+            title: 'Competitive Leaderboards',
+            description: 'Boost student engagement and motivation through transparent scores and healthy rankings.',
         },
     ];
 
@@ -83,7 +83,7 @@ const Features = () => {
                         More Than Just Quizzes
                     </h1>
                     <p className="text-[#51596a] text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
-                        With everything from live polls and Q&As to AI-powered quiz creation, Aptitude Portal fits into every class and workshop.
+                        With structured chapters, leaderboards, and detailed analytics, Aptitude Portal equips students effectively for placement training.
                     </p>
                 </div>
 
@@ -103,9 +103,6 @@ const Features = () => {
                             <p className="text-[#51596a] leading-relaxed mb-8">
                                 {feature.description}
                             </p>
-                            <button className="px-5 py-2 rounded-full border border-[#d7cec3] bg-[#f1ece4] text-sm font-semibold text-[#252938] hover:bg-[#e8e1d8] transition-colors">
-                                Learn more
-                            </button>
                         </article>
                     ))}
                 </div>

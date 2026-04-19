@@ -25,19 +25,19 @@ const LandingPage = () => {
 
     const featureCards = [
         {
+            icon: BrainCircuit,
+            title: 'Chapter-wise Practice',
+            description: 'Focus on specific chapters with targeted practice tests to strengthen weak areas.',
+        },
+        {
+            icon: Briefcase,
+            title: 'Study Materials',
+            description: 'Access chapter-wise study materials, PDFs, and resources to prepare effectively.',
+        },
+        {
             icon: Sparkles,
-            title: 'Interactive Presentations',
-            description: 'Turn concepts into active sessions where everyone participates and remembers more.',
-        },
-        {
-            icon: WandSparkles,
-            title: 'AI Quiz Creator',
-            description: 'Generate structured practice quizzes in seconds from topics, difficulty, and learning goals.',
-        },
-        {
-            icon: MessageSquareText,
-            title: 'Live Polls',
-            description: 'Capture instant understanding checks and keep classes engaged through every section.',
+            title: 'Custom Quiz Builder',
+            description: 'Admins can create custom quizzes, manage questions, and schedule assessments easily.',
         },
         {
             icon: Calendar,
@@ -46,13 +46,13 @@ const LandingPage = () => {
         },
         {
             icon: BarChart2,
-            title: 'Surveys & Insights',
-            description: 'Collect feedback and performance signals to improve future sessions and outcomes.',
+            title: 'Performance Analytics',
+            description: 'Track your progress over time with detailed analytics and performance insights.',
         },
         {
             icon: Trophy,
             title: 'Competitive Leaderboards',
-            description: 'Motivate students through rankings, streaks, and visibility into measurable progress.',
+            description: 'Motivate students through weekly rankings, scores, and measurable progress visibility.',
         },
     ];
 
@@ -158,7 +158,7 @@ const LandingPage = () => {
                                 Competition Meets Collaboration
                             </h2>
                             <p className="text-[#4f5668] max-w-2xl mx-auto">
-                                Everything from instant polls and weekly tests to AI-powered quiz creation and performance insights.
+                                Everything from detailed chapter tests and weekly quizzes to in-depth study materials and performance insights.
                             </p>
                         </div>
 
@@ -174,9 +174,6 @@ const LandingPage = () => {
                                     </div>
                                     <h3 className="text-2xl font-semibold mb-3">{feature.title}</h3>
                                     <p className="text-[#50586a] leading-relaxed mb-6">{feature.description}</p>
-                                    <button className="px-5 py-2 rounded-full border border-[#d7cec3] bg-[#f1ece4] text-sm font-semibold text-[#252938] hover:bg-[#e8e1d8] transition-colors">
-                                        Learn more
-                                    </button>
                                 </article>
                             ))}
                         </div>
@@ -297,7 +294,7 @@ const LandingPage = () => {
                                         href="#features"
                                         className="btn-secondary px-8 py-3.5 text-base rounded-full w-full sm:w-auto text-center"
                                     >
-                                        Learn More
+                                        Explore Features
                                     </a>
                                 </>
                             )}
