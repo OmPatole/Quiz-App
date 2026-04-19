@@ -1039,8 +1039,7 @@ router.get('/reports/monthly-performance', auth, roleAuth('Admin'), async (req, 
             submittedAt: { $gte: startDate, $lte: endDate }
         }).populate({
             path: 'quizId',
-            select: 'title quizType',
-            match: { quizType: 'weekly' } // Only include weekly quizzes
+            select: 'title quizType'
         }).populate('studentId', 'name prn branch academicYear batchYear');
 
         // 2. Aggregate Data by Student

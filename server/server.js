@@ -26,6 +26,8 @@ const materialRoutes = require('./routes/material');
 
 const app = express();
 const uploadsDir = path.join(__dirname, 'uploads');
+const clientDistDir = path.join(__dirname, '..', 'client', 'dist');
+const clientIndexPath = path.join(clientDistDir, 'index.html');
 
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
@@ -135,6 +137,26 @@ app.use('/api/material', materialRoutes);
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Server is running' });
 });
+
+// Serve frontend build in production-like deployments where client/dist exists.
+// Keep API and upload routes separate and never rewrite asset/module requests to HTML.
+if (fs.existsSync(clientDistDir) && fs.existsSync(clientIndexPath)) {
+    app.use(express.static(clientDistDir, { index: false }));
+
+    app.get(/.*/, (req, res, next) => {
+        const reqPath = req.path || '';
+        const isApiOrUploads = reqPath.startsWith('/api') || reqPath.startsWith('/uploads');
+        const hasFileExtension = path.extname(reqPath) !== '';
+
+        if (isApiOrUploads || hasFileExtension) {
+            return next();
+        }
+
+        return res.sendFile(clientIndexPath);
+    });
+} else {
+    console.warn(`Frontend build not found at ${clientDistDir}. Serve client/dist in production to avoid asset MIME issues.`);
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
