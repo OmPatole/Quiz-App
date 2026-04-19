@@ -2,3 +2,6 @@
 node_modules/
 *.csv
 *.json
+.env
+build/
+dist/
