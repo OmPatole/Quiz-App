@@ -120,7 +120,7 @@ const LandingPage = () => {
                                         to="/login"
                                         className="btn-primary flex items-center justify-center gap-2 px-8 py-3.5 text-base rounded-full w-full sm:w-auto"
                                     >
-                                        Complete your first quiz
+                                        Get Started
                                         <ArrowRight className="w-4 h-4" />
                                     </Link>
                                 )}
