@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, X, Save, Clock, Calendar, CheckCircle2, ChevronDown, ChevronUp, Database, Search, Shuffle, List } from 'lucide-react';
 import api from '../../api/axios';
+import { useToast } from '../../context/ToastContext';
+import InputModal from '../common/InputModal';
 
 const QuizBuilder = ({ onCancel, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [chapters, setChapters] = useState([]);
+    
+    const toast = useToast();
 
     const [quizData, setQuizData] = useState({
         title: '',
@@ -42,6 +46,9 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
     const [quizQuestions, setQuizQuestions] = useState([]);
     const [selectedQuizQuestions, setSelectedQuizQuestions] = useState([]);
     const [quizSelectorLoading, setQuizSelectorLoading] = useState(false);
+
+    // Random Select Input State
+    const [randomInputConfig, setRandomInputConfig] = useState({ isOpen: false, max: 0, onConfirm: null });
 
     const handleBasicChange = (e) => {
         const { name, value } = e.target;
@@ -178,10 +185,12 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                 chaptersRes.data.forEach(chapter => {
                     if (chapter.quizzes && chapter.quizzes.length > 0) {
                         chapter.quizzes.forEach(quiz => {
-                            allQuizzes.push({
-                                ...quiz,
-                                chapterName: chapter.title
-                            });
+                            if (quiz.quizType !== 'weekly') {
+                                allQuizzes.push({
+                                    ...quiz,
+                                    chapterName: chapter.title
+                                });
+                            }
                         });
                     }
                 });
@@ -220,14 +229,35 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
     const selectRandomQuestions = () => {
         if (!selectedQuiz || quizQuestions.length === 0) return;
 
-        const count = parseInt(prompt(`How many random questions? (Max: ${quizQuestions.length})`));
-        if (!count || count <= 0 || count > quizQuestions.length) return;
-
-        const shuffled = [...Array(quizQuestions.length).keys()]
-            .sort(() => Math.random() - 0.5)
-            .slice(0, count);
-
-        setSelectedQuizQuestions(shuffled);
+        setRandomInputConfig({
+            isOpen: true,
+            max: quizQuestions.length,
+            onConfirm: (countInput) => {
+                const count = parseInt(countInput, 10);
+                
+                if (isNaN(count) || count <= 0) {
+                    toast.showError('Please enter a valid positive number.');
+                    return;
+                }
+                
+                if (count > quizQuestions.length) {
+                    toast.showError(`Only ${quizQuestions.length} questions available.`);
+                    return;
+                }
+                
+                const allIndices = [...Array(quizQuestions.length).keys()];
+                const randomIndices = allIndices
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, count);
+                    
+                // Merge with currently selected ones without duplicates
+                setSelectedQuizQuestions(prev => {
+                    const combined = new Set([...prev, ...randomIndices]);
+                    return Array.from(combined);
+                });
+                toast.showSuccess(`Added ${count} random question(s) to selection.`);
+            }
+        });
     };
 
     const importFromQuizSelector = () => {
@@ -467,28 +497,92 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
 
                 {/* Question Bank Modal */}
                 {showQuestionBank && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                         <div className="bg-white dark:bg-neutral-900 w-full max-w-4xl max-h-[80vh] rounded-2xl shadow-2xl flex flex-col">
-                            <div className="p-6 border-b border-gray-200 dark:border-neutral-800 flex justify-between items-center">
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <Database className="text-purple-500" />
+                            <div className="p-4 border-b border-gray-200 dark:border-neutral-800 flex justify-between items-center bg-gray-50 dark:bg-neutral-800/50">
+                                <div className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Database className="text-purple-500 w-5 h-5" />
                                     Question Bank
-                                </h3>
-                                <button onClick={() => setShowQuestionBank(false)} className="text-gray-500 hover:text-gray-900 dark:hover:text-white">
-                                    <X className="w-6 h-6" />
+                                </div>
+                                <button onClick={() => setShowQuestionBank(false)} className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                    <X className="w-5 h-5" />
                                 </button>
                             </div>
 
-                            <div className="p-4 border-b border-gray-200 dark:border-neutral-800">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <div className="p-4 border-b border-gray-200 dark:border-neutral-800 flex flex-col sm:flex-row gap-3">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                                     <input
                                         type="text"
                                         placeholder="Search questions..."
-                                        className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-neutral-800 border-none rounded-lg focus:ring-2 focus:ring-purple-500"
+                                        className="w-full pl-9 pr-4 py-2 bg-gray-100 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm text-gray-900 dark:text-white placeholder-gray-500"
                                         value={bankSearch}
                                         onChange={(e) => setBankSearch(e.target.value)}
                                     />
+                                </div>
+                                <div className="flex gap-2 min-w-max">
+                                    <button
+                                        onClick={() => {
+                                            const filtered = questionBank.filter(q => q.questionText.toLowerCase().includes(bankSearch.toLowerCase()));
+                                            const allSelected = filtered.length > 0 && filtered.every(q => selectedBankQuestions.some(s => s._id === q._id));
+                                            
+                                            // Provide selection logic
+                                            if (allSelected) {
+                                                // Deselect all filtered
+                                                const filteredIds = new Set(filtered.map(q => q._id));
+                                                setSelectedBankQuestions(prev => prev.filter(q => !filteredIds.has(q._id)));
+                                            } else {
+                                                // Select all filtered
+                                                // merge prevailing with newly selected, avoiding duplicates
+                                                const prevIds = new Set(selectedBankQuestions.map(q => q._id));
+                                                const toAdd = filtered.filter(q => !prevIds.has(q._id));
+                                                setSelectedBankQuestions(prev => [...prev, ...toAdd]);
+                                            }
+                                        }}
+                                        className="text-xs px-3 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 font-medium transition-colors flex items-center gap-1"
+                                    >
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        {questionBank.filter(q => q.questionText.toLowerCase().includes(bankSearch.toLowerCase())).length > 0 && 
+                                        questionBank.filter(q => q.questionText.toLowerCase().includes(bankSearch.toLowerCase())).every(q => selectedBankQuestions.some(s => s._id === q._id)) 
+                                        ? 'Clear All' : 'Select All'}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const filtered = questionBank.filter(q => q.questionText.toLowerCase().includes(bankSearch.toLowerCase()));
+                                            if (filtered.length === 0) {
+                                                toast.showError('No questions found to randomize.');
+                                                return;
+                                            }
+                                            
+                                            setRandomInputConfig({
+                                                isOpen: true,
+                                                max: filtered.length,
+                                                onConfirm: (countInput) => {
+                                                    const count = parseInt(countInput, 10);
+                                                    if (isNaN(count) || count <= 0) {
+                                                        toast.showError('Please enter a valid positive number.');
+                                                        return;
+                                                    }
+                                                    if (count > filtered.length) {
+                                                        toast.showError(`Only ${filtered.length} questions available matching your search.`);
+                                                        return;
+                                                    }
+
+                                                    const shuffled = [...filtered].sort(() => 0.5 - Math.random());
+                                                    const selected = shuffled.slice(0, count);
+                                                    const prevIds = new Set(selectedBankQuestions.map(q => q._id));
+                                                    const toAdd = selected.filter(q => !prevIds.has(q._id));
+                                                    
+                                                    setSelectedBankQuestions(prev => [...prev, ...toAdd]);
+                                                    toast.showSuccess(`Added ${toAdd.length} random question(s) to selection.`);
+                                                }
+                                            });
+                                        }}
+                                        className="text-xs px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 font-medium transition-colors flex items-center gap-1"
+                                    >
+                                        <Shuffle className="w-3.5 h-3.5" />
+                                        Random Select
+                                    </button>
                                 </div>
                             </div>
 
@@ -547,7 +641,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
 
                 {/* Quiz Selector Modal (for Weekly Tests) */}
                 {showQuizSelector && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                         <div className="bg-white dark:bg-neutral-900 w-full max-w-6xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col">
                             <div className="p-6 border-b border-gray-200 dark:border-neutral-800 flex justify-between items-center">
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -667,6 +761,15 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                     </div>
                 )}
             </div>
+            
+            <InputModal 
+                isOpen={randomInputConfig.isOpen}
+                onClose={() => setRandomInputConfig({ ...randomInputConfig, isOpen: false })}
+                onSubmit={randomInputConfig.onConfirm}
+                title="Select Random Questions"
+                placeholder={`Number of questions max: ${randomInputConfig.max}`}
+                confirmText="Select"
+            />
         </div>
     );
 };

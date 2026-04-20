@@ -108,7 +108,7 @@ const ChapterDetails = () => {
                 </div>
             </header>
 
-            <div className="max-w-7xl mx-auto p-4 md:p-8 pt-24 animate-in fade-in duration-500">
+            <div className="max-w-7xl mx-auto p-4 md:p-8 pt-24 md:pt-32 animate-in fade-in duration-500">
 
                 <div className="mb-12 relative overflow-hidden rounded-3xl bg-neutral-900 border border-neutral-800 p-8 md:p-12 shadow-sm">
                     <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
@@ -162,52 +162,52 @@ const ChapterDetails = () => {
                                     onClick={() => openQuiz(quiz, isCompleted)}
                                     className={`group border rounded-2xl p-6 transition-all cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md dark:shadow-none
                                         ${isCompleted
-                                            ? 'bg-green-900/10 border-green-900/50 hover:border-green-500/50'
+                                            ? 'bg-green-50 dark:bg-green-900/10 border-green-500/30 dark:border-green-900/50 hover:border-green-500/50'
                                             : isExpired
-                                                ? 'bg-neutral-900 border-neutral-800 opacity-70 hover:border-neutral-700'
-                                                : 'bg-neutral-900 border-neutral-800 hover:border-blue-500/50 hover:bg-gray-100 dark:hover:bg-neutral-900/80'
+                                                ? 'bg-gray-100 dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 opacity-70 hover:border-gray-300 dark:hover:border-neutral-700'
+                                                : 'bg-white dark:bg-neutral-900 border-gray-200 dark:border-neutral-800 hover:border-blue-500/50 hover:bg-gray-50 dark:hover:bg-neutral-900/80'
                                         }`}
                                 >
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors shadow-lg
+                                    <div className="flex justify-between items-start mb-4 gap-2">
+                                        <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center transition-colors shadow-lg
                                             ${isCompleted
-                                                ? 'bg-green-900/30 text-green-400 shadow-green-500/10'
-                                                : 'bg-neutral-800 text-blue-400 group-hover:bg-blue-500 group-hover:text-white shadow-blue-500/10'
+                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 shadow-green-500/10'
+                                                : 'bg-gray-100 dark:bg-neutral-800 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500 group-hover:text-white shadow-blue-500/10'
                                             }`}>
                                             {isCompleted ? <CheckCircle2 className="w-6 h-6" /> : <span className="font-bold text-lg">{index + 1}</span>}
                                         </div>
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${quiz.quizType === 'weekly'
-                                            ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-400 border-yellow-900/50'
-                                            : 'bg-blue-900/20 text-blue-400 border-blue-900/50'
+                                        <span className={`px-3 py-1 shrink-0 whitespace-nowrap rounded-full text-xs font-bold border ${quiz.quizType === 'weekly'
+                                            ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-900/50'
+                                            : 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-900/50'
                                             }`}>
                                             {quiz.quizType === 'weekly' ? 'Weekly' : 'Practice'}
                                         </span>
                                     </div>
 
-                                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                         {quiz.title}
                                     </h3>
 
-                                    <p className="text-sm text-neutral-500 mb-6 line-clamp-2">
+                                    <p className="text-sm text-gray-500 dark:text-neutral-500 mb-6 line-clamp-2">
                                         {quiz.description || "Test your knowledge with this practice set."}
                                     </p>
 
-                                    <div className="flex items-center justify-between text-sm text-neutral-400 border-t border-neutral-800 pt-4">
+                                    <div className="flex items-center justify-between text-sm text-gray-500 dark:text-neutral-400 border-t border-gray-200 dark:border-neutral-800 pt-4">
                                         <div className="flex items-center gap-2">
                                             <Clock className="w-4 h-4" />
                                             <span>{quiz.duration} mins</span>
                                         </div>
 
                                         {isCompleted ? (
-                                            <span className="flex items-center gap-1 text-green-400 font-bold">
+                                            <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-bold">
                                                 Completed
                                             </span>
                                         ) : isExpired ? (
-                                            <span className="flex items-center gap-1 text-neutral-500 font-bold">
+                                            <span className="flex items-center gap-1 text-gray-500 dark:text-neutral-500 font-bold">
                                                 Closed
                                             </span>
                                         ) : (
-                                            <span className="flex items-center gap-1 text-blue-400 font-bold group-hover:translate-x-1 transition-transform">
+                                            <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-bold group-hover:translate-x-1 transition-transform">
                                                 Start <ChevronLeft className="w-4 h-4 rotate-180" />
                                             </span>
                                         )}

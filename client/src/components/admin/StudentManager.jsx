@@ -272,7 +272,7 @@ const StudentManager = () => {
 
             {/* Bulk Delete Selection Modal (Not the confirmation modal, but the filter selection) */}
             {showBulkDeleteModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                     <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
                         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                             <Trash2 className="w-6 h-6 text-red-500" /> Bulk Delete Students
@@ -399,7 +399,7 @@ const StudentManager = () => {
 
             {/* Upload Modal */}
             {showUploadModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                     <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-2xl w-full shadow-2xl">
                         <div className="flex justify-between items-start mb-6">
                             <div>

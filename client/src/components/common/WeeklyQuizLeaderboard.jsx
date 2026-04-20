@@ -4,8 +4,8 @@ import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 
 const rankMedal = (rank) => {
-    if (rank === 1) return { icon: Crown, color: 'text-yellow-400', bg: 'bg-yellow-400/10 border-yellow-400/30', label: '1st' };
-    if (rank === 2) return { icon: Medal, color: 'text-slate-300', bg: 'bg-slate-300/10 border-slate-300/30', label: '2nd' };
+    if (rank === 1) return { icon: Crown, color: 'text-yellow-500 dark:text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/30', label: '1st' };
+    if (rank === 2) return { icon: Medal, color: 'text-slate-400 dark:text-slate-300', bg: 'bg-slate-400/10 border-slate-400/30', label: '2nd' };
     if (rank === 3) return { icon: Award, color: 'text-amber-600', bg: 'bg-amber-600/10 border-amber-600/30', label: '3rd' };
     return null;
 };
@@ -38,8 +38,8 @@ const LeaderboardRow = ({ entry, isMe, index }) => {
                 ${isMe
                     ? 'bg-blue-600/10 border-blue-500/50 shadow-blue-900/20 shadow-lg'
                     : index % 2 === 0
-                        ? 'bg-neutral-900/60 border-neutral-800 hover:border-neutral-700'
-                        : 'bg-neutral-900/30 border-neutral-800/50 hover:border-neutral-700'
+                        ? 'bg-white/60 dark:bg-neutral-900/60 border-gray-200 dark:border-neutral-800 hover:border-gray-300 dark:hover:border-neutral-700'
+                        : 'bg-gray-50/50 dark:bg-neutral-900/30 border-gray-200/50 dark:border-neutral-800/50 hover:border-gray-300 dark:hover:border-neutral-700'
                 }
             `}
         >
@@ -50,7 +50,7 @@ const LeaderboardRow = ({ entry, isMe, index }) => {
                         <medal.icon className={`w-4 h-4 ${medal.color}`} />
                     </div>
                 ) : (
-                    <span className="text-neutral-500 font-bold text-sm w-9 text-center">#{entry.rank}</span>
+                    <span className="text-gray-500 dark:text-neutral-500 font-bold text-sm w-9 text-center">#{entry.rank}</span>
                 )}
             </div>
 
@@ -58,22 +58,22 @@ const LeaderboardRow = ({ entry, isMe, index }) => {
             <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0
-                        ${isMe ? 'bg-blue-600 text-white' : 'bg-neutral-800 text-neutral-300'}
+                        ${isMe ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 dark:bg-neutral-800 dark:text-neutral-300'}
                     `}
                 >
                     {entry.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
                 <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                        <p className={`font-semibold truncate text-sm ${isMe ? 'text-blue-300' : 'text-white'}`}>
+                        <p className={`font-semibold truncate text-sm ${isMe ? 'text-blue-600 dark:text-blue-300' : 'text-gray-900 dark:text-white'}`}>
                             {entry.name}
-                            {isMe && <span className="ml-1 text-xs text-blue-400 font-bold">(You)</span>}
+                            {isMe && <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-bold">(You)</span>}
                         </p>
                     </div>
-                    <p className="text-neutral-500 text-xs truncate">{entry.prn}</p>
+                    <p className="text-gray-500 dark:text-neutral-500 text-xs truncate">{entry.prn}</p>
                     <div className="flex items-center gap-1 mt-0.5">
-                        <Clock className="w-3 h-3 text-neutral-600" />
-                        <span className="text-neutral-600 text-[10px]">{timeTakenStr}</span>
+                        <Clock className="w-3 h-3 text-gray-400 dark:text-neutral-600" />
+                        <span className="text-gray-500 dark:text-neutral-600 text-[10px]">{timeTakenStr}</span>
                     </div>
                 </div>
             </div>
@@ -81,21 +81,21 @@ const LeaderboardRow = ({ entry, isMe, index }) => {
             {/* Score */}
             <div className="hidden sm:flex flex-col items-end gap-1 w-28 flex-shrink-0">
                 <div className="flex items-baseline gap-1">
-                    <span className={`text-sm font-bold ${isMe ? 'text-blue-300' : 'text-white'}`}>
+                    <span className={`text-sm font-bold ${isMe ? 'text-blue-600 dark:text-blue-300' : 'text-gray-900 dark:text-white'}`}>
                         {entry.score}/{entry.totalMarks}
                     </span>
-                    <span className="text-neutral-500 text-[10px]">marks</span>
+                    <span className="text-gray-400 dark:text-neutral-500 text-[10px]">marks</span>
                 </div>
                 <ScoreBar percentage={entry.percentage} />
-                <span className="text-[10px] text-neutral-400">{entry.percentage}%</span>
+                <span className="text-[10px] text-gray-500 dark:text-neutral-400">{entry.percentage}%</span>
             </div>
 
             {/* Mobile Score */}
             <div className="flex sm:hidden flex-col items-end">
-                <span className={`text-sm font-bold ${isMe ? 'text-blue-300' : 'text-white'}`}>
+                <span className={`text-sm font-bold ${isMe ? 'text-blue-600 dark:text-blue-300' : 'text-gray-900 dark:text-white'}`}>
                     {entry.percentage}%
                 </span>
-                <span className="text-neutral-500 text-[10px]">{entry.score}/{entry.totalMarks}</span>
+                <span className="text-gray-500 dark:text-neutral-500 text-[10px]">{entry.score}/{entry.totalMarks}</span>
             </div>
         </div>
     );
@@ -148,20 +148,20 @@ const WeeklyQuizLeaderboard = ({ quizId, isModal = false, onClose, className = '
             <div className="flex items-center justify-between mb-6 flex-shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
-                        <Trophy className="w-5 h-5 text-yellow-400" />
+                        <Trophy className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-white">Leaderboard</h2>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Leaderboard</h2>
                         {data && (
-                            <p className="text-neutral-400 text-xs truncate max-w-[200px]">{data.quizTitle}</p>
+                            <p className="text-gray-500 dark:text-neutral-400 text-xs truncate max-w-[200px]">{data.quizTitle}</p>
                         )}
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     {data && (
-                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-neutral-800 rounded-full">
-                            <Users className="w-3.5 h-3.5 text-neutral-400" />
-                            <span className="text-neutral-300 text-xs font-bold">{data.totalParticipants} participants</span>
+                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 dark:bg-neutral-800 rounded-full">
+                            <Users className="w-3.5 h-3.5 text-gray-600 dark:text-neutral-400" />
+                            <span className="text-gray-800 dark:text-neutral-300 text-xs font-bold">{data.totalParticipants} participants</span>
                         </div>
                     )}
                     {isModal && onClose && (
@@ -229,12 +229,12 @@ const WeeklyQuizLeaderboard = ({ quizId, isModal = false, onClose, className = '
                                                 <div className="text-center">
                                                     <div
                                                         className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center text-lg font-bold mb-1
-                                                            ${isMe ? 'bg-blue-600 text-white' : 'bg-neutral-700 text-white'}
+                                                            ${isMe ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 dark:bg-neutral-700 dark:text-white'}
                                                         `}
                                                     >
                                                         {entry.name?.charAt(0)?.toUpperCase()}
                                                     </div>
-                                                    <p className="text-white text-xs font-bold truncate w-24 text-center mx-auto leading-tight">
+                                                    <p className="text-gray-900 dark:text-white text-xs font-bold truncate w-24 text-center mx-auto leading-tight">
                                                         {entry.name?.split(' ')[0]}
                                                     </p>
                                                     <p className={`text-xs font-bold ${medal?.color}`}>{entry.percentage}%</p>
@@ -242,9 +242,9 @@ const WeeklyQuizLeaderboard = ({ quizId, isModal = false, onClose, className = '
                                                 <div
                                                     className={`
                                                         w-full ${heights[i]} rounded-t-xl flex flex-col items-center justify-center gap-1 border
-                                                        ${entry.rank === 1 ? 'bg-yellow-400/10 border-yellow-400/30' :
+                                                        ${entry.rank === 1 ? 'bg-yellow-500/10 border-yellow-500/30 dark:bg-yellow-400/10 dark:border-yellow-400/30' :
                                                             entry.rank === 2 ? 'bg-slate-400/10 border-slate-400/30' :
-                                                                'bg-amber-700/10 border-amber-700/30'}
+                                                                'bg-amber-600/10 border-amber-600/30 dark:bg-amber-700/10 dark:border-amber-700/30'}
                                                     `}
                                                 >
                                                     {medal && <medal.icon className={`w-5 h-5 ${medal.color}`} />}
@@ -258,7 +258,7 @@ const WeeklyQuizLeaderboard = ({ quizId, isModal = false, onClose, className = '
 
                             {/* Full ranked list */}
                             <div className="space-y-2">
-                                <p className="text-neutral-500 text-xs font-bold uppercase tracking-wider px-1 mb-2">
+                                <p className="text-gray-500 dark:text-neutral-500 text-xs font-bold uppercase tracking-wider px-1 mb-2">
                                     All Participants
                                 </p>
                                 {data.leaderboard.map((entry, index) => (

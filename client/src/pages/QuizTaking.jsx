@@ -18,6 +18,7 @@ const QuizTaking = () => {
     const [submitting, setSubmitting] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
+    const [isPaletteOpen, setIsPaletteOpen] = useState(false);
 
     useEffect(() => {
         if (!quizId) return;
@@ -383,16 +384,38 @@ const QuizTaking = () => {
                     )}
                 </div>
 
-                {/* Right Sidebar: Question Palette (Desktop) */}
-                <div className="w-full lg:w-80 flex-shrink-0 sticky top-12 h-fit">
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-[2rem] p-6 shadow-lg">
-                        <div className="flex items-center justify-between mb-5">
+                {/* Right Sidebar: Question Palette */}
+                {/* Mobile Overlay */}
+                {isPaletteOpen && (
+                    <div 
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+                        onClick={() => setIsPaletteOpen(false)}
+                    />
+                )}
+
+                <div 
+                    className={`
+                        fixed inset-y-0 right-0 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:transform-none lg:w-80 lg:flex-shrink-0 lg:sticky lg:top-12 lg:h-fit
+                        ${isPaletteOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+                    `}
+                >
+                    {/* Mobile Toggle Button */}
+                    <button 
+                        onClick={() => setIsPaletteOpen(!isPaletteOpen)}
+                        className="lg:hidden absolute top-1/2 -left-12 -translate-y-1/2 w-12 h-20 bg-neutral-900 border border-r-0 border-neutral-800 rounded-l-2xl flex items-center justify-center text-blue-500 shadow-[-5px_0_15px_rgba(0,0,0,0.5)] hover:text-blue-400 hover:bg-neutral-800 transition-colors"
+                        aria-label="Toggle Question Palette"
+                    >
+                        {isPaletteOpen ? <ChevronRight className="w-8 h-8" /> : <ChevronLeft className="w-8 h-8" />}
+                    </button>
+
+                    <div className="bg-neutral-900 border-l lg:border border-neutral-800 lg:rounded-[2rem] p-6 shadow-2xl lg:shadow-lg h-full lg:h-auto overflow-y-auto w-80 lg:w-full flex flex-col">
+                        <div className="flex items-center justify-between mb-5 flex-shrink-0">
                             <h3 className="text-lg font-black text-white uppercase tracking-wider">Question Palette</h3>
                             <span className="text-xs text-neutral-400 font-bold bg-neutral-800/50 px-2 py-1 rounded-full">
                                 {answeredCount}/{quiz.questions.length}
                             </span>
                         </div>
-                        <div className="grid grid-cols-5 gap-2.5">
+                        <div className="grid grid-cols-5 gap-2.5 flex-1 overflow-y-auto content-start pr-2 p-1 -m-1">
                             {quiz.questions.map((_, index) => {
                                 const isAnswered = answers[index]?.selectedIndices?.length > 0;
                                 const isCurrent = currentQuestion === index;
@@ -402,9 +425,9 @@ const QuizTaking = () => {
                                         key={index}
                                         onClick={() => setCurrentQuestion(index)}
                                         className={`
-                                            h-11 w-11 rounded-xl text-base font-black transition-all duration-300
+                                            h-11 w-11 rounded-xl text-base font-black transition-all duration-300 relative
                                             ${isCurrent
-                                                ? 'border-2 border-yellow-500 bg-neutral-800 text-white scale-110 shadow-[0_0_15px_rgba(234,179,8,0.2)]'
+                                                ? 'border-2 border-yellow-500 bg-neutral-800 text-white scale-110 shadow-[0_0_15px_rgba(234,179,8,0.3)] z-10'
                                                 : isAnswered
                                                     ? 'bg-green-600 text-white border border-green-500 shadow-[0_0_10px_rgba(22,163,74,0.2)]'
                                                     : 'bg-neutral-800 text-neutral-400 border border-neutral-700 hover:bg-neutral-700 hover:border-neutral-500'
@@ -417,7 +440,7 @@ const QuizTaking = () => {
                             })}
                         </div>
 
-                        <div className="mt-6 space-y-2">
+                        <div className="mt-6 space-y-2 flex-shrink-0 pt-4 border-t lg:border-t-0 border-neutral-800">
                             <div className="flex items-center gap-2 text-xs text-neutral-400">
                                 <span className="w-3 h-3 rounded bg-green-600 border border-green-500"></span> Answered
                             </div>

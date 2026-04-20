@@ -66,10 +66,10 @@ const AdminLeaderboard = () => {
             {/* Left: Quiz selector */}
             <div className="lg:w-80 flex-shrink-0 bg-neutral-900 border border-neutral-800 rounded-2xl flex flex-col overflow-hidden">
                 {/* Header */}
-                <div className="p-4 border-b border-neutral-800">
+                <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
                     <div className="flex items-center gap-2 mb-3">
-                        <Trophy className="w-4 h-4 text-yellow-400" />
-                        <h3 className="font-bold text-white text-sm uppercase tracking-wider">Weekly Quizzes</h3>
+                        <Trophy className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />
+                        <h3 className="font-bold text-gray-900 dark:text-white text-sm uppercase tracking-wider">Weekly Quizzes</h3>
                         <span className="ml-auto text-xs text-neutral-500 font-bold bg-neutral-800 px-2 py-0.5 rounded-full">
                             {weeklyQuizzes.length}
                         </span>

@@ -710,12 +710,12 @@ router.get('/reports/monthly', auth, roleAuth('Admin'), async (req, res) => {
 });
 
 // @route   GET /api/admin/questions/bank
-// @desc    Get all unique questions from question bank
+// @desc    Get all unique questions from question bank (excluding weekly quizzes)
 // @access  Admin only
 router.get('/questions/bank', auth, roleAuth('Admin'), async (req, res) => {
     try {
         const Quiz = require('../models/Quiz');
-        const quizzes = await Quiz.find({});
+        const quizzes = await Quiz.find({ quizType: { $ne: 'weekly' } });
 
         const allQuestions = [];
         const seenQuestions = new Set();
