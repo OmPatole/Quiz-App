@@ -63,9 +63,18 @@ const QuizTaking = () => {
                 // Fetch Progress
                 const progressRes = await api.get(`/quiz/progress/${quizId}`);
 
+                // Calculate strict time remaining for weekly quizzes
+                const defaultSeconds = quizData.duration * 60;
+                let strictRemainingSeconds = defaultSeconds;
+                if (quizData.quizType === 'weekly' && quizEndTime) {
+                    const secondsUntilEnd = Math.floor((quizEndTime.getTime() - Date.now()) / 1000);
+                    strictRemainingSeconds = Math.max(0, Math.min(defaultSeconds, secondsUntilEnd));
+                }
+
                 if (progressRes.data.found) {
                     console.log("Resuming session...");
-                    setTimeRemaining(progressRes.data.timeLeft);
+                    const resumedTimeLeft = progressRes.data.timeLeft;
+                    setTimeRemaining(quizData.quizType === 'weekly' ? Math.min(resumedTimeLeft, strictRemainingSeconds) : resumedTimeLeft);
 
                     // Reconstruct answers state from saved map
                     const savedAnswers = progressRes.data.answers; // Map { "0": [1], "1": [] }
@@ -77,7 +86,7 @@ const QuizTaking = () => {
                     toast.success("Resumed from your previous session!");
                 } else {
                     // New Session
-                    setTimeRemaining(quizData.duration * 60);
+                    setTimeRemaining(strictRemainingSeconds);
                     const initialAnswers = quizData.questions.map((_, index) => ({
                         questionIndex: index,
                         selectedIndices: [],
