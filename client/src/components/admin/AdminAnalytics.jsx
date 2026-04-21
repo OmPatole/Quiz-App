@@ -399,7 +399,7 @@ const AdminAnalytics = () => {
                         </div>
                         <div className="h-[300px] w-full min-w-0">
                             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={300}>
-                                <BarChart data={data.categoryPerformance} layout="vertical">
+                                <BarChart data={data.categoryPerformance} layout="vertical" margin={{ left: 0, right: 20 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#525252" horizontal={true} vertical={false} />
                                     <XAxis type="number" stroke="#737373" hide />
                                     <YAxis
@@ -411,7 +411,7 @@ const AdminAnalytics = () => {
                                         axisLine={false}
                                         width={100}
                                     />
-                                    <Tooltip content={<CustomTooltip />} cursor={{ fill: '#262626' }} />
+                                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
                                     <Bar
                                         dataKey="avgScore"
                                         name="Avg Score"

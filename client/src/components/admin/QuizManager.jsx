@@ -36,10 +36,10 @@ const QuizManager = () => {
             const response = await api.get('/admin/chapters');
             setChapters(response.data);
 
-            // By default, expand all chapters (or you can set them to true)
+            // By default, keep chapters collapsed
             const initialExpanded = {};
             response.data.forEach(ch => {
-                initialExpanded[ch._id] = true;
+                initialExpanded[ch._id] = false;
             });
             setExpandedChapters(initialExpanded);
         } catch (error) {
