@@ -259,7 +259,7 @@ const StudentProfile = ({ student, stats, onBack }) => {
                                         {h.quizTitle || h.quizId || "Unknown Quiz"}
                                     </td>
                                     <td className="px-6 py-4">
-                                        {h.submittedAt ? new Date(h.submittedAt).toLocaleDateString() : 'N/A'}
+                                        {h.date ? new Date(h.date).toLocaleString() : 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 text-right font-bold text-blue-400">
                                         {h.score}

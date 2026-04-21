@@ -10,6 +10,7 @@ const roleAuth = require('../middleware/roleAuth');
 const User = require('../models/User');
 const Chapter = require('../models/Chapter');
 const Quiz = require('../models/Quiz');
+const Question = require('../models/Question');
 const bcrypt = require('bcryptjs');
 
 // Configure multer for file uploads
@@ -290,11 +291,27 @@ router.post('/upload-quiz-json', auth, roleAuth('Admin'), uploadJson.single('fil
             return res.status(400).json({ message: 'JSON file must contain an array of quizzes' });
         }
 
-        // Prepare quizzes with chapter reference
-        const quizzesToCreate = quizData.map(quiz => ({
-            ...quiz,
-            chapter: chapterId
-        }));
+        // Prepare quizzes with chapter reference and separate questions
+        const quizzesToCreate = [];
+        for (const quiz of quizData) {
+            let questionIds = [];
+            if (quiz.questions && Array.isArray(quiz.questions)) {
+                for (const q of quiz.questions) {
+                    if (q._id && q._id.toString().length === 24) {
+                        questionIds.push(q._id);
+                    } else {
+                        const newQ = new Question(q);
+                        await newQ.save();
+                        questionIds.push(newQ._id);
+                    }
+                }
+            }
+            quizzesToCreate.push({
+                ...quiz,
+                questions: questionIds,
+                chapter: chapterId
+            });
+        }
 
         // Bulk insert quizzes
         const results = await Quiz.insertMany(quizzesToCreate);
@@ -308,7 +325,10 @@ router.post('/upload-quiz-json', auth, roleAuth('Admin'), uploadJson.single('fil
         res.status(201).json({
             message: 'Quizzes uploaded successfully',
             count: createdQuizzes.length,
-            chapter: await Chapter.findById(chapterId).populate('quizzes')
+            chapter: await Chapter.findById(chapterId).populate({
+                path: 'quizzes',
+                populate: { path: 'questions' }
+            })
         });
     } catch (error) {
         console.error(error);
@@ -324,7 +344,10 @@ router.post('/upload-quiz-json', auth, roleAuth('Admin'), uploadJson.single('fil
 // @access  Admin only
 router.get('/chapters', auth, roleAuth('Admin'), async (req, res) => {
     try {
-        const chapters = await Chapter.find().populate('quizzes');
+        const chapters = await Chapter.find().populate({
+            path: 'quizzes',
+            populate: { path: 'questions' }
+        });
         res.json(chapters);
     } catch (error) {
         console.error(error);
@@ -358,11 +381,26 @@ router.delete('/chapters/:id', auth, roleAuth('Admin'), async (req, res) => {
 // @access  Admin only
 router.put('/quiz/:id', auth, roleAuth('Admin'), async (req, res) => {
     try {
+        let questionIds = [];
+        if (req.body.questions) {
+            for (const q of req.body.questions) {
+                if (q._id && q._id.toString().length === 24) {
+                    await Question.findByIdAndUpdate(q._id, q);
+                    questionIds.push(q._id);
+                } else {
+                    const newQ = new Question(q);
+                    await newQ.save();
+                    questionIds.push(newQ._id);
+                }
+            }
+            req.body.questions = questionIds;
+        }
+
         const quiz = await Quiz.findByIdAndUpdate(
             req.params.id,
             req.body,
             { new: true, runValidators: true }
-        );
+        ).populate('questions');
 
         if (!quiz) {
             return res.status(404).json({ message: 'Quiz not found' });
@@ -425,6 +463,19 @@ router.post('/create-quiz', auth, roleAuth('Admin'), async (req, res) => {
             return res.status(400).json({ message: 'Title and at least one question are required' });
         }
 
+        let questionIds = [];
+        for (const q of questions) {
+            if (q._id && q._id.toString().length === 24) {
+                // Reuse existing question
+                questionIds.push(q._id);
+            } else {
+                // Create new question
+                const newQ = new Question(q);
+                await newQ.save();
+                questionIds.push(newQ._id);
+            }
+        }
+
         const quiz = new Quiz({
             title,
             description,
@@ -432,7 +483,7 @@ router.post('/create-quiz', auth, roleAuth('Admin'), async (req, res) => {
             quizType,
             duration,
             scheduledAt,
-            questions,
+            questions: questionIds,
             chapter: chapter || undefined
         });
 
@@ -447,9 +498,11 @@ router.post('/create-quiz', auth, roleAuth('Admin'), async (req, res) => {
             }
         }
 
+        const populatedQuiz = await Quiz.findById(quiz._id).populate('questions');
+
         res.status(201).json({
             message: 'Quiz created successfully',
-            quiz
+            quiz: populatedQuiz
         });
     } catch (error) {
         console.error(error);
@@ -715,7 +768,7 @@ router.get('/reports/monthly', auth, roleAuth('Admin'), async (req, res) => {
 router.get('/questions/bank', auth, roleAuth('Admin'), async (req, res) => {
     try {
         const Quiz = require('../models/Quiz');
-        const quizzes = await Quiz.find({ quizType: { $ne: 'weekly' } });
+        const quizzes = await Quiz.find({ quizType: { $ne: 'weekly' } }).populate('questions');
 
         const allQuestions = [];
         const seenQuestions = new Set();
@@ -728,7 +781,7 @@ router.get('/questions/bank', auth, roleAuth('Admin'), async (req, res) => {
                     if (!seenQuestions.has(qKey)) {
                         seenQuestions.add(qKey);
                         allQuestions.push({
-                            _id: q._id || new Date().getTime() + Math.random(), // Ensure ID
+                            _id: q._id, // Real Question ID
                             questionText: q.text,
                             options: q.options,
                             correctIndices: q.correctIndices,

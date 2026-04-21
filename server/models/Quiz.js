@@ -1,41 +1,5 @@
 const mongoose = require('mongoose');
 
-const optionSchema = new mongoose.Schema({
-    text: {
-        type: String,
-        required: true
-    },
-    image: {
-        type: String,
-        default: null
-    }
-}, { _id: false });
-
-const questionSchema = new mongoose.Schema({
-    text: {
-        type: String,
-        required: true
-    },
-    marks: {
-        type: Number,
-        required: true,
-        default: 1
-    },
-    options: [optionSchema],
-    correctIndices: [{
-        type: Number,
-        required: true
-    }],
-    explanation: {
-        type: String,
-        default: ''
-    },
-    isMultiSelect: {
-        type: Boolean,
-        default: false
-    }
-}, { _id: false });
-
 const quizSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -64,7 +28,10 @@ const quizSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
-    questions: [questionSchema],
+    questions: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Question'
+    }],
     chapter: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Chapter'

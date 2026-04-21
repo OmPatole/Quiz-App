@@ -154,6 +154,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
 
     const importQuestions = () => {
         const newQuestions = selectedBankQuestions.map(q => ({
+            _id: q._id,
             text: q.questionText,
             marks: q.marks || 1,
             isMultiSelect: q.correctIndices.length > 1,
@@ -266,6 +267,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
         const newQuestions = selectedQuizQuestions.map(qIndex => {
             const q = quizQuestions[qIndex];
             return {
+                _id: q._id,
                 text: q.text,
                 marks: q.marks || 1,
                 isMultiSelect: q.correctIndices?.length > 1,

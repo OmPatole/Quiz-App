@@ -25,7 +25,7 @@ router.post('/submit', auth, roleAuth('Student'), async (req, res) => {
         const sanitizedQuizId = sanitize(quizId);
 
         // Get quiz with correct answers
-        const quiz = await Quiz.findById(sanitizedQuizId);
+const quiz = await Quiz.findById(sanitizedQuizId).populate('questions');
 
         if (!quiz) {
             return res.status(404).json({ message: 'Quiz not found' });
@@ -363,7 +363,10 @@ router.get('/leaderboard/:quizId', auth, async (req, res) => {
 router.get('/:id', auth, roleAuth('Student'), async (req, res) => {
     try {
         const sanitizedId = sanitize(req.params.id);
-        const quiz = await Quiz.findById(sanitizedId).select('-questions.correctIndices -questions.explanation');
+        const quiz = await Quiz.findById(sanitizedId).populate({
+            path: 'questions',
+            select: '-correctIndices -explanation'
+        });
 
         if (!quiz) {
             return res.status(404).json({ message: 'Quiz not found' });
