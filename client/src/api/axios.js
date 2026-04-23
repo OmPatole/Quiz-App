@@ -52,8 +52,6 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 
-console.log(`🔗 API URL auto-detected: ${API_URL}`);
-
 const api = axios.create({
     baseURL: API_URL,
     timeout: 10000, // 10 second timeout

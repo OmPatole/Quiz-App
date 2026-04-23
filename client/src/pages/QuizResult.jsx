@@ -40,9 +40,31 @@ const QuizResult = () => {
 
     const quizId = result.quizId?._id || result.quizId;
     const isWeeklyQuiz = result.quizType === 'weekly';
+    const showAnswersAtEnd = result.showAnswersAtEnd ?? result.quizId?.showAnswersAtEnd ?? true;
     const { score, totalMarks, percentage } = result;
     const detailedResults = Array.isArray(result.detailedResults) ? result.detailedResults : [];
     const passed = percentage >= 50;
+
+    useEffect(() => {
+        if (!isWeeklyQuiz) return;
+
+        const exitFullscreen = async () => {
+            const exitFn =
+                document.exitFullscreen ||
+                document.webkitExitFullscreen ||
+                document.msExitFullscreen;
+
+            if (exitFn && (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement)) {
+                try {
+                    await exitFn.call(document);
+                } catch (err) {
+                    console.error('Failed to exit fullscreen on result page:', err);
+                }
+            }
+        };
+
+        exitFullscreen();
+    }, [isWeeklyQuiz]);
 
     return (
         <div className="min-h-screen bg-neutral-950 text-white font-sans overflow-x-hidden p-4">
@@ -128,80 +150,82 @@ const QuizResult = () => {
                 )}
 
                 {/* Detailed Results */}
-                <div className="space-y-6 mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                        <CheckCircle2 className="w-6 h-6 text-blue-400" />
-                        Detailed Analysis
-                    </h2>
+                {showAnswersAtEnd && (
+                    <div className="space-y-6 mb-8">
+                        <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                            <CheckCircle2 className="w-6 h-6 text-blue-400" />
+                            Detailed Analysis
+                        </h2>
 
-                    {detailedResults.length > 0 ? detailedResults.map((item, index) => (
-                        <div
-                            key={index}
-                            className={`card bg-neutral-900 border-neutral-800 transition-all ${item.isCorrect
-                                ? 'border-l-4 border-l-blue-500 shadow-blue-900/5'
-                                : 'border-l-4 border-l-red-500 shadow-red-900/5'
-                                }`}
-                        >
-                            <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-lg font-bold text-white">
-                                    Question {index + 1}
-                                </h3>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.isCorrect ? 'bg-blue-900/30 text-blue-400' : 'bg-red-900/30 text-red-500'}`}>
-                                    {item.isCorrect ? `+${item.marks} Marks` : '0 Marks'}
-                                </span>
-                            </div>
+                        {detailedResults.length > 0 ? detailedResults.map((item, index) => (
+                            <div
+                                key={index}
+                                className={`card bg-neutral-900 border-neutral-800 transition-all ${item.isCorrect
+                                    ? 'border-l-4 border-l-blue-500 shadow-blue-900/5'
+                                    : 'border-l-4 border-l-red-500 shadow-red-900/5'
+                                    }`}
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <h3 className="text-lg font-bold text-white">
+                                        Question {index + 1}
+                                    </h3>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.isCorrect ? 'bg-blue-900/30 text-blue-400' : 'bg-red-900/30 text-red-500'}`}>
+                                        {item.isCorrect ? `+${item.marks} Marks` : '0 Marks'}
+                                    </span>
+                                </div>
 
-                            <p className="text-neutral-300 mb-6 font-medium text-lg leading-relaxed">
-                                {item.questionText}
-                            </p>
-
-                            {/* Options with Visual Feedback */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                                {item.options?.map((opt, optIdx) => {
-                                    const isSelected = item.selectedIndices.includes(optIdx);
-                                    const isCorrectOpt = item.correctIndices.includes(optIdx);
-
-                                    let borderColor = 'border-neutral-800';
-                                    let bgColor = 'bg-neutral-800/50';
-                                    let icon = null;
-
-                                    if (isCorrectOpt) {
-                                        borderColor = 'border-blue-500';
-                                        bgColor = 'bg-blue-900/20';
-                                        icon = <CheckCircle2 className="w-4 h-4 text-blue-400" />;
-                                    } else if (isSelected && !isCorrectOpt) {
-                                        borderColor = 'border-red-500';
-                                        bgColor = 'bg-red-900/20';
-                                        icon = <XCircle className="w-4 h-4 text-red-500" />;
-                                    }
-
-                                    return (
-                                        <div key={optIdx} className={`p-4 rounded-xl border ${borderColor} ${bgColor} flex items-center justify-between`}>
-                                            <span className={`text-sm ${isCorrectOpt ? 'text-blue-400 font-bold' : isSelected ? 'text-red-400' : 'text-neutral-400'}`}>
-                                                {opt.text}
-                                            </span>
-                                            {icon}
-                                        </div>
-                                    )
-                                })}
-                            </div>
-
-                            {/* Explanation */}
-                            <div className="bg-neutral-950 p-6 rounded-xl border border-neutral-800">
-                                <p className="text-xs font-bold text-blue-400 uppercase tracking-wide mb-2 flex items-center gap-2">
-                                    <TrendingUp className="w-4 h-4" /> Explanation
+                                <p className="text-neutral-300 mb-6 font-medium text-lg leading-relaxed">
+                                    {item.questionText}
                                 </p>
-                                <p className="text-neutral-400 leading-relaxed">
-                                    {item.explanation || "No explanation provided for this question."}
-                                </p>
+
+                                {/* Options with Visual Feedback */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                                    {item.options?.map((opt, optIdx) => {
+                                        const isSelected = item.selectedIndices.includes(optIdx);
+                                        const isCorrectOpt = item.correctIndices.includes(optIdx);
+
+                                        let borderColor = 'border-neutral-800';
+                                        let bgColor = 'bg-neutral-800/50';
+                                        let icon = null;
+
+                                        if (isCorrectOpt) {
+                                            borderColor = 'border-blue-500';
+                                            bgColor = 'bg-blue-900/20';
+                                            icon = <CheckCircle2 className="w-4 h-4 text-blue-400" />;
+                                        } else if (isSelected && !isCorrectOpt) {
+                                            borderColor = 'border-red-500';
+                                            bgColor = 'bg-red-900/20';
+                                            icon = <XCircle className="w-4 h-4 text-red-500" />;
+                                        }
+
+                                        return (
+                                            <div key={optIdx} className={`p-4 rounded-xl border ${borderColor} ${bgColor} flex items-center justify-between`}>
+                                                <span className={`text-sm ${isCorrectOpt ? 'text-blue-400 font-bold' : isSelected ? 'text-red-400' : 'text-neutral-400'}`}>
+                                                    {opt.text}
+                                                </span>
+                                                {icon}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                {/* Explanation */}
+                                <div className="bg-neutral-950 p-6 rounded-xl border border-neutral-800">
+                                    <p className="text-xs font-bold text-blue-400 uppercase tracking-wide mb-2 flex items-center gap-2">
+                                        <TrendingUp className="w-4 h-4" /> Explanation
+                                    </p>
+                                    <p className="text-neutral-400 leading-relaxed">
+                                        {item.explanation || "No explanation provided for this question."}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    )) : (
-                        <div className="card bg-neutral-900 border-neutral-800 text-center py-10">
-                            <p className="text-neutral-400">Detailed analysis is not available for this result.</p>
-                        </div>
-                    )}
-                </div>
+                        )) : (
+                            <div className="card bg-neutral-900 border-neutral-800 text-center py-10">
+                                <p className="text-neutral-400">Detailed analysis is not available for this result.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex flex-col items-center gap-4 mb-12">

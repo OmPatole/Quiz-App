@@ -19,6 +19,25 @@ const QuizTaking = () => {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
     const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+    const [fullscreenLocked, setFullscreenLocked] = useState(false);
+    const [showFullscreenOverlay, setShowFullscreenOverlay] = useState(false);
+
+    const shouldEnforceWeeklyFullscreen = quiz?.quizType === 'weekly' && (quiz?.requireFullscreenForWeekly ?? true);
+
+    const isInFullscreenMode = useCallback(() => {
+        const docFullscreen = Boolean(
+            document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.msFullscreenElement
+        );
+
+        // F11 fullscreen does not set document.fullscreenElement in many browsers.
+        const windowFullscreen =
+            window.innerHeight >= (window.screen?.availHeight || 0) - 2 &&
+            window.innerWidth >= (window.screen?.availWidth || 0) - 2;
+
+        return docFullscreen || windowFullscreen;
+    }, []);
 
     useEffect(() => {
         if (!quizId) return;
@@ -41,8 +60,8 @@ const QuizTaking = () => {
                             state: {
                                 result: {
                                     ...existingResult.data,
-                                    quizId: quizData._id,
                                     quizType: quizData.quizType,
+                                    showAnswersAtEnd: quizData.showAnswersAtEnd ?? existingResult.data?.quizId?.showAnswersAtEnd ?? true,
                                 },
                             },
                         });
@@ -143,8 +162,103 @@ const QuizTaking = () => {
     };
 
     const handleQuit = () => {
+        if (quiz?.quizType === 'weekly') {
+            processSubmission();
+            return;
+        }
         setIsQuitModalOpen(true);
     };
+
+    const requestFullscreenForWeekly = useCallback(async () => {
+        if (!shouldEnforceWeeklyFullscreen) return;
+
+        if (isInFullscreenMode()) {
+            setFullscreenLocked(true);
+            setShowFullscreenOverlay(false);
+            return;
+        }
+
+        const root = document.documentElement;
+        const requestFn = root.requestFullscreen || root.webkitRequestFullscreen || root.msRequestFullscreen;
+
+        if (!requestFn) {
+            toast.error('Fullscreen is not supported in this browser.');
+            processSubmission();
+            return;
+        }
+
+        try {
+            await requestFn.call(root);
+            setFullscreenLocked(true);
+            setShowFullscreenOverlay(false);
+            toast.warning('Weekly quiz is locked in fullscreen. Exiting fullscreen will auto-submit.');
+        } catch (err) {
+            console.error('Failed to enter fullscreen:', err);
+            setShowFullscreenOverlay(true);
+        }
+    }, [shouldEnforceWeeklyFullscreen, isInFullscreenMode, processSubmission, toast]);
+
+    useEffect(() => {
+        if (!shouldEnforceWeeklyFullscreen || loading || submitting) return;
+
+        if (isInFullscreenMode()) {
+            setFullscreenLocked(true);
+            setShowFullscreenOverlay(false);
+            return;
+        }
+
+        requestFullscreenForWeekly();
+    }, [shouldEnforceWeeklyFullscreen, loading, submitting, requestFullscreenForWeekly, isInFullscreenMode]);
+
+    useEffect(() => {
+        if (!shouldEnforceWeeklyFullscreen || loading || submitting) return;
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                toast.error('You switched tabs/windows. Weekly quiz auto-submitted.');
+                processSubmission();
+            }
+        };
+
+        const handleWindowBlur = () => {
+            toast.error('Window focus lost. Weekly quiz auto-submitted.');
+            processSubmission();
+        };
+
+        const handleFullscreenStateChange = () => {
+            const isFullscreen = isInFullscreenMode();
+
+            if (isFullscreen) {
+                setFullscreenLocked(true);
+                setShowFullscreenOverlay(false);
+                return;
+            }
+
+            if (fullscreenLocked) {
+                toast.error('Fullscreen exited. Weekly quiz auto-submitted.');
+                processSubmission();
+                return;
+            }
+
+            setShowFullscreenOverlay(true);
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('blur', handleWindowBlur);
+        document.addEventListener('fullscreenchange', handleFullscreenStateChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenStateChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenStateChange);
+        window.addEventListener('resize', handleFullscreenStateChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleWindowBlur);
+            document.removeEventListener('fullscreenchange', handleFullscreenStateChange);
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenStateChange);
+            document.removeEventListener('MSFullscreenChange', handleFullscreenStateChange);
+            window.removeEventListener('resize', handleFullscreenStateChange);
+        };
+    }, [shouldEnforceWeeklyFullscreen, loading, submitting, fullscreenLocked, isInFullscreenMode, processSubmission, toast]);
 
     // Timer Logic
     useEffect(() => {
@@ -229,6 +343,23 @@ const QuizTaking = () => {
 
     return (
         <div className="min-h-screen bg-black font-sans text-white flex flex-col">
+            {showFullscreenOverlay && shouldEnforceWeeklyFullscreen && !submitting && (
+                <div className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6">
+                    <div className="max-w-md w-full bg-neutral-900 border border-neutral-700 rounded-2xl p-6 text-center space-y-4">
+                        <h2 className="text-xl font-bold text-white">Weekly Quiz Requires Fullscreen</h2>
+                        <p className="text-sm text-neutral-300">
+                            For weekly quizzes, fullscreen mode is mandatory. Exiting fullscreen or switching screen will auto-submit your attempt.
+                        </p>
+                        <button
+                            onClick={requestFullscreenForWeekly}
+                            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition-colors"
+                        >
+                            Enter Fullscreen
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Main Layout */}
             <div className="flex flex-col lg:flex-row gap-12 max-w-[1920px] px-4 lg:px-16 mx-auto w-full flex-grow items-center justify-center py-12">
 
@@ -404,7 +535,7 @@ const QuizTaking = () => {
 
                 <div 
                     className={`
-                        fixed inset-y-0 right-0 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:transform-none lg:w-80 lg:flex-shrink-0 lg:sticky lg:top-12 lg:h-fit
+                        fixed inset-y-0 right-0 z-50 transform transition-transform duration-300 ease-in-out lg:transform-none lg:w-80 lg:flex-shrink-0 lg:sticky lg:top-12 lg:h-fit
                         ${isPaletteOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
                     `}
                 >

@@ -381,9 +381,17 @@ router.delete('/chapters/:id', auth, roleAuth('Admin'), async (req, res) => {
 // @access  Admin only
 router.put('/quiz/:id', auth, roleAuth('Admin'), async (req, res) => {
     try {
+        const quizId = sanitize(req.params.id);
+        const existingQuiz = await Quiz.findById(quizId);
+
+        if (!existingQuiz) {
+            return res.status(404).json({ message: 'Quiz not found' });
+        }
+
+        const updateData = { ...req.body };
         let questionIds = [];
-        if (req.body.questions) {
-            for (const q of req.body.questions) {
+        if (Array.isArray(updateData.questions)) {
+            for (const q of updateData.questions) {
                 if (q._id && q._id.toString().length === 24) {
                     await Question.findByIdAndUpdate(q._id, q);
                     questionIds.push(q._id);
@@ -393,18 +401,37 @@ router.put('/quiz/:id', auth, roleAuth('Admin'), async (req, res) => {
                     questionIds.push(newQ._id);
                 }
             }
-            req.body.questions = questionIds;
+            updateData.questions = questionIds;
         }
 
-        const quiz = await Quiz.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true, runValidators: true }
-        ).populate('questions');
-
-        if (!quiz) {
-            return res.status(404).json({ message: 'Quiz not found' });
+        if (updateData.quizType && updateData.quizType !== 'weekly') {
+            updateData.scheduledAt = null;
+            updateData.showAnswersAtEnd = true;
+            updateData.requireFullscreenForWeekly = false;
         }
+
+        const oldChapterId = existingQuiz.chapter ? existingQuiz.chapter.toString() : null;
+        const newChapterId = updateData.chapter ? updateData.chapter.toString() : oldChapterId;
+
+        if (newChapterId && oldChapterId !== newChapterId) {
+            const newChapter = await Chapter.findById(newChapterId);
+            if (!newChapter) {
+                return res.status(404).json({ message: 'Selected chapter not found' });
+            }
+        }
+
+        Object.assign(existingQuiz, updateData);
+        await existingQuiz.save();
+
+        if (oldChapterId && oldChapterId !== newChapterId) {
+            await Chapter.findByIdAndUpdate(oldChapterId, { $pull: { quizzes: existingQuiz._id } });
+        }
+        if (newChapterId && oldChapterId !== newChapterId) {
+            await Chapter.findByIdAndUpdate(newChapterId, { $addToSet: { quizzes: existingQuiz._id } });
+        }
+
+        const quiz = await Quiz.findById(existingQuiz._id).populate('questions');
+
 
         res.json({
             message: 'Quiz updated successfully',
@@ -454,6 +481,8 @@ router.post('/create-quiz', auth, roleAuth('Admin'), async (req, res) => {
             quizType,
             duration,
             scheduledAt,
+            showAnswersAtEnd,
+            requireFullscreenForWeekly,
             questions,
             chapter
         } = req.body;
@@ -483,6 +512,8 @@ router.post('/create-quiz', auth, roleAuth('Admin'), async (req, res) => {
             quizType,
             duration,
             scheduledAt,
+            showAnswersAtEnd: showAnswersAtEnd ?? true,
+            requireFullscreenForWeekly: quizType === 'weekly' ? (requireFullscreenForWeekly ?? true) : false,
             questions: questionIds,
             chapter: chapter || undefined
         });

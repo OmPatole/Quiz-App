@@ -89,23 +89,17 @@ const quiz = await Quiz.findById(sanitizedQuizId).populate('questions');
             });
         });
 
-        // Save result - Always update if exists, create if new
         let result = await Result.findOne({
             studentId: req.user._id,
             quizId: quizObjectId
         });
 
-        if (result) {
-            // Update existing result with latest attempt
-            result.score = score;
-            result.totalMarks = totalMarks;
-            result.answers = answers;
-            if (timeTaken != null) result.timeTaken = timeTaken;
-            result.submittedAt = new Date();
-            await result.save();
-            console.log(`Updated existing result for student ${req.user._id}, quiz ${quizObjectId}`);
-        } else {
-            // Create new result for first attempt
+        if (quiz.quizType === 'weekly') {
+            // Weekly quizzes are hard-limited to a single attempt.
+            if (result) {
+                return res.status(409).json({ message: 'Weekly quiz allows only one attempt' });
+            }
+
             result = new Result({
                 studentId: req.user._id,
                 quizId: quizObjectId,
@@ -115,7 +109,29 @@ const quiz = await Quiz.findById(sanitizedQuizId).populate('questions');
                 timeTaken: timeTaken ?? null
             });
             await result.save();
-            console.log(`Created new result for student ${req.user._id}, quiz ${quizObjectId}`);
+            console.log(`Created weekly result for student ${req.user._id}, quiz ${quizObjectId}`);
+        } else {
+            // Practice quizzes keep latest attempt by updating existing result.
+            if (result) {
+                result.score = score;
+                result.totalMarks = totalMarks;
+                result.answers = answers;
+                if (timeTaken != null) result.timeTaken = timeTaken;
+                result.submittedAt = new Date();
+                await result.save();
+                console.log(`Updated existing practice result for student ${req.user._id}, quiz ${quizObjectId}`);
+            } else {
+                result = new Result({
+                    studentId: req.user._id,
+                    quizId: quizObjectId,
+                    score,
+                    totalMarks,
+                    answers,
+                    timeTaken: timeTaken ?? null
+                });
+                await result.save();
+                console.log(`Created new practice result for student ${req.user._id}, quiz ${quizObjectId}`);
+            }
         }
 
         // --- Streak Logic ---
@@ -126,10 +142,11 @@ const quiz = await Quiz.findById(sanitizedQuizId).populate('questions');
             message: 'Quiz submitted successfully',
             quizId: quiz._id,
             quizType: quiz.quizType,
+            showAnswersAtEnd: quiz.quizType === 'practice' ? true : quiz.showAnswersAtEnd,
             score,
             totalMarks,
             percentage: ((score / totalMarks) * 100).toFixed(2),
-            detailedResults,
+            detailedResults: quiz.quizType === 'practice' || quiz.showAnswersAtEnd ? detailedResults : [],
             streak: {
                 current: student.currentStreak,
                 longest: student.longestStreak,
@@ -151,7 +168,7 @@ router.get('/results/:quizId', auth, roleAuth('Student'), async (req, res) => {
         const result = await Result.findOne({
             studentId: req.user._id,
             quizId: sanitizedQuizId
-        }).populate('quizId', 'title description');
+        }).populate('quizId', 'title description quizType showAnswersAtEnd');
 
         if (!result) {
             return res.status(404).json({ message: 'No result found for this quiz' });

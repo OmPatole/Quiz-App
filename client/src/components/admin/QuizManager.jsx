@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Plus, Trash2, BookOpen, CheckCircle2, AlertCircle, FilePlus, ChevronDown, ChevronRight, Filter } from 'lucide-react';
+import { Upload, Plus, Trash2, FileEdit, BookOpen, CheckCircle2, AlertCircle, FilePlus, ChevronDown, ChevronRight, Filter } from 'lucide-react';
 import api from '../../api/axios';
 import QuizBuilder from './QuizBuilder';
 import { useToast } from '../../context/ToastContext';
@@ -13,6 +13,7 @@ const QuizManager = () => {
     const [uploading, setUploading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showBuilder, setShowBuilder] = useState(false);
+    const [editingQuiz, setEditingQuiz] = useState(null);
     const [expandedChapters, setExpandedChapters] = useState({});
     const [quizFilter, setQuizFilter] = useState('all'); // 'all', 'practice', 'weekly'
 
@@ -140,14 +141,29 @@ const QuizManager = () => {
         }
     };
 
+    const handleEditQuiz = (quiz, chapterId) => {
+        setEditingQuiz({
+            ...quiz,
+            chapter: chapterId
+        });
+        setShowBuilder(true);
+    };
+
     if (showBuilder) {
         return (
             <QuizBuilder
-                onCancel={() => setShowBuilder(false)}
+                mode={editingQuiz ? 'edit' : 'create'}
+                initialQuizData={editingQuiz}
+                onCancel={() => {
+                    setShowBuilder(false);
+                    setEditingQuiz(null);
+                }}
                 onSuccess={() => {
                     setShowBuilder(false);
+                    const wasEditing = Boolean(editingQuiz);
+                    setEditingQuiz(null);
                     fetchChapters();
-                    toast.success('Quiz created successfully');
+                    toast.success(wasEditing ? 'Quiz updated successfully' : 'Quiz created successfully');
                 }}
             />
         );
@@ -157,7 +173,10 @@ const QuizManager = () => {
         <div className="space-y-6">
             <div className="flex justify-end">
                 <button
-                    onClick={() => setShowBuilder(true)}
+                    onClick={() => {
+                        setEditingQuiz(null);
+                        setShowBuilder(true);
+                    }}
                     className="btn-primary flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold shadow-lg shadow-blue-500/20"
                 >
                     <FilePlus className="w-4 h-4" />
@@ -358,12 +377,22 @@ const QuizManager = () => {
                                                                     {quiz.duration} min • {quiz.questions?.length || 0} questions
                                                                 </p>
                                                             </div>
-                                                            <button
-                                                                onClick={() => confirmDelete('quiz', quiz._id, quiz.title)}
-                                                                className="p-2 text-gray-400 dark:text-neutral-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-neutral-950 rounded-lg transition-colors"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    onClick={() => handleEditQuiz(quiz, chapter._id)}
+                                                                    className="p-2 text-gray-400 dark:text-neutral-600 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-neutral-950 rounded-lg transition-colors"
+                                                                    title="Edit Quiz"
+                                                                >
+                                                                    <FileEdit className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => confirmDelete('quiz', quiz._id, quiz.title)}
+                                                                    className="p-2 text-gray-400 dark:text-neutral-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-neutral-950 rounded-lg transition-colors"
+                                                                    title="Delete Quiz"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>

@@ -28,6 +28,14 @@ const quizSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    showAnswersAtEnd: {
+        type: Boolean,
+        default: true
+    },
+    requireFullscreenForWeekly: {
+        type: Boolean,
+        default: true
+    },
     questions: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Question'

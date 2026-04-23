@@ -1,36 +1,85 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, X, Save, Clock, Calendar, CheckCircle2, ChevronDown, ChevronUp, Database, Search, Shuffle, List } from 'lucide-react';
 import api from '../../api/axios';
 import { useToast } from '../../context/ToastContext';
 import InputModal from '../common/InputModal';
 
-const QuizBuilder = ({ onCancel, onSuccess }) => {
+const getEmptyQuestion = () => ({
+    text: '',
+    marks: 1,
+    isMultiSelect: false,
+    options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }],
+    explanation: '',
+    correctIndices: []
+});
+
+const formatDateTimeLocal = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const mapQuizToBuilderData = (quiz) => {
+    if (!quiz) {
+        return {
+            title: '',
+            description: '',
+            chapter: '',
+            quizType: 'practice',
+            duration: 30,
+            scheduledAt: '',
+            showAnswersAtEnd: true,
+            requireFullscreenForWeekly: true,
+            questions: [getEmptyQuestion()]
+        };
+    }
+
+    return {
+        title: quiz.title || '',
+        description: quiz.description || '',
+        chapter: typeof quiz.chapter === 'object' ? quiz.chapter?._id || '' : quiz.chapter || '',
+        quizType: quiz.quizType || 'practice',
+        duration: quiz.duration || 30,
+        scheduledAt: formatDateTimeLocal(quiz.scheduledAt),
+        showAnswersAtEnd: quiz.showAnswersAtEnd ?? true,
+        requireFullscreenForWeekly: quiz.requireFullscreenForWeekly ?? true,
+        questions: Array.isArray(quiz.questions) && quiz.questions.length > 0
+            ? quiz.questions.map((q) => ({
+                _id: q._id,
+                text: q.text || '',
+                marks: q.marks || 1,
+                isMultiSelect: (q.correctIndices || []).length > 1,
+                options: (q.options || []).map((opt, index) => ({
+                    text: opt.text || '',
+                    isCorrect: (q.correctIndices || []).includes(index)
+                })),
+                explanation: q.explanation || '',
+                correctIndices: q.correctIndices || []
+            }))
+            : [getEmptyQuestion()]
+    };
+};
+
+const QuizBuilder = ({ onCancel, onSuccess, mode = 'create', initialQuizData = null }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [chapters, setChapters] = useState([]);
     
     const toast = useToast();
+    const scheduledAtInputRef = useRef(null);
 
-    const [quizData, setQuizData] = useState({
-        title: '',
-        description: '',
-        chapter: '',
-        quizType: 'practice',
-        duration: 30,
-        scheduledAt: '',
-        questions: [{
-            text: '',
-            marks: 1,
-            isMultiSelect: false,
-            options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }],
-            explanation: '',
-            correctIndices: []
-        }]
-    });
+    const [quizData, setQuizData] = useState(mapQuizToBuilderData(initialQuizData));
 
     useEffect(() => {
         api.get('/admin/chapters').then(res => setChapters(res.data)).catch(() => {});
     }, []);
+
+    useEffect(() => {
+        setQuizData(mapQuizToBuilderData(initialQuizData));
+    }, [initialQuizData, mode]);
 
     // Question Bank State
     const [showQuestionBank, setShowQuestionBank] = useState(false);
@@ -51,22 +100,38 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
     const [randomInputConfig, setRandomInputConfig] = useState({ isOpen: false, max: 0, onConfirm: null });
 
     const handleBasicChange = (e) => {
-        const { name, value } = e.target;
-        setQuizData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+
+        if (name === 'quizType') {
+            setQuizData(prev => {
+                const nextType = value;
+                if (nextType === 'practice') {
+                    return {
+                        ...prev,
+                        quizType: nextType,
+                        scheduledAt: '',
+                        showAnswersAtEnd: true,
+                        requireFullscreenForWeekly: false
+                    };
+                }
+
+                return {
+                    ...prev,
+                    quizType: nextType,
+                    requireFullscreenForWeekly: prev.requireFullscreenForWeekly ?? true
+                };
+            });
+            return;
+        }
+
+        setQuizData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
     // Question Management
     const addQuestion = () => {
         setQuizData(prev => ({
             ...prev,
-            questions: [...prev.questions, {
-                text: '',
-                marks: 1,
-                isMultiSelect: false,
-                options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }],
-                explanation: '',
-                correctIndices: []
-            }]
+            questions: [...prev.questions, getEmptyQuestion()]
         }));
     };
 
@@ -237,12 +302,12 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                 const count = parseInt(countInput, 10);
                 
                 if (isNaN(count) || count <= 0) {
-                    toast.showError('Please enter a valid positive number.');
+                    toast.error('Please enter a valid positive number.');
                     return;
                 }
                 
                 if (count > quizQuestions.length) {
-                    toast.showError(`Only ${quizQuestions.length} questions available.`);
+                    toast.error(`Only ${quizQuestions.length} questions available.`);
                     return;
                 }
                 
@@ -256,7 +321,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                     const combined = new Set([...prev, ...randomIndices]);
                     return Array.from(combined);
                 });
-                toast.showSuccess(`Added ${count} random question(s) to selection.`);
+                toast.success(`Added ${count} random question(s) to selection.`);
             }
         });
     };
@@ -326,13 +391,21 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
 
             const payload = {
                 ...quizData,
+                scheduledAt: quizData.quizType === 'weekly' && quizData.scheduledAt ? quizData.scheduledAt : null,
+                showAnswersAtEnd: quizData.quizType === 'weekly' ? Boolean(quizData.showAnswersAtEnd) : true,
+                requireFullscreenForWeekly: quizData.quizType === 'weekly' ? Boolean(quizData.requireFullscreenForWeekly) : false,
                 questions: formattedQuestions
             };
 
-            await api.post('/admin/create-quiz', payload);
+            if (mode === 'edit' && initialQuizData?._id) {
+                await api.put(`/admin/quiz/${initialQuizData._id}`, payload);
+            } else {
+                await api.post('/admin/create-quiz', payload);
+            }
+
             if (onSuccess) onSuccess();
         } catch (err) {
-            setError(err.message || 'Failed to create quiz');
+            setError(err.response?.data?.message || err.message || `Failed to ${mode === 'edit' ? 'update' : 'create'} quiz`);
         } finally {
             setLoading(false);
         }
@@ -342,12 +415,14 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
         <div className="w-full min-h-screen bg-gray-50 dark:bg-neutral-950 p-6">
             <div className="max-w-[1800px] mx-auto space-y-6">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create New Quiz</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {mode === 'edit' ? 'Edit Quiz' : 'Create New Quiz'}
+                    </h2>
                     <div className="flex gap-2">
                         <button onClick={onCancel} className="btn-secondary">Cancel</button>
                         <button onClick={handleSubmit} disabled={loading} className="btn-primary flex gap-2">
                             <Save className="w-4 h-4" />
-                            Save Quiz
+                            {mode === 'edit' ? 'Update Quiz' : 'Save Quiz'}
                         </button>
                     </div>
                 </div>
@@ -399,18 +474,75 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                         <label className="block text-sm font-medium mb-1">Duration (mins)</label>
                         <input type="number" name="duration" value={quizData.duration} onChange={handleBasicChange} className="input-field" />
                     </div>
-                    <div className="col-span-full md:col-span-1">
-                        <label className="block text-sm font-medium mb-1">Scheduled Date (Optional)</label>
-                        <div className="relative">
-                            <input
-                                type="datetime-local"
-                                name="scheduledAt"
-                                value={quizData.scheduledAt}
-                                onChange={handleBasicChange}
-                                className="input-field [color-scheme:dark]"
-                            />
-                        </div>
-                    </div>
+                    {quizData.quizType === 'weekly' && (
+                        <>
+                            <div className="col-span-full md:col-span-1">
+                                <label className="block text-sm font-medium mb-1">Scheduled Date (Optional)</label>
+                                <div className="relative">
+                                    <input
+                                        type="datetime-local"
+                                        name="scheduledAt"
+                                        value={quizData.scheduledAt}
+                                        onChange={handleBasicChange}
+                                        ref={scheduledAtInputRef}
+                                        className="input-field pr-12 [color-scheme:dark]"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (scheduledAtInputRef.current?.showPicker) {
+                                                scheduledAtInputRef.current.showPicker();
+                                            } else {
+                                                scheduledAtInputRef.current?.focus();
+                                            }
+                                        }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-blue-600 rounded-md transition-colors"
+                                        title="Open date and time picker"
+                                    >
+                                        <Calendar className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="col-span-full md:col-span-2 space-y-3">
+                                <div>
+                                    <label className="flex items-center gap-3 cursor-pointer select-none mt-1">
+                                        <input
+                                            type="checkbox"
+                                            name="showAnswersAtEnd"
+                                            checked={Boolean(quizData.showAnswersAtEnd)}
+                                            onChange={handleBasicChange}
+                                            className="w-4 h-4 text-blue-600 rounded"
+                                        />
+                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Show answers and explanation at the end of quiz
+                                        </span>
+                                    </label>
+                                    <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1 ml-7">
+                                        If disabled, students will only see summary analytics on result page.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="flex items-center gap-3 cursor-pointer select-none mt-1">
+                                        <input
+                                            type="checkbox"
+                                            name="requireFullscreenForWeekly"
+                                            checked={Boolean(quizData.requireFullscreenForWeekly)}
+                                            onChange={handleBasicChange}
+                                            className="w-4 h-4 text-blue-600 rounded"
+                                        />
+                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                            Require fullscreen mode for this weekly quiz
+                                        </span>
+                                    </label>
+                                    <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1 ml-7">
+                                        If enabled, exiting fullscreen or switching screen auto-submits the quiz.
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Questions */}
@@ -552,7 +684,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                                         onClick={() => {
                                             const filtered = questionBank.filter(q => q.questionText.toLowerCase().includes(bankSearch.toLowerCase()));
                                             if (filtered.length === 0) {
-                                                toast.showError('No questions found to randomize.');
+                                                toast.error('No questions found to randomize.');
                                                 return;
                                             }
                                             
@@ -562,11 +694,11 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                                                 onConfirm: (countInput) => {
                                                     const count = parseInt(countInput, 10);
                                                     if (isNaN(count) || count <= 0) {
-                                                        toast.showError('Please enter a valid positive number.');
+                                                        toast.error('Please enter a valid positive number.');
                                                         return;
                                                     }
                                                     if (count > filtered.length) {
-                                                        toast.showError(`Only ${filtered.length} questions available matching your search.`);
+                                                        toast.error(`Only ${filtered.length} questions available matching your search.`);
                                                         return;
                                                     }
 
@@ -576,7 +708,7 @@ const QuizBuilder = ({ onCancel, onSuccess }) => {
                                                     const toAdd = selected.filter(q => !prevIds.has(q._id));
                                                     
                                                     setSelectedBankQuestions(prev => [...prev, ...toAdd]);
-                                                    toast.showSuccess(`Added ${toAdd.length} random question(s) to selection.`);
+                                                    toast.success(`Added ${toAdd.length} random question(s) to selection.`);
                                                 }
                                             });
                                         }}
